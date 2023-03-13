@@ -1,18 +1,40 @@
 import pygame as pg
+import math
 
-
-# ---------------------------------------------- [UI]
+# ---------------------------------------------- static and global variables
 
 progDos_rects           = 1
 progDos_static_images   = 1
 progDos_buttons         = 1
 progDos_texts           = 1
 progDos_TextBoxes       = 1
+progDos_room = 1
+progDos_door = 1
+progDos_window = 1
 
 font_path = "static/nasa_font.ttf"
-font_size = 30
 
-# simple rect subclass that inherits the Sprite superclass
+tiles = {
+    'parquet': 'static/floor_parquet.jpg',
+    'grey': 'static/floor_grey_tiles.jpg',
+    'white': 'floot_white.jpg',
+    'marble': 'static/floor_marble.jpg',
+}
+
+furniture = {
+
+}
+
+
+"""
+    attributes understanding
+    1) x,y refers to the top left corner of the rect: Rect, StaticImage, Text, InputTextBox, OutputTextBox
+    2) x,y referes to the center of the rect: Button, HouseElement
+"""
+
+# ---------------------------------------------- [UI]
+
+# simple rect subclass that inherits the Sprite superclass used for testing
 class Rect(pg.sprite.Sprite):
 
     def __init__(self, x, y, width = 50, height = 50, color = (0,0,0)):
@@ -20,7 +42,9 @@ class Rect(pg.sprite.Sprite):
         self.image = pg.Surface((width, height))
         self.image.fill(color)
         self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
+        # self.rect.center = (x, y)
+        self.rect.x = x
+        self.rect.y = y
         self.type_DO = "rect"
         global progDos_rects
         self.prog = progDos_rects
@@ -39,9 +63,10 @@ class StaticImage(pg.sprite.Sprite):
         self.image = pg.image.load(file_path).convert_alpha()
         self.image = pg.transform.smoothscale(self.image, (self.width, self.height))
         self.rect = self.image.get_rect()
-        self.rect.x = self.x#    (self.x, self.y)
+        self.rect.x = self.x #    (self.x, self.y)
         self.rect.y = self.y
         self.type_DO = 'static_image'
+
         global progDos_static_images
         self.prog = progDos_static_images
         progDos_static_images += 1
@@ -113,7 +138,7 @@ class Button(pg.sprite.Sprite):
 
 class Text(pg.sprite.Sprite):
 
-    def __init__(self, string, x, y,  color, size_font=font_size):
+    def __init__(self, string, x, y,  color, size_font=30):
         super().__init__()
         self.x = x
         self.y = y
@@ -131,7 +156,6 @@ class Text(pg.sprite.Sprite):
         # create display object and get its rect
         self.text = self.font.render(string, True, color)   # text, antialiasing, color, bg color
         self.rect = self.text.get_rect()
-        # self.rect.center = (self.x, self.y)
         self.rect.x = self.x
         self.rect.y = self.y
         self.image = self.text
@@ -151,7 +175,7 @@ class Text(pg.sprite.Sprite):
 
 class InputTextBox():
 
-    def __init__(self,screen, x, y, height, color_text, color_bg, size_font=font_size):
+    def __init__(self,screen, x, y, height, color_text, color_bg, size_font=30):
         self.screen = screen
         self.x = x
         self.y = y
@@ -200,13 +224,13 @@ class InputTextBox():
 
         self.screen.blit(self.text, (self.rect.x + 5, self.rect.y + 5))
 
-    def restore_defult(self):
+    def restore_default(self):
         self.rect.w = self.min_width
         self.text_box = self.default_text
 
 class OutputTextBox():
 
-    def __init__(self,screen, x, y, width, height, color_text, color_bg, size_font=font_size):
+    def __init__(self,screen, x, y, width, height, color_text, color_bg, size_font=30):
         self.screen = screen
         self.x = x
         self.y = y
@@ -262,8 +286,6 @@ class OutputTextBox():
                 n_messages += 1
                 visible_messages.insert(0, message)
 
-        # todo
-
 
         # print messages as lines after the split
         vertical_offset = 0
@@ -273,8 +295,8 @@ class OutputTextBox():
                 self.screen.blit(self.text, (self.rect.x + 5, self.rect.y + 5 + 25 *vertical_offset))
                 vertical_offset += 1
             elif type(message) == list:
-                for sub_messsage in message:
-                    self.text = self.font.render(sub_messsage, True, self.color_text)
+                for sub_message in message:
+                    self.text = self.font.render(sub_message, True, self.color_text)
                     self.screen.blit(self.text, (self.rect.x + 5, self.rect.y + 5 + 25 * vertical_offset))
                     vertical_offset += 1
 
@@ -314,27 +336,114 @@ class OutputTextBox():
         else:
             self.messages.append( message)
 
-    def restore_defult(self):
+    def restore_default(self):
         self.text_box = self.default_text
 # ---------------------------------------------- [Simulation]
 
-class Room():
-    def __init__(self):
+class HouseElement(pg.sprite.Sprite):
+    def __init__(self, name, screen, x, y, width, height):   # x and y center of the DO box rectangle
+        super().__init__()
+        self.name = name
+        self.screen = screen
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.rel_angle = 0
+
+        if (type(self).__name__ == "Room"):
+            global progDos_room
+            self.prog = progDos_room
+            progDos_room += 1
+            self.type_DO = "Room"
+
+        elif (type(self).__name__ == "Door"):
+            global progDos_door
+            self.prog = progDos_door
+            progDos_door += 1
+            self.type_DO = "Door"
+
+        elif (type(self).__name__ == "Window"):
+            global progDos_window
+            self.prog = progDos_window
+            progDos_window += 1
+            self.type_DO = "Window"
+
+        print(f"Created {self.type_DO} ({self.name}) n° {self.prog}")
+        print((self.x, self.y))
+
+
+    def get_display_name(self):
+        text_dos = Text(self.name, x=self.rect.x, y=self.rect.y, color=(255, 255, 255), size_font=20)
+        return text_dos
+
+    def rotate(self, angle):
+        self.image = pg.transform.rotate(self.image, angle)
+        self.rect = self.image.get_rect()
+        self.rect.center = (self.x, self.y)
+        self.rel_angle += angle
+
+    def get_vertices(self):
+
+        # left_top corner
+        lt = ()
+        # right_top corner
+        rt = ()
+        # left_down  corner
+        ld = ()
+        # # right_down corner
+        rd = ()
+
+        vertices = {
+            # 'left-top':     lt,
+            # 'right-top':    rt,
+            # 'left-down':    ld,
+            # 'right-down':   rd
+        }
+
+        return vertices
+
+    def render_debug(self):
+        vertices = self.get_vertices()
+        pg.draw.circle(self.screen, (0,0, 255), (self.x, self.y), radius=15)
+        for v in list(vertices.values()):
+            # print(v)
+            pg.draw.circle(self.screen, (255,0,0), v, radius = 10)
+
+
+class Room(HouseElement):
+    def __init__(self, name, screen, x, y, width, height, tile_type):
+        super().__init__(name, screen, x, y, width, height)
+
+        self.image = pg.image.load(tiles[tile_type]).convert_alpha()
+        self.image = pg.transform.smoothscale(self.image, (self.width, self.height))
+        self.rect = self.image.get_rect()
+        self.rect.center = (self.x, self.y)
+    def adj_to(self, room: HouseElement):
         pass
+
+
+class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
+    def __init__(self):
+        super().__init__()
+
+class Window(HouseElement):
+    def __init__(self, name, x ,y, width, center):
+        super().__init__()
+
+
+class OutDoor(HouseElement):
+    def __init__(self):
+        super(OutDoor, self).__init__()
+
+class Furniture(HouseElement):
+    def __init__(self):
+        super(Furniture, self).__init__()
+
 
 class Pepper():
     def __init__(self):
         pass
-
-class HouseObject():
-    def __init__(self):
-        pass
-
-class Furniture():
-    def __init__(self):
-        pass
-
-
 
 
 
