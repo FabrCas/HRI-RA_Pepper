@@ -1,3 +1,4 @@
+import pygame
 import pygame as pg
 import math
 
@@ -29,7 +30,9 @@ furniture = {
 """
     attributes understanding
     1) x,y refers to the top left corner of the rect: Rect, StaticImage, Text, InputTextBox, OutputTextBox
+        in general is used from pygame for all rect that contains DOs
     2) x,y referes to the center of the rect: Button, HouseElement
+        in general us used from pygame to handle each kind of surface, if i take the rect from the surface i pass to (1)
 """
 
 # ---------------------------------------------- [UI]
@@ -71,12 +74,12 @@ class StaticImage(pg.sprite.Sprite):
         self.prog = progDos_static_images
         progDos_static_images += 1
 
-        print(f"Created {self.type_DO} n° {self.prog}")
+        print(f"Created {self.type_DO} n° {self.prog}: {file_path}")
 
 
 class Button(pg.sprite.Sprite):
 
-    def __init__(self, name ,  x, y, width, height, type_button='on'):
+    def __init__(self, name,  x, y, width, height, type_button='on'):
 
         super().__init__()
         self.width = width
@@ -85,26 +88,25 @@ class Button(pg.sprite.Sprite):
         self.y = y
         self.name = name
         self.status = type_button
-        # image = pg.image.load("static/buttons_.png").convert_alpha() # sprite for both on and off button
-        # # crop image to get green
-        # rect = image.get_rect()
-        # crop_rect = pg.Rect(rect.x, rect.y, rect.width/2, rect.height)
-        # self.image = image.subsurface(crop_rect)
         if type_button == 'on':
             self.image = pg.image.load("static/green_bt.png").convert_alpha() # sprite for both on and off button
-        else:
+        elif type_button == 'off':
             self.image = pg.image.load("static/red_bt.png").convert_alpha()
+        else:
+            raise ValueError("Wrong button type has been assigned")
+
         self.image = pg.transform.smoothscale(self.image, (self.width, self.height))
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
         self.last_click = None
         self.type_DO = 'button'
+        self.sound = pg.mixer.Sound("static/button_click.mp3")
 
         global progDos_buttons
         self.prog = progDos_buttons
         progDos_buttons += 1
 
-        print(f"Created {self.type_DO} ({self.name}) n° {self.prog}")
+        print(f"Created {self.type_DO} ({self.name}) n° {self.prog}: status {self.status}")
 
     def change_status(self):
         # if needed can be used a cooling time variable to reduce the number of switch
@@ -119,6 +121,7 @@ class Button(pg.sprite.Sprite):
 
         if self.status == 'on':
             print(f'button {self.name} goes to off')
+            pg.mixer.Sound.play(self.sound)
             self.image = pg.image.load("static/red_bt.png").convert_alpha()
             self.image = pg.transform.smoothscale(self.image, (self.width, self.height))
             self.rect = self.image.get_rect()
@@ -128,6 +131,7 @@ class Button(pg.sprite.Sprite):
 
         elif self.status == 'off':
             print(f'button {self.name} goes to on')
+            pg.mixer.Sound.play(self.sound)
             self.image = pg.image.load("static/green_bt.png").convert_alpha()
             self.image = pg.transform.smoothscale(self.image, (self.width, self.height))
             self.rect = self.image.get_rect()
@@ -140,6 +144,7 @@ class Text(pg.sprite.Sprite):
 
     def __init__(self, string, x, y,  color, size_font=30):
         super().__init__()
+        self.string = string
         self.x = x
         self.y = y
         self.size = size_font
@@ -160,7 +165,7 @@ class Text(pg.sprite.Sprite):
         self.rect.y = self.y
         self.image = self.text
 
-        print(f"Created {self.type_DO} n° {self.prog}")
+        print(f'Created {self.type_DO} n° {self.prog}: "{self.string.strip()}"')
 
     def center_to(self, x = None ,y = None):
         if x == None and y == None:
@@ -203,7 +208,7 @@ class InputTextBox():
 
         print(f"Created text box (input) n° {self.prog}")
 
-
+    # specific render function, first render the text box and the text, with dynamic changes
     def render(self, max_width=200):
         pg.draw.rect(self.screen, self.color_bg, self.rect)
         self.text = self.font.render(self.text_box, True, self.color_text)
@@ -216,7 +221,6 @@ class InputTextBox():
 
         # show partially the text if the new limit is reached
         if self.text.get_width() > self.rect.w:
-            # print("ao stai a sforà")
             partial_text = self.text_box
             while(self.text.get_width() > self.rect.w - 10):
                 partial_text = partial_text[1:]
@@ -256,9 +260,7 @@ class OutputTextBox():
 
         print(f"Created text box (output) n° {self.prog}")
 
-
-
-
+    # specific render function, first render the text box (static) and adjust the text to fit in the box
     def render(self):
 
         # draw the rect containing the text
@@ -338,6 +340,7 @@ class OutputTextBox():
 
     def restore_default(self):
         self.text_box = self.default_text
+
 # ---------------------------------------------- [Simulation]
 
 class HouseElement(pg.sprite.Sprite):
@@ -345,8 +348,8 @@ class HouseElement(pg.sprite.Sprite):
         super().__init__()
         self.name = name
         self.screen = screen
-        self.x = x
-        self.y = y
+        self.x = x   # refers to center
+        self.y = y   # refers to center
         self.width = width
         self.height = height
         self.rel_angle = 0
@@ -370,56 +373,131 @@ class HouseElement(pg.sprite.Sprite):
             self.type_DO = "Window"
 
         print(f"Created {self.type_DO} ({self.name}) n° {self.prog}")
-        print((self.x, self.y))
 
 
-    def get_display_name(self):
-        text_dos = Text(self.name, x=self.rect.x, y=self.rect.y, color=(255, 255, 255), size_font=20)
+    def get_display_name(self, side = 'top'):  # edge: 'top','bottom'
+
+        vertices = self.get_vertices()
+        if side == 'top':
+            pos_text_x = vertices['left-top'][0] + self.width/2
+            pos_text_y = vertices['left-top'][1] + 20
+        elif side == 'bottom':
+            pos_text_x = vertices['left-down'][0] + self.width/2
+            pos_text_y = vertices['left-down'][1] - 20
+        else:
+            raise ValueError("Invalid edge location as parameter!")
+
+        text_dos = Text(self.name, x=pos_text_x, y= pos_text_y, color=(255, 255, 255), size_font=30)
+        text_dos.center_to(x = pos_text_x, y = pos_text_y)
+
         return text_dos
 
+    # rotation functions support all the angles, by the way only multiples of pi/2 are used in this case
     def rotate(self, angle):
-        self.image = pg.transform.rotate(self.image, angle)
+        self.image = pg.transform.rotate(self.image, angle)  # se the rotation is of the surface, not the rect!
+
+        # update the rect and move to the starting position
         self.rect = self.image.get_rect()
         self.rect.center = (self.x, self.y)
         self.rel_angle += angle
 
+    def _rotate_point(self, pivot, point):
+        angle = - math.radians(self.rel_angle)
+        # rotate clockwise so i do the complement of the angle (+ -> ccw, - -> cw)
+        x = round((math.cos(angle) * (point[0] - pivot[0])) -
+                       (math.sin(angle) * (point[1] - pivot[1])) +
+                       pivot[0])
+        y = round((math.sin(angle) * (point[0] - pivot[0])) +
+                       (math.cos(angle) * (point[1] - pivot[1])) +
+                       pivot[1])
+
+        return (x, y)
+
     def get_vertices(self):
 
+        center_x = self.rect.center[0]
+        center_y = self.rect.center[1]
+        pivot = (center_x, center_y)
+
         # left_top corner
-        lt = ()
+        lt = (center_x - self.width/2, center_y - self.height/2)
+        ltr = self._rotate_point(pivot, lt)
         # right_top corner
-        rt = ()
+        rt = (center_x + self.width/2, center_y - self.height/2)
+        rtr = self._rotate_point(pivot, rt)
         # left_down  corner
-        ld = ()
+        ld = (center_x - self.width/2, center_y + self.height/2)
+        ldr = self._rotate_point(pivot, ld)
         # # right_down corner
-        rd = ()
+        rd = (center_x + self.width/2, center_y + self.height/2)
+        rdr = self._rotate_point(pivot, rd)
 
         vertices = {
-            # 'left-top':     lt,
-            # 'right-top':    rt,
-            # 'left-down':    ld,
-            # 'right-down':   rd
+            'left-top':     ltr,
+            'right-top':    rtr,
+            'left-down':    ldr,
+            'right-down':   rdr
         }
-
         return vertices
 
     def render_debug(self):
         vertices = self.get_vertices()
         pg.draw.circle(self.screen, (0,0, 255), (self.x, self.y), radius=15)
         for v in list(vertices.values()):
-            # print(v)
             pg.draw.circle(self.screen, (255,0,0), v, radius = 10)
 
 
 class Room(HouseElement):
-    def __init__(self, name, screen, x, y, width, height, tile_type):
+    def __init__(self, name, screen, x, y, width, height, env_group, tile_type):
         super().__init__(name, screen, x, y, width, height)
+        self.max_w_tile = 100
+        self.max_h_tile = 100
+        self.image = pygame.Surface((width, height), pg.SRCALPHA)
 
-        self.image = pg.image.load(tiles[tile_type]).convert_alpha()
-        self.image = pg.transform.smoothscale(self.image, (self.width, self.height))
+        # full the surface with the image
+        for i in range(math.ceil(self.width/self.max_w_tile)):
+            for j in range(math.ceil(self.height/self.max_h_tile)):
+                tmp_image = pg.image.load(tiles[tile_type]).convert_alpha()
+                tmp_image = pg.transform.smoothscale(tmp_image, (self.max_w_tile, self.max_h_tile)).convert_alpha()
+                self.image.blit(tmp_image, (i*self.max_w_tile, j*self.max_h_tile))
+
         self.rect = self.image.get_rect()
         self.rect.center = (self.x, self.y)
-    def adj_to(self, room: HouseElement):
+        self.group = env_group
+
+        # list of elements
+        self.walls = []
+        self.windows    = []
+        self.doors      = []
+        self.furnitures = []
+
+        self.group.add(self)
+
+    def create_walls(self):
+        pass
+
+    def add_door(self, room: HouseElement):   # the door connects two rooms
+        pass
+
+    def add_window(self, side, displacement, group, status = 'close'): # side: top,left,bottom,right
+        vertices = self.get_vertices()
+        if side == 'top':
+            x_win = vertices['left-top'][0]
+            y_win = vertices['left-top'][1]
+        elif side == 'left':
+            x_win = vertices['left-down'][0]
+            y_win = vertices['left-down'][1]
+        elif side == 'bottom':
+            x_win = vertices['left-down'][0]
+            y_win = vertices['left-down'][1]
+        elif side == 'right':
+            x_win = vertices['right-down'][0]
+            y_win = vertices['right-down'][1]
+
+        window = Window(self.name + "_" + side + "_" + displacement + "_window",
+                        self.screen, x_win, y_win, status)
+
+        group.add(window)
         pass
 
 
@@ -427,19 +505,39 @@ class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
     def __init__(self):
         super().__init__()
 
+
+
 class Window(HouseElement):
-    def __init__(self, name, x ,y, width, center):
-        super().__init__()
+    def __init__(self, name, screen, x, y, status):
+        super().__init__(name, screen, x, y, width= 30, height= 10)
+        self.status = status
+
+    def open(self): # try animations
+        if self.status == 'open':
+            return
+        else:
+            self.status == 'close'
+            return
+
+    def close(self):
+        if self.status == 'close':
+            return
+        else:
+            self.status == 'open'
+            return
 
 
-class OutDoor(HouseElement):
-    def __init__(self):
-        super(OutDoor, self).__init__()
+
+
+
+
+# class OutDoor(HouseElement):
+#     def __init__(self):
+#         super(OutDoor, self).__init__()
 
 class Furniture(HouseElement):
     def __init__(self):
         super(Furniture, self).__init__()
-
 
 class Pepper():
     def __init__(self):

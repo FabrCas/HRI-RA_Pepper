@@ -6,12 +6,12 @@ import sys
 import math
 import random
 from environment import create_UI, create_environment
-
+from services import InputInterpreter
 
 
 # definition of constants as default values
-WIDTH_WIN = 640
-HEIGHT_WIN = 480
+WIDTH_WIN = 1920
+HEIGHT_WIN = 1080
 X_WIN = 0
 Y_WIN = 0
 FPS = 60
@@ -56,19 +56,23 @@ def debug_render(env_group):
         if type(el).__name__ == "Room":
             el.render_debug()
 
-def rendering(debug = True):
+def rendering(debug = True, extra_HUD = False):
 
     # initialize the pygame engine, get main display object and clock for the rendering
     screen, clock = initialization()
     # create display objects for the UI
     ui_group, text_boxes = create_UI(screen)
     # create display objects for the simulation
-    env_group, exhud_group = create_environment(screen)
+    env_group, extra_HUD_group = create_environment(screen)
 
-    # variable used for the continuous elimination of characters when pressing backspace
+    # variables used for the continuous elimination of characters when pressing backspace
     deleting = None; time_delete = time.time(); deleting_wait = 0.15
 
+    # variable to handle activation of the left mouse button (otherwise i detect generic pg.MOUSEBUTTONDOWN)
     pressed_sx_mouse = False
+
+    # custom object to execute user's inputs
+    input_interpreter = InputInterpreter()
 
     # -------------------------------------------- Main rendering Loop
     while True:
@@ -109,6 +113,10 @@ def rendering(debug = True):
                 for ui_elem in ui_group:
                     if ui_elem.type_DO == 'button' and (ui_elem.rect.collidepoint(mouse_pos)):
                         ui_elem.change_status()
+                        if ui_elem.name == 'HUD' and ui_elem.status == 'on':
+                            extra_HUD = True
+                        elif ui_elem.name == 'HUD' and ui_elem.status == 'off':
+                            extra_HUD = False
 
                 # interact with the input boxes
                 for box in text_boxes:
@@ -141,6 +149,7 @@ def rendering(debug = True):
                         elif event.key == pg.K_RETURN: # reset the text in the box
                             deleting = None
                             print(box.text_box)
+                            input_interpreter.execute(box.text_box)
                             box.box_active = False
                             box.restore_default()
 
@@ -167,11 +176,14 @@ def rendering(debug = True):
         for text_box in text_boxes:
             text_box.render()
 
-        # render simulation graphical elements
+        # rendering the House environment
         env_group.draw(screen)
 
-        # debug elements render
+        # debug elements rendering
         if debug: debug_render(env_group)
+
+        # extra HUD rendering
+        if extra_HUD: extra_HUD_group.draw(screen)
 
 
         # ---------------------------------------- display update

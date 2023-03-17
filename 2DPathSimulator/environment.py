@@ -4,15 +4,17 @@ import math
 import threading
 from display_objects import StaticImage, Text,  InputTextBox, Button, OutputTextBox, Room
 
-def create_UI(screen: Surface):
+def create_UI(screen: Surface, verbose = True):
+
+    if verbose: print("\n         [sketching the UI panel]          ")
+
     # create collections
     ui_group = pg.sprite.Group()
     text_boxes = []  # text boxes are handled differently since are custom objects that don't inherit pygame classes
 
     # print(screen.get_width(), screen.get_height())
 
-    # 1) create lateral panel and title
-    # ltc -> left top corner
+    # 1) create lateral panel and title, ltc -> left top corner
     lateral_panel_ltc_x = math.ceil(screen.get_width()*3/4)
     lateral_panel_ltc_y = 0
     lateral_panel_width = math.ceil(screen.get_width()/4)
@@ -61,27 +63,30 @@ def create_UI(screen: Surface):
     text_boxes.append(system_box)
     ui_group.add(text_system_box)
 
-    # test inserendo i messaggi
-    system_box.add_message("primo messaggio")
-    system_box.add_message("secondo messaggio")
-    system_box.add_message("prova prova prova")
-    system_box.add_message("sa")
-    system_box.add_message("prova prova prova")
-    system_box.add_message("sa")
-    system_box.add_message(
-        "Messaggio molto lungo anzi lunghissimo direi bislungo, ma esiste veramente come parola 'bislungo'? Ma alla fine che ne so io penso di si boh")
-    system_box.add_message("prova prova prova")
-    system_box.add_message("Bla bla bla bla bla blu blue blue")
-    system_box.add_message("Messaggio molto lungo, anzi lunghissimo direi bislungo, ma esiste veramente come parola 'bislungo'? Ma alla fine che ne so io penso di si boh")
+    def test_messages(system_box):
+        system_box.add_message("primo messaggio")
+        system_box.add_message("secondo messaggio")
+        system_box.add_message("prova prova prova")
+        system_box.add_message("sa")
+        system_box.add_message("prova prova prova")
+        system_box.add_message("sa")
+        system_box.add_message(
+            "Messaggio molto lungo anzi lunghissimo direi bislungo, ma esiste veramente come parola 'bislungo'? Ma alla fine che ne so io penso di si boh")
+        system_box.add_message("prova prova prova")
+        system_box.add_message("Bla bla bla bla bla blu blue blue")
+        system_box.add_message("Messaggio molto lungo, anzi lunghissimo direi bislungo, ma esiste veramente come parola 'bislungo'? Ma alla fine che ne so io penso di si boh")
 
-    start_time = threading.Timer(3, lambda : system_box.add_message("Nuovo messaggio"))
-    start_time.start()
+        start_time = threading.Timer(3, lambda : system_box.add_message("Nuovo messaggio"))
+        start_time.start()
 
+    test_messages(system_box)
     return ui_group, text_boxes
 
 
+def create_environment(screen: Surface, verbose = True):
 
-def create_environment(screen: Surface):
+    if verbose: print("\n         [sketching the House environment]          ")
+
     # create environment group
     env_group = pg.sprite.Group()
 
@@ -109,11 +114,9 @@ def create_environment(screen: Surface):
 
     # create the House Room
 
-    living_room = Room('Living Room', screen, 300,300,200,400, tile_type='parquet')
-    living_room.rotate(270)
-    print(living_room.get_vertices())
-    env_group.add(living_room)
-    # extra_hud_group.add(living_room.get_display_name())
+    living_room = Room('Living Room', screen, 300,300,344,423, env_group, tile_type='parquet')
+    # living_room.rotate(90)
+    extra_hud_group.add(living_room.get_display_name(side='top'))
 
 
     return env_group, extra_hud_group
