@@ -65,6 +65,9 @@ def rendering(debug = True, extra_HUD = False):
     # create display objects for the simulation
     env_group, extra_HUD_group = create_environment(screen)
 
+    # for elem in env_group:
+    #     print(elem)
+
     # variables used for the continuous elimination of characters when pressing backspace
     deleting = None; time_delete = time.time(); deleting_wait = 0.15
 
@@ -73,6 +76,9 @@ def rendering(debug = True, extra_HUD = False):
 
     # custom object to execute user's inputs
     input_interpreter = InputInterpreter()
+
+    # frame counter
+    counter_frame = 0
 
     # -------------------------------------------- Main rendering Loop
     while True:
@@ -171,13 +177,16 @@ def rendering(debug = True, extra_HUD = False):
         # fill the background
         screen.fill((255, 255, 255))
 
-        # render UI
-        ui_group.draw(screen)
-        for text_box in text_boxes:
-            text_box.render()
+        # rendering UI
 
-        # rendering the House environment
-        env_group.draw(screen)
+        for ui_elem in ui_group:                      #  alternatively: ui_group.draw(screen)
+            ui_elem.draw()
+        for text_box in text_boxes:
+            text_box.draw()
+
+        # rendering House environment
+        for env_elem in env_group:                        #  alternatively: env_group.draw(screen)
+            env_elem.draw()
 
         # debug elements rendering
         if debug: debug_render(env_group)
@@ -193,6 +202,9 @@ def rendering(debug = True, extra_HUD = False):
 
         # use current selected FPS property for the rendering
         clock.tick(FPS)
+
+        # update counter frames
+        counter_frame += 1
 
         # time.sleep(6)  #synchronous waiting and exit
         # break

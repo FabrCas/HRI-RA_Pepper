@@ -9,9 +9,10 @@ progDos_static_images   = 1
 progDos_buttons         = 1
 progDos_texts           = 1
 progDos_TextBoxes       = 1
-progDos_room = 1
-progDos_door = 1
-progDos_window = 1
+progDos_room            = 1
+progDos_door            = 1
+progDos_window          = 1
+progDos_furniture         = 1
 
 font_path = "static/nasa_font.ttf"
 
@@ -40,25 +41,37 @@ furniture = {
 # simple rect subclass that inherits the Sprite superclass used for testing
 class Rect(pg.sprite.Sprite):
 
-    def __init__(self, x, y, width = 50, height = 50, color = (0,0,0)):
+    def __init__(self, screen, x, y, width = 50, height = 50, color = (0,0,0), alpha = 255):
         super().__init__()
-        self.image = pg.Surface((width, height))
-        self.image.fill(color)
+
+        self.screen = screen
+        self.image = pg.Surface((width, height)).convert_alpha()
+
+        self.image.fill((*color, alpha))
+
         self.rect = self.image.get_rect()
+
         # self.rect.center = (x, y)
         self.rect.x = x
         self.rect.y = y
         self.type_DO = "rect"
+
         global progDos_rects
         self.prog = progDos_rects
         progDos_rects += 1
 
         print(f"Created {self.type_DO} n° {self.prog}")
 
+    def draw(self):
+        self.screen.blit(self.image,self.rect)
+
+
+
 class StaticImage(pg.sprite.Sprite):
 
-    def __init__(self, file_path, x, y, width=50, height=50):
+    def __init__(self, file_path, screen, x, y, width=50, height=50):
         super().__init__()
+        self.screen = screen
         self.x = x
         self.y = y
         self.width = width
@@ -66,7 +79,7 @@ class StaticImage(pg.sprite.Sprite):
         self.image = pg.image.load(file_path).convert_alpha()
         self.image = pg.transform.smoothscale(self.image, (self.width, self.height))
         self.rect = self.image.get_rect()
-        self.rect.x = self.x #    (self.x, self.y)
+        self.rect.x = self.x    #    (self.x, self.y)
         self.rect.y = self.y
         self.type_DO = 'static_image'
 
@@ -76,12 +89,16 @@ class StaticImage(pg.sprite.Sprite):
 
         print(f"Created {self.type_DO} n° {self.prog}: {file_path}")
 
+    def draw(self):
+        self.screen.blit(self.image,self.rect)
+
 
 class Button(pg.sprite.Sprite):
 
-    def __init__(self, name,  x, y, width, height, type_button='on'):
+    def __init__(self, name, screen,  x, y, width, height, type_button='on'):
 
         super().__init__()
+        self.screen = screen
         self.width = width
         self.height = height
         self.x = x
@@ -139,12 +156,15 @@ class Button(pg.sprite.Sprite):
             self.status = 'on'
             self.update()
 
+    def draw(self):
+        self.screen.blit(self.image,self.rect)
 
 class Text(pg.sprite.Sprite):
 
-    def __init__(self, string, x, y,  color, size_font=30):
+    def __init__(self, string, screen,  x, y,  color, size_font=30):
         super().__init__()
         self.string = string
+        self.screen = screen
         self.x = x
         self.y = y
         self.size = size_font
@@ -177,10 +197,13 @@ class Text(pg.sprite.Sprite):
         else:
             self.rect.center = (x, y)
 
+    def draw(self):
+        self.screen.blit(self.image,self.rect)
+
 
 class InputTextBox():
 
-    def __init__(self,screen, x, y, height, color_text, color_bg, size_font=30):
+    def __init__(self, screen, x, y, height, color_text, color_bg, size_font=30):
         self.screen = screen
         self.x = x
         self.y = y
@@ -209,7 +232,7 @@ class InputTextBox():
         print(f"Created text box (input) n° {self.prog}")
 
     # specific render function, first render the text box and the text, with dynamic changes
-    def render(self, max_width=200):
+    def draw(self, max_width=200):   #$render
         pg.draw.rect(self.screen, self.color_bg, self.rect)
         self.text = self.font.render(self.text_box, True, self.color_text)
 
@@ -261,7 +284,7 @@ class OutputTextBox():
         print(f"Created text box (output) n° {self.prog}")
 
     # specific render function, first render the text box (static) and adjust the text to fit in the box
-    def render(self):
+    def draw(self):
 
         # draw the rect containing the text
         pg.draw.rect(self.screen, self.color_bg, self.rect)
@@ -372,10 +395,16 @@ class HouseElement(pg.sprite.Sprite):
             progDos_window += 1
             self.type_DO = "Window"
 
+        elif (type(self).__name__ == "Furniture"):
+            global progDos_furniture
+            self.prog = progDos_furniture
+            progDos_furniture += 1
+            self.type_DO = "furniture"
+
         print(f"Created {self.type_DO} ({self.name}) n° {self.prog}")
 
 
-    def get_display_name(self, side = 'top'):  # edge: 'top','bottom'
+    def get_display_name(self, side = 'top', color = (255, 255, 255), size_font = 30):  # edge: 'top','bottom'
 
         vertices = self.get_vertices()
         if side == 'top':
@@ -387,7 +416,7 @@ class HouseElement(pg.sprite.Sprite):
         else:
             raise ValueError("Invalid edge location as parameter!")
 
-        text_dos = Text(self.name, x=pos_text_x, y= pos_text_y, color=(255, 255, 255), size_font=30)
+        text_dos = Text(self.name, screen=self.screen, x=pos_text_x, y= pos_text_y, color=color, size_font=size_font)
         text_dos.center_to(x = pos_text_x, y = pos_text_y)
 
         return text_dos
@@ -401,8 +430,14 @@ class HouseElement(pg.sprite.Sprite):
         self.rect.center = (self.x, self.y)
         self.rel_angle += angle
 
-    def _rotate_point(self, pivot, point):
-        angle = - math.radians(self.rel_angle)
+    # function to rotate a single point around a pivot using the relative angle property
+    def _rotate_point(self, pivot, point, angle = None):
+
+        if angle == None: angle = self.rel_angle
+
+        # needed transformation from degrees to radians
+        angle = - math.radians(angle)
+
         # rotate clockwise so i do the complement of the angle (+ -> ccw, - -> cw)
         x = round((math.cos(angle) * (point[0] - pivot[0])) -
                        (math.sin(angle) * (point[1] - pivot[1])) +
@@ -412,6 +447,30 @@ class HouseElement(pg.sprite.Sprite):
                        pivot[1])
 
         return (x, y)
+
+    """
+        pos is the position of the pivot on the target Surface screen (relative to the top left of screen)
+        originPos is position of the pivot on the image Surface (relative to the top left of image)
+    """
+    def _rotate_pivot(self, pos, originPos, angle):
+
+        # compute the vector from the center of the image to the pivot
+        image_rect = self.image.get_rect(topleft=(pos[0] - originPos[0], pos[1] - originPos[1]))
+        offset_center_to_pivot = pg.math.Vector2(pos) - image_rect.center
+
+        # rotate the offset vector
+        rotated_offset = offset_center_to_pivot.rotate(-angle)
+
+        # calculate the center fo the rotated image
+        rotated_image_center = (pos[0] - rotated_offset.x, pos[1] - rotated_offset.y)
+
+        # new surface and rect
+        self.image = pg.transform.rotate(self.image, angle)
+        self.rect = self.image.get_rect(center=rotated_image_center)
+
+
+        # compute the vector from the center of the image to the pivot
+
 
     def get_vertices(self):
 
@@ -446,6 +505,9 @@ class HouseElement(pg.sprite.Sprite):
         for v in list(vertices.values()):
             pg.draw.circle(self.screen, (255,0,0), v, radius = 10)
 
+    def draw(self):
+        self.screen.blit(self.image, self.rect)
+
 
 class Room(HouseElement):
     def __init__(self, name, screen, x, y, width, height, env_group, tile_type):
@@ -479,38 +541,157 @@ class Room(HouseElement):
     def add_door(self, room: HouseElement):   # the door connects two rooms
         pass
 
-    def add_window(self, side, displacement, group, status = 'close'): # side: top,left,bottom,right
+    def add_window(self, side, displacement, status = 'close'): # side: top,left,bottom,right
         vertices = self.get_vertices()
+
         if side == 'top':
             x_win = vertices['left-top'][0]
             y_win = vertices['left-top'][1]
+            angle_win = 0
         elif side == 'left':
             x_win = vertices['left-down'][0]
             y_win = vertices['left-down'][1]
+            angle_win = 90
         elif side == 'bottom':
-            x_win = vertices['left-down'][0]
-            y_win = vertices['left-down'][1]
-        elif side == 'right':
             x_win = vertices['right-down'][0]
             y_win = vertices['right-down'][1]
+            angle_win = 180
+        elif side == 'right':
+            x_win = vertices['right-top'][0]
+            y_win = vertices['right-top'][1]
+            angle_win = 270
 
-        window = Window(self.name + "_" + side + "_" + displacement + "_window",
-                        self.screen, x_win, y_win, status)
+        # left window with convention of beeing oriented downward
+        window_l = Window(self.name + "_" + "left" + "_" + side + "_" + str(displacement) + "_window",
+                        self.screen, x_win, y_win, angle_win, displacement, side, True, status, self.group)
 
-        group.add(window)
-        pass
+        # window_r = Window(self.name + "_" + "right" + "_" + side + "_" + str(displacement) + "_window",
+        #                 self.screen, x_win, y_win, angle_win, displacement, side, False, status)
+
+        # add window left and right in the group
+        self.group.add(window_l)
+        # self.group.add(window_r)
+
+        # add both windows as a tuple in the list of windows for the Room
+        # self.windows.append((window_l,window_r))
 
 
 class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
-    def __init__(self):
-        super().__init__()
-
-
-
-class Window(HouseElement):
     def __init__(self, name, screen, x, y, status):
-        super().__init__(name, screen, x, y, width= 30, height= 10)
+        super().__init__(name, screen, x, y, width= 20, height= 10)
         self.status = status
+
+
+    def open(self):  # try animations
+        if self.status == 'open':
+            return
+        else:
+            self.status == 'close'
+            return
+
+    def close(self):
+        if self.status == 'close':
+            return
+        else:
+            self.status == 'open'
+            return
+
+
+"""
+    side(str) -> top || left || bottom || right
+"""
+class Window(HouseElement):
+    def __init__(self, name, screen, x, y, angle, displacement, side, is_left, status, group):
+        super().__init__(name, screen, x, y, width= 100, height= 80)
+
+        self.status = status
+        self.side = side
+        self.angle_start = angle
+        self.rel_angle = 0
+        self.angle_open = - 135
+        self.is_left = is_left
+        self.group = group
+
+
+        # load image
+        if self.status == 'open':
+            self.image = pg.image.load("static/window_open.png").convert_alpha()
+        elif self.status == 'close':
+            self.image = pg.image.load("static/window-closed.png").convert_alpha()
+        else:
+            raise ValueError("Wrong button type has been assigned")
+
+        # compute correct displacement and transform image: flip if right window, upscale/downscale, rotate
+        if is_left:
+            self.displacement = displacement - self.width/2
+        else:
+            self.displacement = displacement + self.width/2
+            self.image = pg.transform.flip(self.image, True, False)
+
+        self.image = pg.transform.smoothscale(self.image, (self.width, self.height))
+        self.image = pg.transform.rotate(self.image, self.angle_start)
+
+        # get the rect containing the surface (image)
+        self.rect = self.image.get_rect()
+
+
+
+
+        # correct positions
+        # self.correctionPos_()
+
+
+        self.rect_gfx = Rect(self.screen, self.rect.topleft[0], self.rect.topleft[1], self.rect.width, self.rect.height, (255,0,0), alpha= 150)
+        self.group.add(self.rect_gfx)
+
+        # load sound effects
+        self.sound_open = pg.mixer.Sound("static/window_open.mp3")
+        self.sound_close = pg.mixer.Sound("static/window_close.mp3")
+
+    def correctionPos_(self):
+
+        # correct displacement on the axis
+        if self.side == 'top':
+            self.rect.center = (self.x + self.displacement, self.y)
+        elif self.side == 'left':
+            self.rect.center = (self.x, self.y - self.displacement)
+        elif self.side == 'bottom':
+            self.rect.center = (self.x - self.displacement, self.y)
+        elif self.side == 'right':
+            self.rect.center = (self.x, self.y + self.displacement)
+
+        print("self.rect.center", self.rect.center)
+        print("self.rect.topleft", self.rect.topleft)
+        print("self.rect.topright", self.rect.topright)
+        print("self.rect.bottomleft", self.rect.bottomleft)
+        print("self.rect.bottomright", self.rect.bottomright, "\n")
+
+        # todo
+        # correct angle if window has open status
+
+        if self.status == 'open':
+            if self.is_left:
+                pivot = self.rect.topleft
+                # self.image = pg.transform.rotate(self.image, -90)
+
+                # self._rotate_pivot(pivot, (0,0), - 100)
+
+                # self.rect.topleft = pivot
+                # self.rect.topright =  self._rotate_point(pivot, self.rect.topright, -90)
+                # self.rect.topleft = pivot
+                # self.rect.bottomleft = self._rotate_point(pivot, self.rect.bottomleft, -90)
+                # self.rect.bottomright = self._rotate_point(pivot, self.rect.bottomright, -90)
+
+                # print("self.rect.center", self.rect.center)
+                # print("self.rect.topleft", self.rect.topleft)
+                # print("self.rect.topright", self.rect.topright)
+                # print("self.rect.bottomleft", self.rect.bottomleft)
+                # print("self.rect.bottomright", self.rect.bottomright)
+
+
+            else:
+                pass
+
 
     def open(self): # try animations
         if self.status == 'open':
@@ -526,18 +707,41 @@ class Window(HouseElement):
             self.status == 'open'
             return
 
+    # def draw(self, surface):
+    #     surface.blit(self.image,(400,400))
+    #     pg.draw.rect(self.image, (0, 0, 0), self.rect)
+
+    # def update(self):
+    #     pass
+    #     # old_center = self.rect.center
+    #
+    #
+    #
+    #
+    #
+    #
+    #     orig_rect = self.image.get_rect()
+    #     rot_image = pg.transform.rotate(self.image,self.rel_angle)
+    #
+    #
+    #     rot_rect = orig_rect.copy()
+    #     rot_rect.center = rot_image.get_rect().center
+    #     self.image = rot_image.subsurface(rot_rect).copy()
+    #     self.rect = self.image.get_rect()
+
+        # self.rect = self.rect.copy()
+        # self.rect.center = old_center
+        # self.image = rotated_image.copy()
+
+    #     print(counter_frame)
+    #     pivot = self.rect.topleft
+    #     self._rotate_pivot(pivot, (0, 0), - new_angle)
 
 
-
-
-
-# class OutDoor(HouseElement):
-#     def __init__(self):
-#         super(OutDoor, self).__init__()
 
 class Furniture(HouseElement):
-    def __init__(self):
-        super(Furniture, self).__init__()
+    def __init__(self, name, screen, x, y, width, height):
+        super().__init__(name, screen, x, y, width, height)
 
 class Pepper():
     def __init__(self):
