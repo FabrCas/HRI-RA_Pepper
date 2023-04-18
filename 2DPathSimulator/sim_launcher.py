@@ -4,7 +4,6 @@ import time
 import os
 import sys
 import math
-import random
 from environment import create_UI, create_environment
 from services import InputInterpreter
 
@@ -18,12 +17,6 @@ FPS = 60
 XC_WIN = lambda : math.ceil(WIDTH_WIN/2)
 YC_WIN = lambda : math.ceil(HEIGHT_WIN/2)
 
-
-def random_position(screen):
-    margin = 20
-    x_r = random.randint(0 + margin, screen.get_width()  - margin)
-    y_r = random.randint(0 + margin, screen.get_height() - margin)
-    return x_r, y_r
 
 def update_win_size():
     global WIDTH_WIN
@@ -54,7 +47,9 @@ def initialization():
 def debug_render(env_group):
     for el in env_group:
         if type(el).__name__ == "Room":
-            el.render_debug()
+            el.render_debug_vertices()
+        if type(el).__name__ == "Window":
+            el.render_debug_rect()
 
 def rendering(debug = True, extra_HUD = False):
 

@@ -122,7 +122,10 @@ def create_environment(screen: Surface, verbose = True):
                        height=400, env_group= env_group, tile_type='parquet')
     # living_room.rotate(90)
     extra_hud_group.add(living_room.get_display_name(side='top'))
-    living_room.add_window("top", displacement= 175, status='open')
+    window = living_room.add_window("top", displacement= 175, status='close')
+
+    window.open()
+
 
 
     return env_group, extra_hud_group
