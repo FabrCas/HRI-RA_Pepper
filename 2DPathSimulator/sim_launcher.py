@@ -183,6 +183,10 @@ def rendering(debug = True, extra_HUD = False):
         for env_elem in env_group:                        #  alternatively: env_group.draw(screen)
             env_elem.draw()
 
+        # pg.draw.circle(screen, (30, 250, 70), (350,100), 10)
+        # pg.draw.circle(screen, (30, 250, 70), (250, 100), 10)
+
+
         # debug elements rendering
         if debug: debug_render(env_group)
 

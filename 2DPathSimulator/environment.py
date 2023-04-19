@@ -65,23 +65,7 @@ def create_UI(screen: Surface, verbose = True):
     text_boxes.append(system_box)
     ui_group.add(text_system_box)
 
-    def test_messages(system_box):
-        system_box.add_message("primo messaggio")
-        system_box.add_message("secondo messaggio")
-        system_box.add_message("prova prova prova")
-        system_box.add_message("sa")
-        system_box.add_message("prova prova prova")
-        system_box.add_message("sa")
-        system_box.add_message(
-            "Messaggio molto lungo anzi lunghissimo direi bislungo, ma esiste veramente come parola 'bislungo'? Ma alla fine che ne so io penso di si boh")
-        system_box.add_message("prova prova prova")
-        system_box.add_message("Bla bla bla bla bla blu blue blue")
-        system_box.add_message("Messaggio molto lungo, anzi lunghissimo direi bislungo, ma esiste veramente come parola 'bislungo'? Ma alla fine che ne so io penso di si boh")
-
-        start_time = threading.Timer(3, lambda : system_box.add_message("window width -> {}, window height -> {}".format(str(screen.get_width()), str(screen.get_height()))))
-        start_time.start()
-
-    test_messages(system_box)
+    test_messages(system_box, screen)
     return ui_group, text_boxes
 
 
@@ -120,12 +104,34 @@ def create_environment(screen: Surface, verbose = True):
 
     living_room = Room(name='Living Room', screen= screen, x=300, y=300, width=350,\
                        height=400, env_group= env_group, tile_type='parquet')
-    # living_room.rotate(90)
-    extra_hud_group.add(living_room.get_display_name(side='top'))
-    window = living_room.add_window("top", displacement= 175, status='close')
 
-    window.open()
+    extra_hud_group.add(living_room.get_display_name(side='top'))
+    w_l, w_r = living_room.add_window("top", displacement= 175, status='open')
+
+
+    anim_window_l = threading.Timer(0.5, lambda: w_l.close())
+    anim_window_r = threading.Timer(0.5, lambda: w_r.close())
+    anim_window_l.start()
+    anim_window_r.start()
 
 
 
     return env_group, extra_hud_group
+
+
+# ----------------------------------- test functions -------------------------------------
+def test_messages(system_box, screen):
+    system_box.add_message("primo messaggio")
+    system_box.add_message("secondo messaggio")
+    system_box.add_message("prova prova prova")
+    system_box.add_message("sa")
+    system_box.add_message("prova prova prova")
+    system_box.add_message("sa")
+    system_box.add_message(
+        "Messaggio molto lungo anzi lunghissimo direi bislungo, ma esiste veramente come parola 'bislungo'? Ma alla fine che ne so io penso di si boh")
+    system_box.add_message("prova prova prova")
+    system_box.add_message("Bla bla bla bla bla blu blue blue")
+    system_box.add_message("Messaggio molto lungo, anzi lunghissimo direi bislungo, ma esiste veramente come parola 'bislungo'? Ma alla fine che ne so io penso di si boh")
+
+    start_time = threading.Timer(3, lambda : system_box.add_message("window width -> {}, window height -> {}".format(str(screen.get_width()), str(screen.get_height()))))
+    start_time.start()

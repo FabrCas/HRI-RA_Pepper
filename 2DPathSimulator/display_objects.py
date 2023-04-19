@@ -1,6 +1,7 @@
 import pygame
 import pygame as pg
 import math
+from copy import deepcopy
 
 # ---------------------------------------------- static and global variables
 
@@ -60,7 +61,7 @@ class Rect(pg.sprite.Sprite):
         self.prog = progDos_rects
         progDos_rects += 1
 
-        print(f"Created {self.type_DO} n° {self.prog}")
+        # print(f"Created {self.type_DO} n° {self.prog}")
 
     def draw(self):
         self.screen.blit(self.image,self.rect)
@@ -449,28 +450,33 @@ class HouseElement(pg.sprite.Sprite):
 
         return (x, y)
 
-    def _rotate_pivot(self,origin, pivot, angle):
+
+    # function to call for central rotation during animation, this avoid the distortion from each approximation
+    def _rotate_central_anim(self, image, angle):
+        self.image = pg.transform.rotate(image, angle)
+        self.rect = self.image.get_rect(center = self.rect.center)
+
+    def _rotate_pivot_anim(self, image, pivot, offset,angle):
         """
-        :param pivot:  position of the pivot on the target Surface screen (relative to the top left of screen)
-        # :param pivot: position of the pivot on the image Surface (relative to the top left of image)
-        :param offset: 2d vector that represent the offset between the pivot and the center of the image
-        :param angle:  angle for the rotation (degrees)
+
+        :param image: the new image to be rotated
+        :param pivot: point (2D vector) that represent the pivot point on the screen surface, (global coordinates)
+        :param offset: distance (2D vector) that represent how much the surface should be displaced from the central rotation (relative coordinates)
+        :param angle: the angle for the rotation
         :return: None
-
-        How to perform rotation of an image around a pivot:
-        - step 1: rotate the image
-        - step 2: take a vector from pivot position to the center of the image (offset) and rotate
-        - step 3: get the new rect from (1), and pass the pivot point plus offset vector as the center argument
-                to shift the new rect
         """
+        self.image = pg.transform.rotate(image, angle)
+        rotated_offset = offset.rotate(-angle)
+        self.rect = self.image.get_rect(center = pivot + rotated_offset)
 
-        image_rect = self.image.get_rect(topleft = (origin[0] - pivot[0], origin[1] - pivot[1]))
-        offset_center_to_pivot = pg.math.Vector2(origin) - image_rect.center
-        rotated_offset = offset_center_to_pivot.rotate(-angle)
-        rotated_image_center = (origin[0] - rotated_offset.x, origin[1] - rotated_offset.y)
-        self.image =  pg.transform.rotozoom(self.image, angle, 1)
-        self.rect = self.image.get_rect(center = rotated_image_center)
 
+
+
+
+
+
+        # self.image = pg.transform.rotate(image, angle)
+        # self.rect = self.image.get_rect(center = self.rect.center)
 
 
     def get_vertices(self):
@@ -589,8 +595,8 @@ class Room(HouseElement):
         self.group.add(window_r)
 
         # add both windows as a tuple in the list of windows for the Room
-        # self.windows.append((window_l,window_r))
-        return window_l
+        self.windows.append((window_l,window_r))
+        return window_l, window_r
 
 class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
     def __init__(self, name, screen, x, y, status):
@@ -627,30 +633,24 @@ class Window(HouseElement):
         self.is_left = is_left          # boolean variable to indicate which window door is of the pair
         self.group = group
 
+        # variable to handle animation
+        self.is_opening = False
+        self.is_closing = False
 
-        # load image
-        if self.status == 'open':
-            self.image = pg.image.load("static/window_open.png").convert_alpha()
-        elif self.status == 'close':
-            self.image = pg.image.load("static/window-closed.png").convert_alpha()
+        if self.is_left:
+            self.displacement = displacement - self.width / 2
         else:
-            raise ValueError("Wrong button type has been assigned")
+            self.displacement = displacement + self.width / 2
 
-        # compute correct displacement and transform image: flip if right window, upscale/downscale, rotate
-        if is_left:
-            self.displacement = displacement - self.width/2
-        else:
-            self.displacement = displacement + self.width/2
-            self.image = pg.transform.flip(self.image, True, False)
+        # load images
+        self._load_images()
 
-        self.image = pg.transform.smoothscale(self.image, (self.width, self.height))
-        self.image = pg.transform.rotate(self.image, self.angle_start)
+        # correct positions and get rect
+        new_rect = self._correctionPos()
+        self.rect = new_rect
 
-        # get the rect containing the surface (image)
-        self.rect = self.image.get_rect()
-
-        # correct positions
-        self.correctionPos_()
+        # correct angle based on status
+        self._correctionStatus()
 
         # create debug rect
         self.display_gfxRect()
@@ -660,37 +660,76 @@ class Window(HouseElement):
         self.sound_close = pg.mixer.Sound("static/window_close.mp3")
 
 
-    def correctionPos_(self):
+    def _transformation_image(self, image):
+        # flip if right window, upscale/downscale, rotate
+        if not(self.is_left):
+            image = pg.transform.flip(image, True, False)
+        image = pg.transform.smoothscale(image, (self.width, self.height))
+        image = pg.transform.rotate(image, self.angle_start)
+
+        return image
+
+
+    def _load_images(self):
+        # load both images (no transformations)
+        self.image_open = pg.image.load("static/window_open.png").convert_alpha()
+        self.image_close = pg.image.load("static/window-closed.png").convert_alpha()
+
+        # load actual image based on status
+        if self.status == 'open':
+            self.image = pg.image.load("static/window_open.png").convert_alpha()
+        elif self.status == 'close':
+            self.image = pg.image.load("static/window-closed.png").convert_alpha()
+        else:
+            raise ValueError("Wrong button type has been assigned")
+
+        self.image = self._transformation_image(self.image)
+
+        image_rect = self.image.get_rect()
+        self.starting_image = self.image.copy()  # used to avoid distortion during the animation
+
+
+
+
+    def _correctionPos(self):
+
+        # get the rect containing the surface (image)
+        new_rect = self.image.get_rect()
 
         # correct displacement on the axis
         if self.side == 'top':
-            self.rect.center = (self.x + self.displacement, self.y)
+            new_rect.center = (self.x + self.displacement, self.y)
         elif self.side == 'left':
-            self.rect.center = (self.x, self.y - self.displacement)
+            new_rect.center = (self.x, self.y - self.displacement)
         elif self.side == 'bottom':
-            self.rect.center = (self.x - self.displacement, self.y)
+            new_rect.center = (self.x - self.displacement, self.y)
         elif self.side == 'right':
-            self.rect.center = (self.x, self.y + self.displacement)
+            new_rect.center = (self.x, self.y + self.displacement)
 
-        print("self.rect.center", self.rect.center)
-        print("self.rect.topleft", self.rect.topleft)
-        print("self.rect.topright", self.rect.topright)
-        print("self.rect.bottomleft", self.rect.bottomleft)
-        print("self.rect.bottomright", self.rect.bottomright, "\n")
+        # print("self.rect.center",       new_rect.center)
+        # print("self.rect.topleft",      new_rect.topleft)
+        # print("self.rect.topright",     new_rect.topright)
+        # print("self.rect.bottomleft",   new_rect.bottomleft)
+        # print("self.rect.bottomright",  new_rect.bottomright, "\n")
 
+        return new_rect
+
+    def _correctionStatus(self):
 
         # correct angle if window has open status
         if self.status == 'open':
-            if self.is_left:   # left window (seen frontally)
-                pass
-                # self._rotate_pivot(self.rect.center, (-self.width/2 + 10, 0), self.angle_open)
-
-                # self.image = pg.transform.rotate(self.image, self.angle_open)
-                # self.rect = self.image.get_rect(center = self.rect.center)
-
-            else:               # right window (seen frontally)
-                self.image = pg.transform.rotate(self.image, - self.angle_open)
-                self.rect = self.image.get_rect(center=self.rect.center)
+            if self.is_left:   # left window
+                center_image = pg.math.Vector2(self.rect.center[0] - self.width / 2, self.rect.center[1])
+                offset = pg.math.Vector2(self.width / 2, 0)
+                image = self._transformation_image(self.image_open)
+                self._rotate_pivot_anim(image, center_image, offset, self.angle_open)
+                self.rel_angle = self.angle_open
+            else:              # right window
+                center_image = pg.math.Vector2(self.rect.center[0] + self.width / 2, self.rect.center[1])
+                offset = pg.math.Vector2(- self.width / 2, 0)
+                image = self._transformation_image(self.image_open)
+                self._rotate_pivot_anim(image, center_image, offset, - self.angle_open)
+                self.rel_angle = - self.angle_open
 
 
     def open(self): # try animations
@@ -698,36 +737,89 @@ class Window(HouseElement):
             return
         else:                       # from close to open
             pg.mixer.Sound.play(self.sound_open)
-            # todo update the image
-
             self.status = 'open'
             self.rel_angle = 0
+            self.is_opening = True
 
     def close(self):
-        if self.status == 'close':
+        if self.status == 'close':   # nothing to do
             return
         else:                       # from open to close
             pg.mixer.Sound.play(self.sound_close)
-
-            # todo update the image
             self.status = 'close'
             if self.is_left:
-                self.rel_angle = -135
+                self.rel_angle = self.angle_open   # initial angle when open
             else:
-                self.rel_angle = 135
+                self.rel_angle = - self.angle_open
+            self.is_closing = True
 
     def update(self):
-        if self.status == 'open' and abs(self.rel_angle) < abs(self.angle_open):
+
+        # set increment and use module of the angle
+        increment = 5
+        if self.rel_angle > 0: self.rel_angle = self.rel_angle % 360
+        else: self.rel_angle = self.rel_angle % - 360
+
+        #                                           [Opening animation]
+        if self.status == 'open' and self.is_opening:
             if self.is_left:
-                self.rel_angle -= 1
-                self.display_gfxRect()
-                print(self.rel_angle)
-                self._rotate_pivot(self.rect.center, (-self.width/2,self.height/2), -0.00001)
+                self.rel_angle -= increment
+            else:
+                self.rel_angle += increment
+            print(self.rel_angle)
+
+            # compute the temp image and get rect with positions
+            image_tmp = self.image_open.copy()
+            image_tmp = self._transformation_image(image_tmp)
+            self.rect = self._correctionPos()
 
 
+            # perform anchor rotation
+            if self.is_left:
+                center_image = pg.math.Vector2(self.rect.center[0] - self.width/2,self.rect.center[1])
+                offset = pg.math.Vector2(self.width/2, 0)
+            else:
+                center_image = pg.math.Vector2(self.rect.center[0] + self.width/2,self.rect.center[1])
+                offset = pg.math.Vector2(-self.width/2, 0)
 
-        elif self.status == 'close' and abs(self.rel_angle) > abs(self.angle_close):
-            pass
+            self._rotate_pivot_anim(image_tmp, center_image, offset, self.rel_angle)
+
+            # check whether turn off animation flags
+            if abs(self.rel_angle) == abs(self.angle_open):
+                self.is_opening = False
+
+        #                                           [Closing animation]
+        elif self.status == 'close' and self.is_closing:
+            if self.is_left:
+                self.rel_angle += increment
+            else:
+                self.rel_angle -= increment
+
+
+            print(self.rel_angle)
+
+            # compute the temp image and get rect with positions
+            image_tmp = self.image_close.copy()
+            image_tmp = self._transformation_image(image_tmp)
+            self.rect = self._correctionPos()
+
+
+            # perform anchor rotation
+            if self.is_left:
+                center_image = pg.math.Vector2(self.rect.center[0] - self.width/2,self.rect.center[1])
+                offset = pg.math.Vector2(self.width/2, 0)
+            else:
+                center_image = pg.math.Vector2(self.rect.center[0] + self.width/2,self.rect.center[1])
+                offset = pg.math.Vector2(-self.width/2, 0)
+
+            self._rotate_pivot_anim(image_tmp, center_image, offset, self.rel_angle)
+
+            # check whether turn off animation flags
+            if abs(self.rel_angle) == abs(self.angle_close):
+                self.is_closing = False
+
+        # display rect for debug
+        self.display_gfxRect()
 
 
 
