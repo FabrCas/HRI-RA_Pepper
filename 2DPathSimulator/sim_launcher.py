@@ -48,7 +48,7 @@ def debug_render(env_group):
     for el in env_group:
         if type(el).__name__ == "Room":
             el.render_debug_vertices()
-        if type(el).__name__ == "Window":
+        if type(el).__name__ == "Window" or type(el).__name__ == "Door":
             el.render_debug_rect()
 
 def rendering(debug = True, extra_HUD = False):

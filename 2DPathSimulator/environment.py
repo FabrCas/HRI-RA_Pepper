@@ -80,41 +80,58 @@ def create_environment(screen: Surface, verbose = True):
     # create extra hud group
     extra_hud_group = pg.sprite.Group()
 
-    # 1) create background garden + outdoor exit sidewalk
+    # 1) Create background garden + outdoor exit sidewalk
+
+    # define dimensions of the environment and top left corner coordinates
     env_ltc_x = 0
     env_ltc_y = 0
     env_width = math.ceil(screen.get_width()*3/4)
     env_height = screen.get_height()
 
-    bg_garden_t = StaticImage('static/garden.jpg', screen, env_ltc_x,env_ltc_y, env_width,
+    margin = 50     # margin to be kept from the environment boundary
+    wall_size = 10   # distance between contiguous rooms since walls
+
+    print(f"Environment shape -> width:{env_width}, height:{env_height}")
+
+    # garden
+    bg_garden_t = StaticImage('static/garden.jpg', screen, env_ltc_x,env_ltc_y, env_width,\
+                               math.ceil(env_height / 2))   # static images are defined with top left corner coordinates
+
+    bg_garden_b = StaticImage('static/garden.jpg', screen, env_ltc_x, math.ceil(env_height / 2), env_width,\
                                math.ceil(env_height / 2))
+    bg_garden_b.image = pg.transform.flip(bg_garden_b.image, False, True)
 
-    bg_garden_d = StaticImage('static/garden.jpg', screen, env_ltc_x, math.ceil(env_height / 2), env_width,
-                               math.ceil(env_height / 2))
-    bg_garden_d.image = pg.transform.flip(bg_garden_d.image, False, True)
+    env_group.add(bg_garden_t)  # top garden texture
+    env_group.add(bg_garden_b)  # bottom garden texture
 
-    #todo - exit outdoor sidewalk using outdoor class
+    # outdoor sidewalk
+    outdoor_w = 150; outdoor_h = 400
+    outdoor = Room(name='outdoor', screen= screen, x = env_width - (outdoor_w/2 + margin),\
+                   y= env_height - (outdoor_h/2), width=outdoor_w,height= outdoor_h,\
+                   env_group=env_group, tile_type='grey')  # rooms are defined using the top center coordinates
+
+    extra_hud_group.add(outdoor.get_display_name(side='bottom'))
+
+    # 2) Create the House Rooms
+
+    # studio
+    studio_w = 300; studio_h = 400
+    studio = Room(name='Studio', screen= screen, x=margin + (studio_w/2), y= margin + (studio_h/2),\
+                  width=studio_w, height=studio_h, env_group= env_group, tile_type='parquet')
+    extra_hud_group.add(studio.get_display_name(side='top'))
+    studio.add_window("north", displacement= studio_w/2, status='close')
+    studio.add_door("east", displacement=studio_h / 2, status='open')
 
 
-    env_group.add(bg_garden_t)
-    env_group.add(bg_garden_d)
+    # north toilet
+    toiletNorth_w= 300; toiletNorth_h= 200
+    toilet_north = Room(name="Toilet (north)", screen= screen, x= margin + studio_w + wall_size+ toiletNorth_w/2,\
+                        y= margin + toiletNorth_h/2, width= toiletNorth_w, height=toiletNorth_h,\
+                        env_group= env_group, tile_type='rhombus')
+    extra_hud_group.add(toilet_north.get_display_name(side='top', color=(0,0,0)))
+    toilet_north.add_window("north", displacement= 150, status= 'close')
 
-    # create the House Rooms
 
-    # 2) living room
-
-    living_room = Room(name='Living Room', screen= screen, x=300, y=300, width=350,\
-                       height=400, env_group= env_group, tile_type='parquet')
-
-    extra_hud_group.add(living_room.get_display_name(side='top'))
-    living_room.add_window("top",       displacement= 175, status='close')
-    living_room.add_window("left",      displacement= 175, status='close')
-    living_room.add_window("right",     displacement= 175, status='close')
-    living_room.add_window("bottom",    displacement= 175, status='close')
-
-    test_animate_windows(living_room)
-    timer = threading.Timer(4, lambda: test_animate_windows(living_room))
-    timer.start()
 
 
 
