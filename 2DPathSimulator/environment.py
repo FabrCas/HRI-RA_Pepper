@@ -1,6 +1,7 @@
 import pygame as pg
 from pygame import Surface
 import math
+import time
 import threading
 from display_objects import StaticImage, Text,  InputTextBox, Button, OutputTextBox, Room
 
@@ -106,13 +107,16 @@ def create_environment(screen: Surface, verbose = True):
                        height=400, env_group= env_group, tile_type='parquet')
 
     extra_hud_group.add(living_room.get_display_name(side='top'))
-    w_l, w_r = living_room.add_window("top", displacement= 175, status='open')
+    living_room.add_window("top",       displacement= 175, status='close')
+    living_room.add_window("left",      displacement= 175, status='close')
+    living_room.add_window("right",     displacement= 175, status='close')
+    living_room.add_window("bottom",    displacement= 175, status='close')
+
+    test_animate_windows(living_room)
+    timer = threading.Timer(4, lambda: test_animate_windows(living_room))
+    timer.start()
 
 
-    anim_window_l = threading.Timer(0.5, lambda: w_l.close())
-    anim_window_r = threading.Timer(0.5, lambda: w_r.close())
-    anim_window_l.start()
-    anim_window_r.start()
 
 
 
@@ -135,3 +139,32 @@ def test_messages(system_box, screen):
 
     start_time = threading.Timer(3, lambda : system_box.add_message("window width -> {}, window height -> {}".format(str(screen.get_width()), str(screen.get_height()))))
     start_time.start()
+
+def test_animate_windows(room):
+
+    def call_timers(windows, time):
+        print(windows)
+        print(windows[0].status)
+        if windows[0].status == "close":
+            t_r = threading.Timer(time, lambda: windows[0].open())
+            t_l = threading.Timer(time, lambda: windows[1].open())
+
+        elif windows[0].status == 'open':
+            t_r = threading.Timer(time, lambda: windows[0].close())
+            t_l = threading.Timer(time, lambda: windows[1].close())
+
+        t_r.start()
+        t_l.start()
+
+    # open windows
+    call_timers(room.windows['top'],    time=1)
+    call_timers(room.windows['left'],   time=2)
+    call_timers(room.windows['right'],  time=3)
+    call_timers(room.windows['bottom'], time=4)
+
+
+
+
+
+
+

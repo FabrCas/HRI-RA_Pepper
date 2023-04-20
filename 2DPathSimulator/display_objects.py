@@ -470,15 +470,6 @@ class HouseElement(pg.sprite.Sprite):
         self.rect = self.image.get_rect(center = pivot + rotated_offset)
 
 
-
-
-
-
-
-        # self.image = pg.transform.rotate(image, angle)
-        # self.rect = self.image.get_rect(center = self.rect.center)
-
-
     def get_vertices(self):
 
         center_x = self.rect.center[0]
@@ -532,6 +523,7 @@ class HouseElement(pg.sprite.Sprite):
 
 
 class Room(HouseElement):
+
     def __init__(self, name, screen, x, y, width, height, env_group, tile_type):
         super().__init__(name, screen, x, y, width, height)
         self.max_w_tile = 100
@@ -550,10 +542,10 @@ class Room(HouseElement):
         self.group = env_group
 
         # list of elements
-        self.walls = []
-        self.windows    = []
-        self.doors      = []
-        self.furnitures = []
+        self.walls = {}
+        self.windows    = {}
+        self.doors      = {}
+        self.furnitures = {}
 
         self.group.add(self)
 
@@ -563,7 +555,11 @@ class Room(HouseElement):
     def add_door(self, room: HouseElement):   # the door connects two rooms
         pass
 
-    def add_window(self, side, displacement, status = 'close'): # side: top,left,bottom,right
+    def add_window(self, side: str, displacement: int, status='close'):
+        """
+        :param side -> top, left, right, bottom
+        :param status -> open or close
+        """
         vertices = self.get_vertices()
 
         if side == 'top':
@@ -583,19 +579,21 @@ class Room(HouseElement):
             y_win = vertices['right-top'][1]
             angle_win = 270
 
-        # left window with convention of beeing oriented downward
+        # left window with convention of being oriented downward (grip on the down side)
+
         window_l = Window(self.name + "_" + "left" + "_" + side + "_" + str(displacement) + "_window",
-                        self.screen, x_win, y_win, angle_win, displacement, side, True, status, self.group)
+                        self.screen, x_win, y_win, angle_win, displacement, side, True, status, self, self.group)
 
         window_r = Window(self.name + "_" + "right" + "_" + side + "_" + str(displacement) + "_window",
-                        self.screen, x_win, y_win, angle_win, displacement, side, False, status, self.group)
+                        self.screen, x_win, y_win, angle_win, displacement, side, False, status, self, self.group)
 
         # add window left and right in the group
         self.group.add(window_l)
         self.group.add(window_r)
 
         # add both windows as a tuple in the list of windows for the Room
-        self.windows.append((window_l,window_r))
+        self.windows[side] = (window_l,window_r)
+
         return window_l, window_r
 
 class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
@@ -620,18 +618,19 @@ class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
 
 
 class Window(HouseElement):
-    def __init__(self, name, screen, x, y, angle, displacement, side, is_left, status, group):
-        super().__init__(name, screen, x, y, width= 100, height= 80)
+    def __init__(self, name, screen, x, y, angle_side, displacement, side, is_left, status, room, group):
+        super().__init__(name, screen, x, y, width= 60, height= 60)
 
-        self.status = status
+        self.status = status            # status(str) -> open || close
         self.side = side                # side(str) -> top || left || bottom || right
-        self.angle_start = angle        # global angle (int) respect the world (screen)
+        self.angle_side = angle_side    # global angle (int) respect the world (screen) when windows are closed
         self.rel_angle = 0              # relative angle (int) from the creation reference frame
         self.angle_open = - 135         # relative angle (int) that represent the open state
         self.angle_close = 0            # relative angle (int) that represent the close state
-        self.is_left: bool
-        self.is_left = is_left          # boolean variable to indicate which window door is of the pair
+
+        self.is_left: bool; self.is_left = is_left # boolean variable to indicate which window door is of the pair
         self.group = group
+        self.room = room
 
         # variable to handle animation
         self.is_opening = False
@@ -644,6 +643,10 @@ class Window(HouseElement):
 
         # load images
         self._load_images()
+
+        # self.rel_angle = self.angle_side
+        # self.angle_open -= self.angle_side
+        # self.angle_close = self.angle_side
 
         # correct positions and get rect
         new_rect = self._correctionPos()
@@ -665,7 +668,9 @@ class Window(HouseElement):
         if not(self.is_left):
             image = pg.transform.flip(image, True, False)
         image = pg.transform.smoothscale(image, (self.width, self.height))
-        image = pg.transform.rotate(image, self.angle_start)
+        image = pg.transform.rotate(image, self.angle_side)
+
+
 
         return image
 
@@ -681,58 +686,81 @@ class Window(HouseElement):
         elif self.status == 'close':
             self.image = pg.image.load("static/window-closed.png").convert_alpha()
         else:
-            raise ValueError("Wrong button type has been assigned")
+            raise ValueError("Wrong window status has been assigned")
 
         self.image = self._transformation_image(self.image)
 
-        image_rect = self.image.get_rect()
-        self.starting_image = self.image.copy()  # used to avoid distortion during the animation
+        self.starting_image = self.image.copy()  # check if needed
 
 
-
-
-    def _correctionPos(self):
+    def _correctionPos(self, vertical_offset=3):
 
         # get the rect containing the surface (image)
         new_rect = self.image.get_rect()
 
         # correct displacement on the axis
         if self.side == 'top':
-            new_rect.center = (self.x + self.displacement, self.y)
+            new_rect.center = (self.x + self.displacement, self.y - vertical_offset)
         elif self.side == 'left':
-            new_rect.center = (self.x, self.y - self.displacement)
+            new_rect.center = (self.x - vertical_offset, self.y - self.displacement)
         elif self.side == 'bottom':
-            new_rect.center = (self.x - self.displacement, self.y)
+            new_rect.center = (self.x - self.displacement, self.y + vertical_offset)
         elif self.side == 'right':
-            new_rect.center = (self.x, self.y + self.displacement)
-
-        # print("self.rect.center",       new_rect.center)
-        # print("self.rect.topleft",      new_rect.topleft)
-        # print("self.rect.topright",     new_rect.topright)
-        # print("self.rect.bottomleft",   new_rect.bottomleft)
-        # print("self.rect.bottomright",  new_rect.bottomright, "\n")
+            new_rect.center = (self.x + vertical_offset, self.y + self.displacement)
 
         return new_rect
+
+    def print_shape(self):
+        print("Rect center -> ",       self.rect.center)
+        print("Rect topleft -> ",      self.rect.topleft)
+        print("Rect topright -> ",     self.rect.topright)
+        print("Rect bottomleft -> ",   self.rect.bottomleft)
+        print("Rect bottomright -> ",  self.rect.bottomright, "\n")
+
+
 
     def _correctionStatus(self):
 
         # correct angle if window has open status
         if self.status == 'open':
+            image = self._transformation_image(self.image_open)
+
             if self.is_left:   # left window
-                center_image = pg.math.Vector2(self.rect.center[0] - self.width / 2, self.rect.center[1])
-                offset = pg.math.Vector2(self.width / 2, 0)
-                image = self._transformation_image(self.image_open)
+                if self.side == "top":
+                    center_image = pg.math.Vector2(self.rect.center[0] -self.width / 2, self.rect.center[1])
+                    offset = pg.math.Vector2(self.width/2, 0)
+                if self.side == 'left':
+                    center_image = pg.math.Vector2(self.rect.center[0], self.rect.center[1] + self.width/2)
+                    offset = pg.math.Vector2(0, -self.width/2)
+                if self.side == 'right':
+                    center_image = pg.math.Vector2(self.rect.center[0], self.rect.center[1] - self.width/2)
+                    offset = pg.math.Vector2(0, self.width/2)
+                if self.side == 'bottom':
+                    center_image = pg.math.Vector2(self.rect.center[0] + self.width/2, self.rect.center[1])
+                    offset = pg.math.Vector2(-self.width/2, 0)
+
                 self._rotate_pivot_anim(image, center_image, offset, self.angle_open)
                 self.rel_angle = self.angle_open
+
             else:              # right window
-                center_image = pg.math.Vector2(self.rect.center[0] + self.width / 2, self.rect.center[1])
-                offset = pg.math.Vector2(- self.width / 2, 0)
-                image = self._transformation_image(self.image_open)
+                if self.side == "top":
+                    center_image = pg.math.Vector2(self.rect.center[0] + self.width / 2, self.rect.center[1])
+                    offset = pg.math.Vector2(-self.width/2, 0)
+                if self.side == 'left':
+                    center_image = pg.math.Vector2(self.rect.center[0], self.rect.center[1] - self.width/2)
+                    offset = pg.math.Vector2(0, self.width/2)
+                if self.side == 'right':
+                    center_image = pg.math.Vector2(self.rect.center[0], self.rect.center[1] + self.width/2)
+                    offset = pg.math.Vector2(0, -self.width/2)
+                if self.side == 'bottom':
+                    center_image = pg.math.Vector2(self.rect.center[0] - self.width/2, self.rect.center[1])
+                    offset = pg.math.Vector2(self.width/2, 0)
+
                 self._rotate_pivot_anim(image, center_image, offset, - self.angle_open)
                 self.rel_angle = - self.angle_open
 
 
-    def open(self): # try animations
+    def open(self):
         if self.status == 'open':   # nothing to do
             return
         else:                       # from close to open
@@ -747,81 +775,83 @@ class Window(HouseElement):
         else:                       # from open to close
             pg.mixer.Sound.play(self.sound_close)
             self.status = 'close'
-            if self.is_left:
+            if self.is_left:    # ccw
                 self.rel_angle = self.angle_open   # initial angle when open
-            else:
+            else:               # cw
                 self.rel_angle = - self.angle_open
             self.is_closing = True
 
     def update(self):
 
-        # set increment and use module of the angle
+        # set angle increment and use module of the angle
         increment = 5
         if self.rel_angle > 0: self.rel_angle = self.rel_angle % 360
         else: self.rel_angle = self.rel_angle % - 360
 
-        #                                           [Opening animation]
-        if self.status == 'open' and self.is_opening:
+        # incremental step
+        if (self.status == 'open' and self.is_opening):
             if self.is_left:
                 self.rel_angle -= increment
             else:
                 self.rel_angle += increment
+        if (self.status == 'close' and self.is_closing):
+            if self.is_left:
+                self.rel_angle += increment
+            else:
+                self.rel_angle -= increment
+
             print(self.rel_angle)
 
+        # animation update [Opening & Closing]
+        if self.is_opening or self.is_closing:
+
             # compute the temp image and get rect with positions
-            image_tmp = self.image_open.copy()
+            if self.is_opening: image_tmp = self.image_open.copy()
+            elif self.is_closing: image_tmp = self.image_close.copy()
             image_tmp = self._transformation_image(image_tmp)
             self.rect = self._correctionPos()
 
-
             # perform anchor rotation
             if self.is_left:
-                center_image = pg.math.Vector2(self.rect.center[0] - self.width/2,self.rect.center[1])
-                offset = pg.math.Vector2(self.width/2, 0)
+                if self.side == "top":
+                    center_image = pg.math.Vector2(self.rect.center[0] -self.width / 2, self.rect.center[1])
+                    offset = pg.math.Vector2(self.width/2, 0)
+                if self.side == 'left':
+                    center_image = pg.math.Vector2(self.rect.center[0], self.rect.center[1] + self.width/2)
+                    offset = pg.math.Vector2(0, -self.width/2)
+                if self.side == 'right':
+                    center_image = pg.math.Vector2(self.rect.center[0], self.rect.center[1] - self.width/2)
+                    offset = pg.math.Vector2(0, self.width/2)
+                if self.side == 'bottom':
+                    center_image = pg.math.Vector2(self.rect.center[0] + self.width/2, self.rect.center[1])
+                    offset = pg.math.Vector2(-self.width/2, 0)
             else:
-                center_image = pg.math.Vector2(self.rect.center[0] + self.width/2,self.rect.center[1])
-                offset = pg.math.Vector2(-self.width/2, 0)
+                if self.side == "top":
+                    center_image = pg.math.Vector2(self.rect.center[0] + self.width / 2, self.rect.center[1])
+                    offset = pg.math.Vector2(-self.width/2, 0)
+                if self.side == 'left':
+                    center_image = pg.math.Vector2(self.rect.center[0], self.rect.center[1] - self.width/2)
+                    offset = pg.math.Vector2(0, self.width/2)
+                if self.side == 'right':
+                    center_image = pg.math.Vector2(self.rect.center[0], self.rect.center[1] + self.width/2)
+                    offset = pg.math.Vector2(0, -self.width/2)
+                if self.side == 'bottom':
+                    center_image = pg.math.Vector2(self.rect.center[0] - self.width/2, self.rect.center[1])
+                    offset = pg.math.Vector2(self.width/2, 0)
 
             self._rotate_pivot_anim(image_tmp, center_image, offset, self.rel_angle)
 
-            # check whether turn off animation flags
+            # check whether turn off opening
             if abs(self.rel_angle) == abs(self.angle_open):
                 self.is_opening = False
 
-        #                                           [Closing animation]
-        elif self.status == 'close' and self.is_closing:
-            if self.is_left:
-                self.rel_angle += increment
-            else:
-                self.rel_angle -= increment
-
-
-            print(self.rel_angle)
-
-            # compute the temp image and get rect with positions
-            image_tmp = self.image_close.copy()
-            image_tmp = self._transformation_image(image_tmp)
-            self.rect = self._correctionPos()
-
-
-            # perform anchor rotation
-            if self.is_left:
-                center_image = pg.math.Vector2(self.rect.center[0] - self.width/2,self.rect.center[1])
-                offset = pg.math.Vector2(self.width/2, 0)
-            else:
-                center_image = pg.math.Vector2(self.rect.center[0] + self.width/2,self.rect.center[1])
-                offset = pg.math.Vector2(-self.width/2, 0)
-
-            self._rotate_pivot_anim(image_tmp, center_image, offset, self.rel_angle)
-
-            # check whether turn off animation flags
+            # check whether turn off closing
             if abs(self.rel_angle) == abs(self.angle_close):
                 self.is_closing = False
 
+
         # display rect for debug
         self.display_gfxRect()
-
-
 
 
 
