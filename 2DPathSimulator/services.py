@@ -16,7 +16,6 @@ class InputInterpreter(object):
             pg.mixer.Sound.play(daje_roma)
         pass
 
-
 class PepperSocket():
     def __init__(self):
         super().__init__()

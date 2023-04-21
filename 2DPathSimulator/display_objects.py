@@ -1,6 +1,7 @@
 import pygame
 import pygame as pg
 import math
+from services import PepperSocket
 
 # ---------------------------------------------- static and global variables
 
@@ -24,13 +25,18 @@ tiles = {
     'black_marble': 'static/floor_black_marble.jpg',
     'ceramic': 'static/floor_ceramic.jpg',
     'parquet_strips': 'static/floor_parquet_strips.jpg',
-    'rhombus': 'static/floor_rhombus.jpg'
+    'rhombus': 'static/floor_rhombus.jpg',
+    'test': 'static/floor_test.png'
 }
 
 furniture = {
 
+
 }
 
+rooms = []
+def get_rooms():
+    return rooms
 
 """
     attributes understanding
@@ -64,12 +70,18 @@ class Rect(pg.sprite.Sprite):
         self.prog = progDos_rects
         progDos_rects += 1
 
-        # print(f"Created {self.type_DO} n° {self.prog}")
-
     def draw(self):
         self.screen.blit(self.image,self.rect)
 
-
+    def center_to(self, x=None, y=None):
+        if x == None and y == None:
+            return
+        elif x == None:
+            self.rect.center = (self.rect.center[0], y)
+        elif y == None:
+            self.rect.center = (x, self.rect.center[1])
+        else:
+            self.rect.center = (x, y)
 
 class StaticImage(pg.sprite.Sprite):
 
@@ -130,7 +142,7 @@ class Button(pg.sprite.Sprite):
         print(f"Created {self.type_DO} ({self.name}) n° {self.prog}: status {self.status}")
 
     def change_status(self):
-        # if needed can be used a cooling time variable to reduce the number of switch
+        # if needed can be used a cooling time variable to reduce the number of switch changes
 
         # if self.last_click == None:
         #     cooling_time = 1
@@ -408,7 +420,14 @@ class HouseElement(pg.sprite.Sprite):
             progDos_furniture += 1
             self.type_DO = "furniture"
 
-        print(f"Created {self.type_DO} ({self.name}) n° {self.prog}")
+        elif (type(self).__name__ == "Pepper"):
+            self.type_DO = "Pepper"
+            self.prog = None
+
+        if self.prog != None:
+            print(f"Created {self.type_DO} ({self.name}) n° {self.prog}")
+        else:
+            print(f"Created Pepper!")
 
 
     def get_display_name(self, side = 'top', color = (255, 255, 255), size_font = 30):  # edge: 'top','bottom'
@@ -447,8 +466,11 @@ class HouseElement(pg.sprite.Sprite):
         return (x, y)
 
 
-    # function to call for central rotation during animation, this avoid the distortion from each approximation
+
     def _rotate_central_anim(self, image, angle):
+        """
+            Function to call for central rotation during animation, this avoid the distortion from each approximation
+        """
         self.image = pg.transform.rotate(image, angle)
         self.rect = self.image.get_rect(center = self.rect.center)
 
@@ -526,7 +548,7 @@ class HouseElement(pg.sprite.Sprite):
 
 class Room(HouseElement):
 
-    def __init__(self, name, screen, x, y, width, height, env_group, tile_type):
+    def __init__(self, name, screen, x, y, width, height, env_group, tile_type='test'):
         super().__init__(name, screen, env_group, x, y, width, height)
         self.max_w_tile = 100
         self.max_h_tile = 100
@@ -543,51 +565,139 @@ class Room(HouseElement):
         self.rect.center = (self.x, self.y)
 
         # list of elements
-        self.walls = {}
+        self.walls      = {}
         self.windows    = {}
         self.doors      = {}
         self.furniture  = {}
 
         self.group.add(self)
 
+        global rooms
+        rooms.append(self)
+
     def create_walls(self):  # depth wall 10 pixels
         pass
 
     # def add_door(self, room: HouseElement):   # the door connects two rooms
-    def add_door(self, side: str, displacement: int, status='close', is_main = False):
+    def add_door(self, other_room: HouseElement, status='close', is_main = False):
         """
-        :param side -> north, west, south, east
+        :param other_room -> the adjacent room which is connected through the door
         :param status -> open or close
         :param displacement -> pixel distance from the reference corner, used to place the door
+
+        reference points:
+        N------------------------E
+        |                        |
+        |                        |
+        |                        |
+        |                        |
+        |                        |
+        W________________________S
         """
 
         vertices = self.get_vertices()
+        print("vertices",vertices)
+        print("vertices other", other_room.get_vertices())
+        x_interval_other = range(other_room.get_vertices()['left-down'][0]+1, other_room.get_vertices()['right-down'][0])
+        x_midpoint_other = math.ceil(other_room.get_vertices()['right-down'][0] - (other_room.width/2))
 
-        if side == 'north':
+        y_interval_other = range(other_room.get_vertices()['left-top'][1]+1, other_room.get_vertices()['left-down'][1])
+        y_midpoint_other = math.ceil(other_room.get_vertices()['left-top'][1] + (other_room.height/2))
+
+        x_interval = range(vertices['left-down'][0]+1, vertices['right-down'][0])
+        x_midpoint = math.ceil(vertices['right-down'][0] - (self.width/2))
+        y_interval = range(vertices['left-top'][1]+1, vertices['left-down'][1])
+        y_midpoint = math.ceil(vertices['left-top'][1] + (self.height/2))
+
+
+        print("\n------------------------")
+        print(self.name)
+        print("x_interval_other",x_interval_other)
+        print("x_midpoint_other",x_midpoint_other)
+        print("x_interval",x_interval)
+        print("x_midpoint",x_midpoint)
+        print("y_interval_other", y_interval_other)
+        print("y_midpoint_other", y_midpoint_other)
+        print("y_interval", y_interval)
+        print("y_midpoint", y_midpoint)
+        print("\n------------------------")
+
+        door_width = 100
+        wall_margin = 10
+
+        # check adjacency rooms and if there is possibility to place the door, infer the side
+        if (other_room.y + other_room.height/2 + wall_margin == self.y - self.height/2) \
+            and (((x_midpoint - door_width/2 in x_interval_other) and (x_midpoint + door_width/2 in x_interval_other))\
+            or  ( (x_midpoint_other - door_width/2 in x_interval) and (x_midpoint_other + door_width/2 in x_interval)) ):
+
+            side = 'north'
             x_door = vertices['left-top'][0]
             y_door = vertices['left-top'][1]
             angle_door = 0
-        elif side == 'west':
+            if self.width > other_room.width:
+                displacement = other_room.width/2
+            else:
+                displacement = self.width/2
+
+        elif (other_room.x + other_room.width/2 + wall_margin == self.x - self.width/2)\
+            and (((y_midpoint - door_width/2 in y_interval_other) and (y_midpoint + door_width/2 in y_interval_other))\
+            or  ( (y_midpoint_other - door_width/2 in y_interval) and (y_midpoint_other + door_width/2 in y_interval)) ):
+
+            side = 'west'
             x_door = vertices['left-down'][0]
             y_door = vertices['left-down'][1]
             angle_door = 90
-        elif side == 'south':
+            if self.height > other_room.height:
+                displacement = other_room.height/2
+            else:
+                displacement = self.height/2
+
+        elif (other_room.y - other_room.height/2 - wall_margin == self.y + self.height/2) \
+            and (((x_midpoint - door_width/2 in x_interval_other) and (x_midpoint + door_width/2 in x_interval_other))\
+            or  ( (x_midpoint_other - door_width/2 in x_interval) and (x_midpoint_other + door_width/2 in x_interval)) ):
+
+            side = 'south'
             x_door = vertices['right-down'][0]
             y_door = vertices['right-down'][1]
             angle_door = 180
-        elif side == 'east':
+            if self.width > other_room.width:
+                displacement = other_room.width/2
+            else:
+                displacement = self.width/2
+
+        elif (other_room.x - other_room.width/2 - wall_margin == self.x + self.width/2)\
+            and (((y_midpoint - door_width/2 in y_interval_other) and (y_midpoint + door_width/2 in y_interval_other)) \
+            or  ( (y_midpoint_other - door_width/2 in y_interval) and (y_midpoint_other + door_width/2 in y_interval)) ):
+
+            side = 'east'
             x_door = vertices['right-top'][0]
             y_door = vertices['right-top'][1]
             angle_door = 270
+            if self.height > other_room.height:
+                displacement = other_room.height/2
+            else:
+                displacement = self.height/2
+        else:
+            raise ValueError(f"No valid position for the adjacent room")
+
 
         door = Door(self.name + "_" + side + "_" + str(displacement) + "_door", self.screen,
-                    x_door, y_door, angle_door, displacement, side, status, self, self.group, is_main)
+                    x_door, y_door, angle_door, displacement, door_width, side, status, self,
+                    other_room, self.group, is_main)
 
         # add door object to the environment group
         self.group.add(door)
 
-        # add door in the list of doors for the Room
+        # add door in the list of doors for the rooms
         self.doors[side] = door
+        if side == 'north':
+            other_room.doors['south'] = door
+        elif side == 'west':
+            other_room.doors['east'] = door
+        elif side == 'south':
+            other_room.doors['north'] = door
+        elif side == 'east':
+            other_room.doors['west'] = door
 
         return door
 
@@ -634,18 +744,19 @@ class Room(HouseElement):
         return window_l, window_r
 
 class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
-    def __init__(self, name, screen, x, y, angle_side, displacement, side, status, room, group, is_main = False):
-        super().__init__(name, screen, group, x, y, width= 100, height= 100)
+    def __init__(self, name, screen, x, y, angle_side, displacement, door_width, side, status, room_a, room_b, group, is_main = False):
+        super().__init__(name, screen, group, x, y, width= door_width, height= 100)
 
         self.status = status            # status(str) -> open || close
         self.side = side                # side(str) -> north || west || south || east
         self.angle_side = angle_side    # global angle (int) respect the world (screen) when windows are closed
         self.rel_angle = 0              # relative angle (int) from the creation reference frame
-        self.angle_open = - 90         # relative angle (int) that represent the open state
+        self.angle_open = - 90          # relative angle (int) that represent the open state
         self.angle_close = 0            # relative angle (int) that represent the close state
-        self.room = room
+        self.rooms = (room_a, room_b)   # the two rooms that are connected from the door, the door rotates in direction of the first
         self.displacement = displacement
         self.is_main = is_main
+        self.shape = (self.width, 10)
 
         # variable to handle animation
         self.is_opening = False
@@ -668,11 +779,47 @@ class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
         self.sound_open = pg.mixer.Sound("static/open_door.mp3")
         self.sound_close = pg.mixer.Sound("static/close_door.mp3")
 
+        # compute reduced rect for white surface of opened door
+        self.rect_open = self._get_reduced_rect()
+
     def _transformation_image(self, image):
         # upscale/downscale, rotate
         image = pg.transform.smoothscale(image, (self.width, self.height))
         image = pg.transform.rotate(image, self.angle_side)
         return image
+
+    def _get_reduced_rect(self):
+        """
+        :return: reduced rect from the transparent asset of the door, used to show when it's open
+        """
+        init_rect = self.rect.copy()
+
+        if self.side == 'north':
+            init_rect.height = 10
+            init_rect.y = self.rect.center[1] - 5
+            init_rect.width -= 3
+            init_rect.center = self.rect.center
+            init_rect.x += 4
+        elif self.side == 'south':
+            init_rect.height = 10
+            init_rect.y = self.rect.center[1] - 5
+            init_rect.width -= 3
+            init_rect.center = self.rect.center
+            init_rect.x -= 4
+        elif self.side == 'west':
+            init_rect.width = 10
+            init_rect.x = self.rect.center[1] - 5
+            init_rect.height -= 3
+            init_rect.center = self.rect.center
+            init_rect.y -= 4
+        elif self.side == 'east':
+            init_rect.width = 10
+            init_rect.x = self.rect.center[1] - 5
+            init_rect.height -= 3
+            init_rect.center = self.rect.center
+            init_rect.y += 4
+
+        return init_rect
 
     def _load_images(self):
         if not(self.is_main):
@@ -724,24 +871,81 @@ class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
     def open(self):  # try animations
         if self.status == 'open':
             return
-        else:
-            self.status == 'close'
-            return
+        else:               # from close to open
+            pg.mixer.Sound.play(self.sound_open)
+            self.status = 'open'
+            self.rel_angle = 0
+            self.is_opening = True
 
     def close(self):
         if self.status == 'close':
             return
-        else:
-            self.status == 'open'
-            return
+        else:               # from open to close
+            pg.mixer.Sound.play(self.sound_close)
+            self.status = 'close'
+            self.rel_angle = self.angle_open  # initial angle when open
+            self.is_closing = True
 
     def update(self):
-        pass
 
+        # set angle increment and use module of the angle
+        increment = 5
+        if self.rel_angle > 0:
+            self.rel_angle = self.rel_angle % 360
+        else:
+            self.rel_angle = self.rel_angle % - 360
+
+        # incremental step
+        if (self.status == 'open' and self.is_opening):
+            self.rel_angle -= increment
+        elif (self.status == 'close' and self.is_closing):
+            self.rel_angle += increment
+            print(self.rel_angle)
+
+        # animation update [Opening & Closing]
+        if self.is_opening or self.is_closing:
+
+            # compute the temp image and get rect with positions
+
+            image_tmp = self.image_door.copy()
+
+            image_tmp = self._transformation_image(image_tmp)
+            self.rect = self._correctionPos()
+
+            # perform anchor rotation
+            if self.side == "north":
+                center_image = pg.math.Vector2(self.rect.center[0] - self.width / 2, self.rect.center[1])
+                offset = pg.math.Vector2(self.width / 2, 0)
+            if self.side == 'west':
+                center_image = pg.math.Vector2(self.rect.center[0], self.rect.center[1] + self.width / 2)
+                offset = pg.math.Vector2(0, -self.width / 2)
+            if self.side == 'east':
+                center_image = pg.math.Vector2(self.rect.center[0], self.rect.center[1] - self.width / 2)
+                offset = pg.math.Vector2(0, self.width / 2)
+            if self.side == 'south':
+                center_image = pg.math.Vector2(self.rect.center[0] + self.width / 2, self.rect.center[1])
+                offset = pg.math.Vector2(-self.width / 2, 0)
+            self._rotate_pivot_anim(image_tmp, center_image, offset, self.rel_angle)
+
+            # check whether turn off opening
+            if abs(self.rel_angle) == abs(self.angle_open):
+                self.is_opening = False
+
+            # check whether turn off closing
+            if abs(self.rel_angle) == abs(self.angle_close):
+                self.is_closing = False
+
+        # display rect for debug
+        self.display_gfxRect()
+
+    def draw(self):
+        if abs(self.rel_angle) == abs(self.angle_open):
+            pg.draw.rect(surface= self.screen, color=(15, 255, 80), rect=self.rect_open)
+        super().draw()
 
 class Window(HouseElement):
     def __init__(self, name, screen, x, y, angle_side, displacement, side, is_left: bool, status, room, group):
-        super().__init__(name, screen, group, x, y, width= 60, height= 60)
+        super().__init__(name, screen, group, x, y, width= 60, height= 100)
 
         self.status = status            # status(str) -> open || close
         self.side = side                # side(str) -> north || west || south || east
@@ -750,6 +954,7 @@ class Window(HouseElement):
         self.angle_open = - 135         # relative angle (int) that represent the open state
         self.angle_close = 0            # relative angle (int) that represent the close state
 
+        self.shape = (self.width, 10)
         self.is_left = is_left          # boolean variable to indicate which window door is of the pair
         self.room = room
 
@@ -779,6 +984,8 @@ class Window(HouseElement):
         self.sound_open = pg.mixer.Sound("static/window_open.mp3")
         self.sound_close = pg.mixer.Sound("static/window_close.mp3")
 
+        # compute reduced rect for white surface of opened window
+        self.rect_open = self._get_reduced_rect()
 
     def _transformation_image(self, image):
         # flip if right window, upscale/downscale, rotate
@@ -789,6 +996,22 @@ class Window(HouseElement):
         image = pg.transform.rotate(image, self.angle_side)
         return image
 
+    def _get_reduced_rect(self):
+        """
+        :return: reduced rect from the transparent asset of the door, used to show when it's open
+        """
+        init_rect = self.rect.copy()
+        if self.side == 'north' or self.side == 'south':
+            init_rect.y = self.rect.center[1] - 5
+            init_rect.height = 10
+            init_rect.width += 6
+        elif self.side == 'west' or self.side == 'east':
+            init_rect.width = 10
+            init_rect.x = self.rect.center[1] - 5
+            init_rect.height += 6
+
+        init_rect.center = self.rect.center
+        return init_rect
 
     def _load_images(self):
         # load both images (no transformations)
@@ -808,7 +1031,7 @@ class Window(HouseElement):
         self.starting_image = self.image.copy()  # check if needed
 
 
-    def _correctionPos(self, vertical_offset=3):
+    def _correctionPos(self, vertical_offset=5):
 
         # get the rect containing the surface (image)
         new_rect = self.image.get_rect()
@@ -958,19 +1181,52 @@ class Window(HouseElement):
             if abs(self.rel_angle) == abs(self.angle_close):
                 self.is_closing = False
 
-
         # display rect for debug
         self.display_gfxRect()
 
+    def draw(self):
+        if abs(self.rel_angle) == abs(self.angle_open):
+            pg.draw.rect(surface= self.screen, color=(15, 255, 80), rect=self.rect_open)
+        super().draw()
 
 class Furniture(HouseElement):
-    def __init__(self, name, screen, x, y, width, height):
-        super().__init__(name, screen, x, y, width, height)
+    def __init__(self, name, screen, group, x, y, width, height):
+        super().__init__(name, screen, group, x, y, width, height)
 
+class Pepper(HouseElement):
+    def __init__(self, screen, group, room):
+        super().__init__('Pepper', screen, group, room.x, room.y, width = 20, height= 20)
+        self.rel_angle = 0
+        self.actual_room = room
+        self.color = (255, 255, 255)
+        self.p_letter = Text("P", self.screen, self.x, self.y, color=(0, 0, 0), size_font= 21)
 
-class Pepper:
-    def __init__(self):
+        # homing data
+        self.homing_room_name = 'Studio'
+        self.homing_room_position = (room.x, room.y)
+
+        # adding to the environment group
+        self.group.add(self)
+        self.group.add(self.p_letter)
+
+        # pepper socket for communication with simulator
+        self.socket = PepperSocket()
+
+    def move_to(self, position):
         pass
+
+    def set_color(self, color):
+        self.color = color
+
+    def draw(self):
+        # draw a circle to track the position
+        pg.draw.circle(self.screen, color=(0, 0, 0), center=(self.x, self.y), radius=13)  # thick circle
+        pg.draw.circle(self.screen, color=self.color, center=(self.x, self.y), radius=10)
+        self.p_letter.center_to(self.x, self.y)
+
+    def get_logo(self, width = 80, height = 80):
+        logo = StaticImage("static/pepper.png", self.screen, self.x - width/2, self.y - height/2, width, height)
+        return logo
 
 
 

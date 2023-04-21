@@ -51,7 +51,7 @@ def debug_render(env_group):
         if type(el).__name__ == "Window" or type(el).__name__ == "Door":
             el.render_debug_rect()
 
-def rendering(debug = True, extra_HUD = False):
+def rendering(debug = False, extra_HUD = False):
 
     # initialize the pygame engine, get main display object and clock for the rendering
     screen, clock = initialization()

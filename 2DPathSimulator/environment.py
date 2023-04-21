@@ -3,7 +3,7 @@ from pygame import Surface
 import math
 import time
 import threading
-from display_objects import StaticImage, Text,  InputTextBox, Button, OutputTextBox, Room
+from display_objects import StaticImage, Text, InputTextBox, Button, OutputTextBox, Room, Pepper, get_rooms
 
 def create_UI(screen: Surface, verbose = True):
 
@@ -80,7 +80,7 @@ def create_environment(screen: Surface, verbose = True):
     # create extra hud group
     extra_hud_group = pg.sprite.Group()
 
-    # 1) Create background garden + outdoor exit sidewalk
+    # 1) Create garden background garden + outdoor exit sidewalk
 
     # define dimensions of the environment and top left corner coordinates
     env_ltc_x = 0
@@ -93,7 +93,7 @@ def create_environment(screen: Surface, verbose = True):
 
     print(f"Environment shape -> width:{env_width}, height:{env_height}")
 
-    # garden
+    # -- garden
     bg_garden_t = StaticImage('static/garden.jpg', screen, env_ltc_x,env_ltc_y, env_width,\
                                math.ceil(env_height / 2))   # static images are defined with top left corner coordinates
 
@@ -104,26 +104,32 @@ def create_environment(screen: Surface, verbose = True):
     env_group.add(bg_garden_t)  # top garden texture
     env_group.add(bg_garden_b)  # bottom garden texture
 
-    # outdoor sidewalk
+    # -- outdoor sidewalk
     outdoor_w = 150; outdoor_h = 400
-    outdoor = Room(name='outdoor', screen= screen, x = env_width - (outdoor_w/2 + margin),\
+    outdoor = Room(name='Outdoor', screen= screen, x = env_width - (outdoor_w/2 + margin),\
                    y= env_height - (outdoor_h/2), width=outdoor_w,height= outdoor_h,\
                    env_group=env_group, tile_type='grey')  # rooms are defined using the top center coordinates
 
     extra_hud_group.add(outdoor.get_display_name(side='bottom'))
 
-    # 2) Create the House Rooms
+    # 2.1) create walls (black background behind rooms)
+    #todo
 
-    # studio
+    # 2.2) Create the House Rooms, windows, and extra HUD text
+
+    # -- studio
     studio_w = 300; studio_h = 400
     studio = Room(name='Studio', screen= screen, x=margin + (studio_w/2), y= margin + (studio_h/2),\
                   width=studio_w, height=studio_h, env_group= env_group, tile_type='parquet')
     extra_hud_group.add(studio.get_display_name(side='top'))
-    studio.add_window("north", displacement= studio_w/2, status='close')
-    studio.add_door("east", displacement=studio_h / 2, status='open')
+    win = studio.add_window("north", displacement= studio_w/2, status='close')
 
+    timer1 = threading.Timer(1, lambda: win[0].open())
+    timer2 = threading.Timer(1, lambda: win[1].open())
+    timer1.start()
+    timer2.start()
 
-    # north toilet
+    # -- north toilet
     toiletNorth_w= 300; toiletNorth_h= 200
     toilet_north = Room(name="Toilet (north)", screen= screen, x= margin + studio_w + wall_size+ toiletNorth_w/2,\
                         y= margin + toiletNorth_h/2, width= toiletNorth_w, height=toiletNorth_h,\
@@ -131,11 +137,18 @@ def create_environment(screen: Surface, verbose = True):
     extra_hud_group.add(toilet_north.get_display_name(side='top', color=(0,0,0)))
     toilet_north.add_window("north", displacement= 150, status= 'close')
 
+    # 2.2) creates doors (interconnection between rooms)
+
+    # studio -> toiler (north)
+    door = studio.add_door(toilet_north, status='close')
+    timer = threading.Timer(1, lambda : door.open())
+    timer.start()
 
 
+    # 3) Create pepper placeholder
 
-
-
+    pepper = Pepper(screen, env_group, studio)
+    extra_hud_group.add(pepper.get_logo())
 
     return env_group, extra_hud_group
 
@@ -182,6 +195,35 @@ def test_animate_windows(room):
 
 
 
+# -- test_room
+# test_w = 300; test_h = 200
+# test_roomN = Room(name="Test nord", screen=screen, x= studio.x -99, \
+#                     y= studio.y - studio.height/2 - wall_size - test_h/2 , width=test_w, height=test_h, \
+#                     env_group=env_group)
 
+# test_roomS = Room(name="Test sud", screen=screen, x= studio.x + 99, \
+#                     y= studio.y + studio.height/2 + wall_size + test_h/2 , width=test_w, height=test_h, \
+#                     env_group=env_group)
 
+# test_roomW = Room(name="Test west", screen=screen, x= studio.x - studio.width/2 - wall_size - test_w/2, \
+#                     y= studio.y, width=test_w, height=test_h, \
+#                     env_group=env_group)
+
+# test_roomE = Room(name="Test east", screen=screen, x= studio.x + studio.width/2 + wall_size + test_w/2, \
+#                     y= studio.y, width=test_w, height=test_h, \
+#                     env_group=env_group)
+
+# test_doorN = test_roomN.add_door(studio, status='close')
+# timer2 = threading.Timer(1, lambda : test_doorN.open())
+# timer2.start()
+
+# test_doorS = test_roomS.add_door(studio, status='close')
+# timer3 = threading.Timer(1, lambda : test_doorS.open())
+# timer3.start()
+
+# test_doorW = test_roomW.add_door(studio, status='close')
+# timer4 = threading.Timer(1, lambda : test_doorW.open())
+# timer4.start()
+#
+# test_doorE = test_roomE.add_door(studio, status='close')
 
