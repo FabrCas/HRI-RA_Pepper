@@ -13,7 +13,7 @@ progDos_TextBoxes       = 1
 progDos_room            = 1
 progDos_door            = 1
 progDos_window          = 1
-progDos_furniture         = 1
+progDos_furniture       = 1
 
 font_path = "static/nasa_font.ttf"
 
@@ -36,10 +36,13 @@ furniture = {
 
 rooms = []
 def get_rooms():
+    """
+    :return: list containing all the rooms created
+    """
     return rooms
 
 """
-    attributes understanding
+    Position attributes specification:
     1) x,y refers to the top left corner of the rect: Rect, StaticImage, Text, InputTextBox, OutputTextBox
         in general is used from pygame for all rect that contains DOs
     2) x,y refers to the center of the rect: Button, HouseElement
@@ -48,22 +51,24 @@ def get_rooms():
 
 # ---------------------------------------------- [UI]
 
-# simple rect subclass that inherits the Sprite superclass used for testing
 class Rect(pg.sprite.Sprite):
+    """
+        simple rect subclass that inherits the Sprite superclass, used for the creation of rectangular figures
+    """
+
 
     def __init__(self, screen, x, y, width = 50, height = 50, color = (0,0,0), alpha = 255):
         super().__init__()
 
         self.screen = screen
         self.image = pg.Surface((width, height)).convert_alpha()
-
+        self.width = width
+        self.height = height
         self.image.fill((*color, alpha))
-
         self.rect = self.image.get_rect()
-
         # self.rect.center = (x, y)
-        self.rect.x = x
-        self.rect.y = y
+        self.rect.x = x             # fix top left corner position
+        self.rect.y = y             # fix top left corner position
         self.type_DO = "rect"
 
         global progDos_rects
@@ -107,7 +112,6 @@ class StaticImage(pg.sprite.Sprite):
 
     def draw(self):
         self.screen.blit(self.image,self.rect)
-
 
 class Button(pg.sprite.Sprite):
 
@@ -215,7 +219,6 @@ class Text(pg.sprite.Sprite):
 
     def draw(self):
         self.screen.blit(self.image,self.rect)
-
 
 class InputTextBox():
 
@@ -545,7 +548,6 @@ class HouseElement(pg.sprite.Sprite):
         except:
             raise ValueError("First instantiate the graphic rect of the display object!")
 
-
 class Room(HouseElement):
 
     def __init__(self, name, screen, x, y, width, height, env_group, tile_type='test'):
@@ -565,25 +567,102 @@ class Room(HouseElement):
         self.rect.center = (self.x, self.y)
 
         # list of elements
-        self.walls      = {}
+        self.bounds      = {}
         self.windows    = {}
         self.doors      = {}
         self.furniture  = {}
 
+        # add in the list of element for rendering
         self.group.add(self)
 
+        # include the room in the global list
         global rooms
         rooms.append(self)
 
-    def create_walls(self):  # depth wall 10 pixels
-        pass
+        self._create_boundaries()
+        self.visible_boundaries = True
 
-    # def add_door(self, room: HouseElement):   # the door connects two rooms
+    def _create_boundaries(self):  # depth wall 10 pixels
+        vertices = self.get_vertices()
+
+        # initially the bounds are defined as a whole continuous interval
+        top_wall    = [(pg.math.Vector2(vertices['left-top'])   , pg.math.Vector2(vertices['right-top'])    )]
+        bottom_wall = [(pg.math.Vector2(vertices['left-down'])  , pg.math.Vector2(vertices['right-down'])   )]
+        left_wall   = [(pg.math.Vector2(vertices['left-top'])   , pg.math.Vector2(vertices['left-down'])    )]
+        right_wall  = [(pg.math.Vector2(vertices['right-top'])  , pg.math.Vector2(vertices['right-down'])   )]
+
+        self.bounds['north'] = top_wall
+        self.bounds['south'] = bottom_wall
+        self.bounds['west'] = left_wall
+        self.bounds['east'] = right_wall
+
+    def _edit_boundaries(self, side, start, end):
+        """
+        Function used to change the shape of the room's boundaries when a door is inserted
+
+        :param side: (str) cardinal direction: north, south, east, west
+        :param start: (int) start position (x or y based on the side) of the door
+        :param end: (int) end position (x or y based on the side) of the door
+        :return: None
+        """
+        bounds = self.bounds[side]
+        start_position = start; end_position = end
+
+        # print("side", side)
+        # print("start", start)
+        # print("end", end)
+        # print("bounds", bounds)
+
+        # invert if wrongly assigned start and end
+        if start > end:
+            tmp = end
+            end_position = start_position
+            start_position = tmp
+
+        # initialize variables algorithm
+        to_insert = []
+        idx_delete = -1
+
+        if   side == 'south' or side == 'north':   # check x
+            for idx, bound in enumerate(bounds):
+                if start_position > bound[0][0] and end_position < bound[1][0]:
+                    print("passed -------")
+                    first_new_bound  = (pg.math.Vector2(bound[0][0], bound[0][1]),pg.math.Vector2(start_position,bound[0][1]))
+                    second_new_bound = (pg.math.Vector2(end_position,bound[1][1]),pg.math.Vector2(bound[1][0],bound[1][1]))
+                    to_insert = [first_new_bound,second_new_bound]
+                    idx_delete = idx
+                    break
+             # [(pg.math.Vector2(vertices['left-top']), pg.math.Vector2(vertices['right-top']))]
+        elif side == 'west' or side == 'east':     # check y
+            for idx, bound in enumerate(bounds):
+                if start_position > bound[0][1] and end_position < bound[1][1]:
+                    print("passed -------")
+                    first_new_bound  = (pg.math.Vector2(bound[0][0], bound[0][1]),pg.math.Vector2(bound[0][0], start_position))
+                    second_new_bound = (pg.math.Vector2(bound[1][0], end_position),pg.math.Vector2(bound[1][0],bound[1][1]))
+                    to_insert = [first_new_bound,second_new_bound]
+                    idx_delete = idx
+                    break
+
+        # insert the new interval removing the old one
+        if idx_delete != -1:
+            bounds.pop(idx_delete)
+            bounds.insert(idx_delete, to_insert[0])
+            bounds.insert(idx_delete+1, to_insert[1])
+
+
+    def show_boundaries(self):
+        self.visible_boundaries = True
+
+    def hide_boundaries(self):
+        self.visible_boundaries = False
+
+    # def add_door(self, room: HouseElement):   #
     def add_door(self, other_room: HouseElement, status='close', is_main = False):
         """
+        function that insert doors in the room. The door connects two rooms (edge graph like)
         :param other_room -> the adjacent room which is connected through the door
         :param status -> open or close
-        :param displacement -> pixel distance from the reference corner, used to place the door
+        :param is_main -> boolean variable to change asset for the frontal door
 
         reference points:
         N------------------------E
@@ -596,8 +675,7 @@ class Room(HouseElement):
         """
 
         vertices = self.get_vertices()
-        print("vertices",vertices)
-        print("vertices other", other_room.get_vertices())
+
         x_interval_other = range(other_room.get_vertices()['left-down'][0]+1, other_room.get_vertices()['right-down'][0])
         x_midpoint_other = math.ceil(other_room.get_vertices()['right-down'][0] - (other_room.width/2))
 
@@ -610,17 +688,19 @@ class Room(HouseElement):
         y_midpoint = math.ceil(vertices['left-top'][1] + (self.height/2))
 
 
-        print("\n------------------------")
-        print(self.name)
-        print("x_interval_other",x_interval_other)
-        print("x_midpoint_other",x_midpoint_other)
-        print("x_interval",x_interval)
-        print("x_midpoint",x_midpoint)
-        print("y_interval_other", y_interval_other)
-        print("y_midpoint_other", y_midpoint_other)
-        print("y_interval", y_interval)
-        print("y_midpoint", y_midpoint)
-        print("\n------------------------")
+        # print("\n------------------------")
+        # print("vertices",vertices)
+        # print("vertices other", other_room.get_vertices())
+        # print(self.name)
+        # print("x_interval_other",x_interval_other)
+        # print("x_midpoint_other",x_midpoint_other)
+        # print("x_interval",x_interval)
+        # print("x_midpoint",x_midpoint)
+        # print("y_interval_other", y_interval_other)
+        # print("y_midpoint_other", y_midpoint_other)
+        # print("y_interval", y_interval)
+        # print("y_midpoint", y_midpoint)
+        # print("\n------------------------")
 
         door_width = 100
         wall_margin = 10
@@ -690,6 +770,8 @@ class Room(HouseElement):
 
         # add door in the list of doors for the rooms
         self.doors[side] = door
+
+        # i do the same for the adjacent room, using the opposite cardinal direction
         if side == 'north':
             other_room.doors['south'] = door
         elif side == 'west':
@@ -698,6 +780,11 @@ class Room(HouseElement):
             other_room.doors['north'] = door
         elif side == 'east':
             other_room.doors['west'] = door
+
+        if side == 'north' or side == 'south':
+            self._edit_boundaries(side, door.rect.center[0] - door_width/2, door.rect.center[0] + door_width/2)
+        elif side == 'west' or side == 'east':
+            self._edit_boundaries(side, door.rect.center[1] - door_width/2, door.rect.center[1] + door_width/2)
 
         return door
 
@@ -742,6 +829,21 @@ class Room(HouseElement):
         self.windows[side] = (window_l,window_r)
 
         return window_l, window_r
+
+    def add_furniture(self): #todo
+        pass
+
+    def draw(self, width_line = 5):
+        super().draw()
+        if self.visible_boundaries:
+            for segment in self.bounds['north']:
+                pg.draw.line(self.screen, (255, 0, 0), start_pos= segment[0], end_pos=segment[1], width=width_line)
+            for segment in self.bounds['south']:
+                pg.draw.line(self.screen, (255, 0, 0), start_pos= segment[0], end_pos=segment[1], width=width_line)
+            for segment in self.bounds['east']:
+                pg.draw.line(self.screen, (255, 0, 0), start_pos= segment[0], end_pos=segment[1], width=width_line)
+            for segment in self.bounds['west']:
+                pg.draw.line(self.screen, (255, 0, 0), start_pos= segment[0], end_pos=segment[1], width=width_line)
 
 class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
     def __init__(self, name, screen, x, y, angle_side, displacement, door_width, side, status, room_a, room_b, group, is_main = False):
@@ -796,8 +898,8 @@ class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
 
         if self.side == 'north':
             init_rect.height = 10
-            init_rect.y = self.rect.center[1] - 5
-            init_rect.width -= 3
+            init_rect.y = self.rect.center[1] - 5    # rect needs the top left corner, so remove the half width offset
+            init_rect.width -= 3                     # next 3 lines are to enhance aspect
             init_rect.center = self.rect.center
             init_rect.x += 4
         elif self.side == 'south':
