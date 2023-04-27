@@ -1,9 +1,9 @@
 import pygame as pg
 from pygame import Surface
 import math
-import time
 import threading
-from display_objects import StaticImage, Rect, Text, InputTextBox, Button, OutputTextBox, Room, Pepper, get_rooms
+from display_objects import StaticImage, Rect, Text, InputTextBox, Button,\
+                            OutputTextBox, Room, Pepper, get_rooms
 
 def create_UI(screen: Surface, verbose = True):
 
@@ -21,7 +21,7 @@ def create_UI(screen: Surface, verbose = True):
     lateral_panel_width = math.ceil(screen.get_width()/4)
     lateral_panel_height = screen.get_height()
 
-    lateral_panel = StaticImage(file_path = "static/lateral_panel.jpg", screen= screen, x= lateral_panel_ltc_x,\
+    lateral_panel = StaticImage(file_path = "static/texture/lateral_panel.jpg", screen= screen, x= lateral_panel_ltc_x,\
                                  y=lateral_panel_ltc_y, width=lateral_panel_width, height=lateral_panel_height)
 
     text_control_panel = Text("Control Panel", screen= screen, x= lateral_panel_ltc_x \
@@ -94,10 +94,10 @@ def create_environment(screen: Surface, verbose = True):
     print(f"Environment shape -> width:{env_width}, height:{env_height}")
 
     # -- garden
-    bg_garden_t = StaticImage('static/garden2.jpg', screen, env_ltc_x,env_ltc_y, env_width,\
+    bg_garden_t = StaticImage('static/texture/garden2.jpg', screen, env_ltc_x,env_ltc_y, env_width,\
                                math.ceil(env_height / 2))   # static images are defined with top left corner coordinates
 
-    bg_garden_b = StaticImage('static/garden2.jpg', screen, env_ltc_x, math.ceil(env_height / 2), env_width,\
+    bg_garden_b = StaticImage('static/texture/garden2.jpg', screen, env_ltc_x, math.ceil(env_height / 2), env_width,\
                                math.ceil(env_height / 2))
     bg_garden_b.image = pg.transform.flip(bg_garden_b.image, False, True)
 
@@ -155,43 +155,32 @@ def create_environment(screen: Surface, verbose = True):
     extra_hud_group.add(toilet_north.get_display_name(side='top', color=(0,0,0)))
     toilet_north.add_window("north", displacement= 150, status= 'close')
 
-    test_w = 300; test_h = 200
-    test_roomN = Room(name="Test nord", screen=screen, x= studio.x -99, \
-                        y= studio.y - studio.height/2 - wall_size - test_h/2 , width=test_w, height=test_h, \
-                        env_group=env_group)
-
-    test_roomS = Room(name="Test sud", screen=screen, x= studio.x + 99, \
-                        y= studio.y + studio.height/2 + wall_size + test_h/2 , width=test_w, height=test_h, \
-                        env_group=env_group)
-
-    test_roomW = Room(name="Test west", screen=screen, x= studio.x - studio.width/2 - wall_size - test_w/2, \
-                        y= studio.y, width=test_w, height=test_h, \
-                        env_group=env_group)
 
     # 2.2) creates doors (interconnection between rooms)
 
     # studio -> toiler (north)
-    door = studio.add_door(toilet_north, status='close')
+    door = studio.add_door(toilet_north, status='close', displ= 45)
     timer = threading.Timer(1, lambda : door.open())
     timer.start()
-
-    test_doorN = test_roomN.add_door(studio, status='close')
-    timer2 = threading.Timer(1, lambda : test_doorN.open())
-    timer2.start()
-
-    test_doorS = test_roomS.add_door(studio, status='close')
-    timer3 = threading.Timer(1, lambda : test_doorS.open())
-    timer3.start()
-
-    test_doorW = test_roomW.add_door(studio, status='close')
-    timer4 = threading.Timer(1, lambda : test_doorW.open())
-    timer4.start()
-
 
     # 3) Create pepper placeholder
 
     pepper = Pepper(screen, env_group, studio)
     extra_hud_group.add(pepper.get_logo())
+
+
+    # 4) include furniture
+
+    #  -- studio
+    desk_studio_w = math.ceil(studio_w /2) + 50 ; desk_studio_h = math.ceil(studio_h /4)
+    studio.add_furniture("studio desk", "studio_table",x=math.ceil(studio.x),\
+                         y=math.ceil(studio.y + studio.height/2 - desk_studio_h/2 - 20), width=desk_studio_w,\
+                         height=desk_studio_h, rotation= 180)
+    chair_studio_w = 50; chair_studio_h = 50
+    studio.add_furniture("studio chair", "studio_chair",x=math.ceil(studio.x),\
+                         y=math.ceil(studio.y + studio.height/2 - chair_studio_h/2), width=chair_studio_w,\
+                         height=chair_studio_h, rotation= 180)
+
     return env_group, extra_hud_group
 
 # ----------------------------------- test functions -------------------------------------

@@ -2,21 +2,19 @@ import pygame
 import pygame as pg
 import time
 import os
+import gc
 import sys
 import math
 from environment import create_UI, create_environment
 from services import InputInterpreter
 
 
-# definition of constants as default values
-WIDTH_WIN = 1920
-HEIGHT_WIN = 1080
-X_WIN = 0
-Y_WIN = 0
+# Definition of constants as default values
+WIDTH_WIN = 1920; HEIGHT_WIN = 1080
+X_WIN = 0; Y_WIN = 0
 FPS = 60
-XC_WIN = lambda : math.ceil(WIDTH_WIN/2)
-YC_WIN = lambda : math.ceil(HEIGHT_WIN/2)
-
+XC_WIN = lambda: math.ceil(WIDTH_WIN/2); YC_WIN = lambda: math.ceil(HEIGHT_WIN/2)
+os_systems = ['linux', 'windows']; os_selected = os_systems[1]
 
 def update_win_size():
     global WIDTH_WIN
@@ -24,9 +22,9 @@ def update_win_size():
     global X_WIN
     global Y_WIN
     info_display = pg.display.Info()
-    WIDTH_WIN = math.floor(info_display.current_w/2) +400  # 100
+    WIDTH_WIN = math.floor(info_display.current_w/2) + 400  # 100
     HEIGHT_WIN = info_display.current_h - 75
-    X_WIN = WIDTH_WIN -800
+    X_WIN = WIDTH_WIN - 800
     Y_WIN = 35
 
 def initialization():
@@ -35,23 +33,27 @@ def initialization():
     update_win_size()
 
     # move the position where to create the window modifying the SDL properties
-    os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (X_WIN, Y_WIN)
+    if os_selected == 'windows':
+        os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (X_WIN, Y_WIN)
 
-    screen = pg.display.set_mode((WIDTH_WIN, HEIGHT_WIN))  # it's a surface object with all the space
+    screen = pg.display.set_mode((WIDTH_WIN, HEIGHT_WIN))  # it's a surface object to draw in
     pg.display.set_caption("2D simulator HRI-RA")
+    pg.display.set_icon(pg.image.load('static/assets/pepper.png'))
+    # pg.display.toggle_fullscreen()
+
     clock = pg.time.Clock()
 
     return screen, clock
-
 
 def debug_render(env_group):
     for el in env_group:
         if type(el).__name__ == "Room":
             el.render_debug_vertices()
-        if type(el).__name__ == "Window" or type(el).__name__ == "Door":
+            if not(el.visible_boundaries): el.show_boundaries()
+        if type(el).__name__ in ["Window", "Door", "Furniture"]:
             el.render_debug_rect()
 
-def rendering(debug = False, extra_HUD = False):
+def rendering(debug = True, extra_HUD = False):
 
     # initialize the pygame engine, get main display object and clock for the rendering
     screen, clock = initialization()
@@ -72,12 +74,14 @@ def rendering(debug = False, extra_HUD = False):
     # custom object to execute user's inputs
     input_interpreter = InputInterpreter()
 
+
     # frame counter
     counter_frame = 0
 
     # -------------------------------------------- Main rendering Loop
     while True:
 
+        # for delation animation of the text in the box
         if deleting is not None:
             cooldown_delete = time.time() - time_delete
             if  cooldown_delete > deleting_wait:
@@ -162,6 +166,22 @@ def rendering(debug = False, extra_HUD = False):
 
             if event.type == pg.KEYUP:
                 if event.key == pg.K_BACKSPACE: deleting = None
+
+        # ---------------------------------------- Input Interpreter action
+        if input_interpreter.reset:
+            gc.collect()
+            # first option
+            # pg.display.quit()
+            # rendering()
+
+            # second option
+            del env_group; del extra_HUD_group
+            del ui_group; del text_boxes
+            ui_group, text_boxes = create_UI(screen)
+            env_group, extra_HUD_group = create_environment(screen)
+            input_interpreter.reset = False
+
+
 
 
         # ---------------------------------------- Logical updates

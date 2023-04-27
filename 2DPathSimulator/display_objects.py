@@ -1,4 +1,3 @@
-import pygame
 import pygame as pg
 import math
 from services import PepperSocket
@@ -18,20 +17,50 @@ progDos_furniture       = 1
 font_path = "static/nasa_font.ttf"
 
 tiles = {
-    'parquet': 'static/floor_parquet.jpg',
-    'grey': 'static/floor_grey_tiles.jpg',
-    'white': 'static/floor_white.jpg',
-    'marble': 'static/floor_marble.jpg',
-    'black_marble': 'static/floor_black_marble.jpg',
-    'ceramic': 'static/floor_ceramic.jpg',
-    'parquet_strips': 'static/floor_parquet_strips.jpg',
-    'rhombus': 'static/floor_rhombus.jpg',
-    'test': 'static/floor_test.png'
+    'parquet': 'static/texture/floor_parquet.jpg',
+    'grey': 'static/texture/floor_grey_tiles.jpg',
+    'white': 'static/texture/floor_white.jpg',
+    'marble': 'static/texture/floor_marble.jpg',
+    'black_marble': 'static/texture/floor_black_marble.jpg',
+    'ceramic': 'static/texture/floor_ceramic.jpg',
+    'parquet_strips': 'static/texture/floor_parquet_strips.jpg',
+    'rhombus': 'static/texture/floor_rhombus.jpg',
+    'test': 'static/texture/floor_test.png'
 }
 
-furniture = {
-
-
+assets_furniture = {
+    "apple"             : {"path": "static/assets/apple.png", "has_status" : False, "is_movable" : True},
+    "armchair"          : {"path": "static/assets/armchair.png", "has_status" : False , "is_movable" : False},
+    "bed"               : {"path": "static/assets/bed.png", "has_status" : False, "is_movable" : False},
+    "big_table"         : {"path": "static/assets/big_table.png", "has_status": False, "is_movable": False},
+    "big_table_chairs"  : {"path": "static/assets/big_table_chairs.png", "has_status" : False, "is_movable":  False},
+    "cabinet"           : {"path": "static/assets/cabinet.png", "has_status" : False, "is_mobable" : False},
+    "cards"             : {"path": "static/assets/cards.png", "has_status" : False, "is_movable" : True},
+    "chair"             : {"path": "static/assets/chair.png", "has_status" : False, "is_movable" : False},
+    "coffee"            : {"path": "static/assets/coffee.png", "has_status" : False, "is_movable" : True},
+    "glasses"           : {"path": "static/assets/glasses.png", "has_status" : False, "is_movable" : True},
+    "green_marker"      : {"path": "static/assets/green_marker.png", "has_status" : False, "is_movable" : True},
+    "kitchen"           : {"path": "static/assets/kitchen.png", "has_status" : False, "is_movable" : False},
+    "orange"            : {"path": "static/assets/orange.png", "has_status" : False, "is_movable" : True},
+    "paper_notebook"    : {"path": "static/assets/paper_notebook.png", "has_status" : False, "is_movable" : True},
+    "pen"               : {"path": "static/assets/pen.png", "has_status" : False, "is_movable" : True},
+    "pencil"            : {"path": "static/assets/pencil.png", "has_status" : False, "is_movable" : True},
+    "plant_1"           : {"path": "static/assets/plant_1.png", "has_status" : False, "is_movable" : False},
+    "plant_2"           : {"path": "static/assets/plant_2.png", "has_status" : False, "is_movable" : False},
+    "plate"             : {"path": "static/assets/plate.png", "has_status" : False, "is_movable" : True},
+    "pool"              : {"path": "static/assets/pool.png", "has_status" : False, "is_movable" : False},
+    "sink"              : {"path": "static/assets/sink.png", "has_status" : False, "is_movable" : False},
+    "small_table"       : {"path": "static/assets/small_table.png", "has_status" : False, "is_movable" : False},
+    "smartphone"        : {"path": "static/assets/smartphone.png", "has_status" : False, "is_movable" : True},
+    "sofa"              : {"path": "static/assets/sofa.png", "has_status" : False, "is_movable" : False},
+    "stove"             : {"path": "static/assets/stove.png", "has_status" : False, "is_movable" : False},
+    "studio_chair"      : {"path": "static/assets/studio_chair.png", "has_status" : False, "is_movable" : False},
+    "studio_table"      : {"path": "static/assets/studio_table.png", "has_status" : False, "is_movable" : False},
+    "toilet"            : {"path": "static/assets/toilet.png", "has_status" : False, "is_movable" : False},
+    "toilet_sink"       : {"path": "static/assets/toilet_sink.png", "has_status" : False, "is_movable" : False},
+    "tub"               : {"path": "static/assets/tub.png", "has_status" : False, "is_movable" : False},
+    "tv_off"            : {"path": "static/assets/tv_off.png", "has_status" : True, "is_movable" : False},
+    "tv_on"             : {"path": "static/assets/tv_on.png", "has_status" : True, "is_movable" : False}
 }
 
 rooms = []
@@ -126,9 +155,9 @@ class Button(pg.sprite.Sprite):
         self.name = name
         self.status = type_button
         if type_button == 'on':
-            self.image = pg.image.load("static/green_bt.png").convert_alpha() # sprite for both on and off button
+            self.image = pg.image.load("static/assets/green_bt.png").convert_alpha() # sprite for both on and off button
         elif type_button == 'off':
-            self.image = pg.image.load("static/red_bt.png").convert_alpha()
+            self.image = pg.image.load("static/assets/red_bt.png").convert_alpha()
         else:
             raise ValueError("Wrong button type has been assigned")
 
@@ -137,7 +166,7 @@ class Button(pg.sprite.Sprite):
         self.rect.center = (x, y)
         self.last_click = None
         self.type_DO = 'button'
-        self.sound = pg.mixer.Sound("static/button_click.mp3")
+        self.sound = pg.mixer.Sound("static/sounds/button_click.mp3")
 
         global progDos_buttons
         self.prog = progDos_buttons
@@ -159,7 +188,7 @@ class Button(pg.sprite.Sprite):
         if self.status == 'on':
             print(f'button {self.name} goes to off')
             pg.mixer.Sound.play(self.sound)
-            self.image = pg.image.load("static/red_bt.png").convert_alpha()
+            self.image = pg.image.load("static/assets/red_bt.png").convert_alpha()
             self.image = pg.transform.smoothscale(self.image, (self.width, self.height))
             self.rect = self.image.get_rect()
             self.rect.center = (self.x, self.y)
@@ -169,7 +198,7 @@ class Button(pg.sprite.Sprite):
         elif self.status == 'off':
             print(f'button {self.name} goes to on')
             pg.mixer.Sound.play(self.sound)
-            self.image = pg.image.load("static/green_bt.png").convert_alpha()
+            self.image = pg.image.load("static/assets/green_bt.png").convert_alpha()
             self.image = pg.transform.smoothscale(self.image, (self.width, self.height))
             self.rect = self.image.get_rect()
             self.rect.center = (self.x, self.y)
@@ -554,7 +583,7 @@ class Room(HouseElement):
         super().__init__(name, screen, env_group, x, y, width, height)
         self.max_w_tile = 100
         self.max_h_tile = 100
-        self.image = pygame.Surface((width, height), pg.SRCALPHA)
+        self.image = pg.Surface((width, height), pg.SRCALPHA)
 
         # full the surface with the image
         for i in range(math.ceil(self.width/self.max_w_tile)):
@@ -567,10 +596,10 @@ class Room(HouseElement):
         self.rect.center = (self.x, self.y)
 
         # list of elements
-        self.bounds      = {}
-        self.windows    = {}
-        self.doors      = {}
-        self.furniture  = {}
+        self.bounds     = {}    # k: (str) side             v: list of tuple with x and y vector values for each segment
+        self.windows    = {}    # k: (str) side             v: tuple for left window and right window
+        self.doors      = {}    # k: (str) side             v: door display object
+        self.furniture  = {}    # k: (str) type_furniture   v: furniture display object
 
         # add in the list of element for rendering
         self.group.add(self)
@@ -580,7 +609,7 @@ class Room(HouseElement):
         rooms.append(self)
 
         self._create_boundaries()
-        self.visible_boundaries = True
+        self.visible_boundaries = False
 
     def _create_boundaries(self):  # depth wall 10 pixels
         vertices = self.get_vertices()
@@ -598,7 +627,8 @@ class Room(HouseElement):
 
     def _edit_boundaries(self, side, start, end):
         """
-        Function used to change the shape of the room's boundaries when a door is inserted
+        Function used to change the shape of the room's boundaries when a door is inserted.
+        this function decompose each segment side in sub-segments separated by the door
 
         :param side: (str) cardinal direction: north, south, east, west
         :param start: (int) start position (x or y based on the side) of the door
@@ -649,7 +679,6 @@ class Room(HouseElement):
             bounds.insert(idx_delete, to_insert[0])
             bounds.insert(idx_delete+1, to_insert[1])
 
-
     def show_boundaries(self):
         self.visible_boundaries = True
 
@@ -657,7 +686,7 @@ class Room(HouseElement):
         self.visible_boundaries = False
 
     # def add_door(self, room: HouseElement):   #
-    def add_door(self, other_room: HouseElement, status='close', is_main = False):
+    def add_door(self, other_room: HouseElement, status='close', displ = 0, is_main = False):
         """
         function that insert doors in the room. The door connects two rooms (edge graph like)
         :param other_room -> the adjacent room which is connected through the door
@@ -715,9 +744,9 @@ class Room(HouseElement):
             y_door = vertices['left-top'][1]
             angle_door = 0
             if self.width > other_room.width:
-                displacement = other_room.width/2
+                displacement = other_room.width/2 + displ
             else:
-                displacement = self.width/2
+                displacement = self.width/2 + displ
 
         elif (other_room.x + other_room.width/2 + wall_margin == self.x - self.width/2)\
             and (((y_midpoint - door_width/2 in y_interval_other) and (y_midpoint + door_width/2 in y_interval_other))\
@@ -728,9 +757,9 @@ class Room(HouseElement):
             y_door = vertices['left-down'][1]
             angle_door = 90
             if self.height > other_room.height:
-                displacement = other_room.height/2
+                displacement = other_room.height/2 + displ
             else:
-                displacement = self.height/2
+                displacement = self.height/2 + displ
 
         elif (other_room.y - other_room.height/2 - wall_margin == self.y + self.height/2) \
             and (((x_midpoint - door_width/2 in x_interval_other) and (x_midpoint + door_width/2 in x_interval_other))\
@@ -741,9 +770,9 @@ class Room(HouseElement):
             y_door = vertices['right-down'][1]
             angle_door = 180
             if self.width > other_room.width:
-                displacement = other_room.width/2
+                displacement = other_room.width/2 + displ
             else:
-                displacement = self.width/2
+                displacement = self.width/2 + displ
 
         elif (other_room.x - other_room.width/2 - wall_margin == self.x + self.width/2)\
             and (((y_midpoint - door_width/2 in y_interval_other) and (y_midpoint + door_width/2 in y_interval_other)) \
@@ -754,9 +783,9 @@ class Room(HouseElement):
             y_door = vertices['right-top'][1]
             angle_door = 270
             if self.height > other_room.height:
-                displacement = other_room.height/2
+                displacement = other_room.height/2 + displ
             else:
-                displacement = self.height/2
+                displacement = self.height/2 + displ
         else:
             raise ValueError(f"No valid position for the adjacent room")
 
@@ -774,12 +803,20 @@ class Room(HouseElement):
         # i do the same for the adjacent room, using the opposite cardinal direction
         if side == 'north':
             other_room.doors['south'] = door
+            other_room._edit_boundaries("south", door.rect.center[0] - door_width/2,
+                                        door.rect.center[0] + door_width/2)
         elif side == 'west':
             other_room.doors['east'] = door
+            other_room._edit_boundaries("east", door.rect.center[1] - door_width / 2,
+                                  door.rect.center[1] + door_width / 2)
         elif side == 'south':
             other_room.doors['north'] = door
+            other_room._edit_boundaries("north", door.rect.center[0] - door_width / 2,
+                                        door.rect.center[0] + door_width / 2)
         elif side == 'east':
             other_room.doors['west'] = door
+            other_room._edit_boundaries("west", door.rect.center[1] - door_width / 2,
+                                  door.rect.center[1] + door_width / 2)
 
         if side == 'north' or side == 'south':
             self._edit_boundaries(side, door.rect.center[0] - door_width/2, door.rect.center[0] + door_width/2)
@@ -830,8 +867,14 @@ class Room(HouseElement):
 
         return window_l, window_r
 
-    def add_furniture(self): #todo
-        pass
+    def add_furniture(self, name, type_forniture, x, y, width, height, rotation):
+
+        house_component = Furniture(name, self.screen, self.group, type_forniture, x, y,\
+                                    width, height, rotation)
+
+        self.furniture[type_forniture] = house_component
+        self.group.add(house_component)
+
 
     def draw(self, width_line = 5):
         super().draw()
@@ -878,8 +921,8 @@ class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
         self.display_gfxRect()
 
         # load sound effects
-        self.sound_open = pg.mixer.Sound("static/open_door.mp3")
-        self.sound_close = pg.mixer.Sound("static/close_door.mp3")
+        self.sound_open = pg.mixer.Sound("static/sounds/open_door.mp3")
+        self.sound_close = pg.mixer.Sound("static/sounds/close_door.mp3")
 
         # compute reduced rect for white surface of opened door
         self.rect_open = self._get_reduced_rect()
@@ -925,9 +968,9 @@ class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
 
     def _load_images(self):
         if not(self.is_main):
-            self.image_door = pg.image.load("static/door.png").convert_alpha()
+            self.image_door = pg.image.load("static/assets/door.png").convert_alpha()
         else:
-            self.image_door = pg.image.load("static/main_door.png").convert_alpha()
+            self.image_door = pg.image.load("static/assets/main_door.png").convert_alpha()
         self.image = self.image_door.copy()
         self.image = self._transformation_image(self.image)
 
@@ -1083,8 +1126,8 @@ class Window(HouseElement):
         self.display_gfxRect()
 
         # load sound effects
-        self.sound_open = pg.mixer.Sound("static/window_open.mp3")
-        self.sound_close = pg.mixer.Sound("static/window_close.mp3")
+        self.sound_open = pg.mixer.Sound("static/sounds/window_open.mp3")
+        self.sound_close = pg.mixer.Sound("static/sounds/window_close.mp3")
 
         # compute reduced rect for white surface of opened window
         self.rect_open = self._get_reduced_rect()
@@ -1117,14 +1160,14 @@ class Window(HouseElement):
 
     def _load_images(self):
         # load both images (no transformations)
-        self.image_open = pg.image.load("static/window_open.png").convert_alpha()
-        self.image_close = pg.image.load("static/window-closed.png").convert_alpha()
+        self.image_open = pg.image.load("static/assets/window_open.png").convert_alpha()
+        self.image_close = pg.image.load("static/assets/window-closed.png").convert_alpha()
 
         # load actual image based on status
         if self.status == 'open':
-            self.image = pg.image.load("static/window_open.png").convert_alpha()
+            self.image = pg.image.load("static/assets/window_open.png").convert_alpha()
         elif self.status == 'close':
-            self.image = pg.image.load("static/window-closed.png").convert_alpha()
+            self.image = pg.image.load("static/assets/window-closed.png").convert_alpha()
         else:
             raise ValueError("Wrong window status has been assigned")
 
@@ -1292,8 +1335,40 @@ class Window(HouseElement):
         super().draw()
 
 class Furniture(HouseElement):
-    def __init__(self, name, screen, group, x, y, width, height):
+    def __init__(self, name, screen, group, type_furniture, x, y, width, height, rotation):
         super().__init__(name, screen, group, x, y, width, height)
+        self.type_furniture = type_furniture
+        self.rotation = rotation
+        self.has_status = assets_furniture[self.type_furniture]["has_status"]
+        # self.status = status
+        self.is_movable = assets_furniture[self.type_furniture]["is_movable"]
+        self._load_image()
+        self.rect = self.image.get_rect()
+        self.rect.center = (self.x, self.y)
+        self.display_gfxRect()
+
+
+    def _load_image(self):
+        if not(self.has_status):
+            self.image_asset = pg.image.load(assets_furniture[self.type_furniture]["path"]).convert_alpha()
+            self.image = self.image_asset.copy()
+        else:
+            status = self.type_furniture.split("_")[1]
+            type_asset = self.type_furniture.split("_")[0]
+            self.image_asset_on = pg.image.load(assets_furniture[type_asset  + "_on"]["path"]).convert_alpha()
+            self.image_asset_off = pg.image.load(assets_furniture[type_asset + '_off']["path"]).convert_alpha()
+            if status == 'on': self.image = self.image_asset_on.copy()
+            elif status == 'off': self.image = self.image_asset_off.copy()
+            else: raise ValueError("asset type selected not valid!")
+
+        self._transformation_image(self.image)
+
+    def _transformation_image(self, image):
+        # upscale/downscale, rotate
+        image = pg.transform.smoothscale(image, (self.width, self.height))
+        image = pg.transform.rotate(image, self.rotation)
+        self.image = image
+
 
 class Pepper(HouseElement):
     def __init__(self, screen, group, room):
@@ -1327,7 +1402,7 @@ class Pepper(HouseElement):
         self.p_letter.center_to(self.x, self.y)
 
     def get_logo(self, width = 80, height = 80):
-        logo = StaticImage("static/pepper.png", self.screen, self.x - width/2, self.y - height/2, width, height)
+        logo = StaticImage("static/assets/pepper.png", self.screen, self.x - width/2, self.y - height/2, width, height)
         return logo
 
 

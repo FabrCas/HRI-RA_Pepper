@@ -9,12 +9,15 @@ def random_position(screen, margin=20):
 class InputInterpreter(object):
     def __init__(self):
         super().__init__()
+        self.reset = False
 
     def execute(self, message):
         if "daje roma" in message.strip().lower():
-            daje_roma = pg.mixer.Sound('static/daje_roma_daje.mp3')
+            daje_roma = pg.mixer.Sound('static/sounds/daje_roma_daje.mp3')
             pg.mixer.Sound.play(daje_roma)
-        pass
+        if "reset" in message.strip().lower():
+            self.reset = True
+
 
 class PepperSocket():
     def __init__(self):
