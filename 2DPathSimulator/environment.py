@@ -13,8 +13,6 @@ def create_UI(screen: Surface, verbose = True):
     ui_group = pg.sprite.Group()
     text_boxes = []  # text boxes are handled differently since are custom objects that don't inherit pygame classes
 
-    # print(screen.get_width(), screen.get_height())
-
     # 1) create lateral panel and title, ltc -> left top corner
     lateral_panel_ltc_x = math.ceil(screen.get_width()*3/4)
     lateral_panel_ltc_y = 0
@@ -66,9 +64,8 @@ def create_UI(screen: Surface, verbose = True):
     text_boxes.append(system_box)
     ui_group.add(text_system_box)
 
-    test_messages(system_box, screen)
+    # test_messages(system_box, screen)
     return ui_group, text_boxes
-
 
 def create_environment(screen: Surface, verbose = True):
 
@@ -106,7 +103,7 @@ def create_environment(screen: Surface, verbose = True):
 
     # -- outdoor sidewalk
     outdoor_w = 150; outdoor_h = 400;
-    outdoor_x = env_width - (outdoor_w/2 + margin)
+    outdoor_x = env_width - (outdoor_w/2 + margin) - wall_size
     outdoor_y = env_height - (outdoor_h/2)
 
     outdoor_edge = Rect(screen= screen, x = outdoor_x - outdoor_w/2 - wall_size, y= outdoor_y - outdoor_h/2,\
@@ -127,7 +124,7 @@ def create_environment(screen: Surface, verbose = True):
                    height= env_height - (margin - wall_size) - outdoor.height, color= (0,0,0))
 
     wall_down = Rect(screen= screen, x = margin - wall_size, y= margin - wall_size + wall_up.height,\
-                    width = env_width - (2*(margin - wall_size)) - outdoor.width - 2*margin,\
+                    width = env_width - (2*(margin - wall_size)) - outdoor.width - margin,\
                     height= env_height - wall_up.height - 2*(margin - wall_size), color= (0,0,0))
 
     env_group.add(wall_up); env_group.add(wall_down)
@@ -136,7 +133,7 @@ def create_environment(screen: Surface, verbose = True):
     # 2.2) Create the House Rooms, windows, and extra HUD text
 
     # -- studio
-    studio_w = 300; studio_h = 400
+    studio_w = 350; studio_h = 350
     studio = Room(name='Studio', screen= screen, x=margin + (studio_w/2), y= margin + (studio_h/2),\
                   width=studio_w, height=studio_h, env_group= env_group, tile_type='parquet')
     extra_hud_group.add(studio.get_display_name(side='top'))
@@ -147,21 +144,85 @@ def create_environment(screen: Surface, verbose = True):
     timer1.start()
     timer2.start()
 
-    # -- north toilet
-    toiletNorth_w= 300; toiletNorth_h= 200
-    toilet_north = Room(name="Toilet (north)", screen= screen, x= margin + studio_w + wall_size+ toiletNorth_w/2,\
-                        y= margin + toiletNorth_h/2, width= toiletNorth_w, height=toiletNorth_h,\
+    # -- toilet
+    toilet_w= 360; toilet_h= 200
+    toilet = Room(name="Toilet", screen= screen, x= margin + studio_w + wall_size+ toilet_w/2,\
+                        y= margin + toilet_h/2, width= toilet_w, height=toilet_h,\
                         env_group= env_group, tile_type='rhombus')
-    extra_hud_group.add(toilet_north.get_display_name(side='top', color=(0,0,0)))
-    toilet_north.add_window("north", displacement= 150, status= 'close')
+    extra_hud_group.add(toilet.get_display_name(side='top', color=(0,0,0)))
+    toilet.add_window("north", displacement= toilet_w/2, status= 'open')
+
+    # -- Foyer
+    foyer_w = wall_up.width - wall_size*4 - studio_w - toilet_w; foyer_h= wall_up.height -2* wall_size
+    foyer = Room(name="Foyer", screen= screen, x= toilet.x + toilet_w/2 + wall_size + foyer_w/2,\
+                        y = wall_up.y + foyer_h/2 + wall_size , width= foyer_w,
+                        height= foyer_h, env_group= env_group, tile_type='white')
+    extra_hud_group.add(foyer.get_display_name(side='top', color=(0, 0, 0)))
+    foyer.add_window("east", displacement=300, status='open')
+
+    # -- Living Room
+    living_room_w = toilet_w; living_room_h = wall_up.height + wall_down.height - toilet_h -4* wall_size - 300
+    living_room = Room(name="Living Room", screen= screen, x= toilet.x,\
+                        y = toilet.y + toilet_h/2 + wall_size + living_room_h/2 , width= living_room_w,
+                        height= living_room_h, env_group= env_group, tile_type='parquet_strips')
+    extra_hud_group.add(living_room.get_display_name(side='top', color=(255, 255, 255)))
+
+    # -- Dining
+    dining_w = toilet_w; dining_h = 300
+    dining = Room(name="Dining", screen= screen, x= toilet.x,\
+                        y = living_room.y + living_room_h/2 + wall_size + dining_h/2 , width= dining_w,
+                        height= dining_h, env_group= env_group, tile_type='marble')
+    extra_hud_group.add(dining.get_display_name(side='top', color=(0, 0, 0)))
+    dining.add_window("east", displacement=dining_h/2, status='open')
+
+
+    # -- Bedroom
+    bedroom_w = studio_w; bedroom_h = 300
+    bedroom = Room(name="Bedroom", screen= screen, x= studio.x,\
+                        y = studio.y + studio_h/2 + wall_size + bedroom_h/2 , width= bedroom_w,
+                        height= bedroom_h, env_group= env_group, tile_type='black_marble')
+    extra_hud_group.add(bedroom.get_display_name(side='top', color=(255, 255, 255)))
+    bedroom.add_window("west", displacement=bedroom_h/2, status='open')
+
+    # -- Kitchen
+    kitchen_w = studio_w; kitchen_h = wall_up.height + wall_down.height - studio_h - wall_size*4 - bedroom_h
+    kitchen = Room(name="Kitchen", screen= screen, x= studio.x,\
+                        y = bedroom.y + bedroom_h/2 + wall_size + kitchen_h/2, width= kitchen_w,
+                        height= kitchen_h, env_group= env_group, tile_type='ceramic')
+    extra_hud_group.add(kitchen.get_display_name(side='top', color=(0, 0, 0)))
+    wind = kitchen.add_window("south", displacement= math.ceil(kitchen_w * 1/4), status='open')
+
+    timer1 = threading.Timer(1, lambda: wind[0].close())
+    timer1.start()
 
 
     # 2.2) creates doors (interconnection between rooms)
 
-    # studio -> toiler (north)
-    door = studio.add_door(toilet_north, status='close', displ= 45)
-    timer = threading.Timer(1, lambda : door.open())
-    timer.start()
+    # main door: foyer -> outside
+    door_f = foyer.add_door(outdoor, status="open", displ=10, is_main=True)
+
+    # foyer -> living room
+    foyer.add_door(living_room, status='open', displ=50)
+
+    # toilet -> living room
+    toilet.add_door(living_room,  status='open', displ=-120)
+
+    # studio -> living room
+    studio.add_door(living_room, status='open', displ=132)
+
+    # bedroom -> living room
+    bedroom.add_door(living_room, status='open', displ=-25)
+
+    # living room -> dining
+    living_room.add_door(dining, status='open', displ= 0)
+
+    # dining -> kitchen
+    door_d = dining.add_door(kitchen, status='close')
+
+    timer1 = threading.Timer(1, lambda: door_f.close())
+    timer2 = threading.Timer(1, lambda: door_d.open())
+    timer1.start()
+    timer2.start()
 
     # 3) Create pepper placeholder
 
@@ -169,17 +230,66 @@ def create_environment(screen: Surface, verbose = True):
     extra_hud_group.add(pepper.get_logo())
 
 
-    # 4) include furniture
+    # 4.1) include furniture (fixed)
 
     #  -- studio
-    desk_studio_w = math.ceil(studio_w /2) + 50 ; desk_studio_h = math.ceil(studio_h /4)
-    studio.add_furniture("studio desk", "studio_table",x=math.ceil(studio.x),\
+    desk_studio_w = math.ceil(studio_w /3) + 50 ; desk_studio_h = math.ceil(studio_h /5)
+    studio.add_furniture("studio desk", "studio_table",x=math.ceil(studio.x - studio.width/2 + desk_studio_w/2),\
                          y=math.ceil(studio.y + studio.height/2 - desk_studio_h/2 - 20), width=desk_studio_w,\
                          height=desk_studio_h, rotation= 180)
-    chair_studio_w = 50; chair_studio_h = 50
-    studio.add_furniture("studio chair", "studio_chair",x=math.ceil(studio.x),\
-                         y=math.ceil(studio.y + studio.height/2 - chair_studio_h/2), width=chair_studio_w,\
+
+    chair_studio_w = 40; chair_studio_h = 40
+    studio.add_furniture("studio chair", "studio_chair",x=math.ceil(studio.x - studio.width/2 + + desk_studio_w/2),\
+                         y=math.ceil(studio.y + studio.height/2 - chair_studio_h/2) -5, width=chair_studio_w,\
                          height=chair_studio_h, rotation= 180)
+
+    pool_studio_w = 150; pool_studio_h = 150
+    studio.add_furniture("studio pool", "pool",x=math.ceil(studio.x - studio.width/2 + pool_studio_w/2 * 3/5) + 50,\
+                         y=studio.y - 25, width=pool_studio_w,\
+                         height=pool_studio_h, rotation= 0)
+
+    # -- kitchen
+    kitchen_furniture_w = kitchen_h; kitchen_furniture_h = math.ceil(kitchen_w/3)
+    studio.add_furniture("kitchen furniture", "kitchen",x= kitchen.x - math.ceil(kitchen_w/2) + math.ceil(kitchen_furniture_h/2),\
+                         y= kitchen.y, width=kitchen_furniture_w,\
+                         height= kitchen_furniture_h, rotation= -90)
+
+    # -- bedroom
+    bed_w = math.ceil(bedroom_w/3); bed_h=math.ceil(bedroom_h/2)
+    bedroom.add_furniture("bed", "bed",x= bedroom.x,\
+                         y= bedroom.y - math.ceil(bedroom_h/2) + math.ceil(bed_h/2), width=bed_w,\
+                         height= bed_h, rotation= 0)
+
+    # -- toilet
+    toilet_water_w = 50; toilet_water_h = 50
+    toilet.add_furniture("water", "toilet_water", x=toilet.x - math.ceil(toilet_w/2) + math.ceil(toilet_water_w/2) + 5,\
+                         y= toilet.y - math.ceil(toilet_h/2) + math.ceil(toilet_water_h/2) + 5, width=toilet_water_w,\
+                         height= toilet_water_h, rotation= 180)
+
+    toilet_tub_w = 120; toilet_tub_h = 120
+
+    toilet.add_furniture("tub", "tub", x=toilet.x - math.ceil(toilet_w/2) + math.ceil(toilet_tub_w/4),\
+                         y= toilet.y + math.ceil(toilet_h/2) - math.ceil(toilet_tub_h/2), width=toilet_tub_w,\
+                         height= toilet_tub_h, rotation= 0)
+
+    toilet_sink_w = 70; toilet_sink_h = 70
+    toilet.add_furniture("sink", "toilet_sink", x=toilet.x,\
+                         y= toilet.y + math.ceil(toilet_h/2) - math.ceil(toilet_sink_h/2 * 3/5),\
+                         width=toilet_sink_w, height= toilet_sink_h, rotation=180)
+
+    toilet_cabinet_w = 80; toilet_cabinet_h = 80
+    toilet.add_furniture("toilet cabinet", "cabinet", x=toilet.x + math.ceil(toilet_w/2) - math.ceil(toilet_cabinet_h/2 * 3/5) ,\
+                         y= toilet.y - math.ceil(toilet_cabinet_w/2) -20,\
+                         width=toilet_cabinet_w, height= toilet_cabinet_h, rotation=-90)
+
+    # -- foyer
+
+    # -- living room
+
+    # -- dining
+
+    # 4.2) include furniture (movable)
+
 
     return env_group, extra_hud_group
 

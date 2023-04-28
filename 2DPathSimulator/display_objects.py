@@ -29,38 +29,38 @@ tiles = {
 }
 
 assets_furniture = {
-    "apple"             : {"path": "static/assets/apple.png", "has_status" : False, "is_movable" : True},
-    "armchair"          : {"path": "static/assets/armchair.png", "has_status" : False , "is_movable" : False},
-    "bed"               : {"path": "static/assets/bed.png", "has_status" : False, "is_movable" : False},
-    "big_table"         : {"path": "static/assets/big_table.png", "has_status": False, "is_movable": False},
-    "big_table_chairs"  : {"path": "static/assets/big_table_chairs.png", "has_status" : False, "is_movable":  False},
-    "cabinet"           : {"path": "static/assets/cabinet.png", "has_status" : False, "is_mobable" : False},
-    "cards"             : {"path": "static/assets/cards.png", "has_status" : False, "is_movable" : True},
-    "chair"             : {"path": "static/assets/chair.png", "has_status" : False, "is_movable" : False},
-    "coffee"            : {"path": "static/assets/coffee.png", "has_status" : False, "is_movable" : True},
-    "glasses"           : {"path": "static/assets/glasses.png", "has_status" : False, "is_movable" : True},
-    "green_marker"      : {"path": "static/assets/green_marker.png", "has_status" : False, "is_movable" : True},
-    "kitchen"           : {"path": "static/assets/kitchen.png", "has_status" : False, "is_movable" : False},
-    "orange"            : {"path": "static/assets/orange.png", "has_status" : False, "is_movable" : True},
-    "paper_notebook"    : {"path": "static/assets/paper_notebook.png", "has_status" : False, "is_movable" : True},
-    "pen"               : {"path": "static/assets/pen.png", "has_status" : False, "is_movable" : True},
-    "pencil"            : {"path": "static/assets/pencil.png", "has_status" : False, "is_movable" : True},
-    "plant_1"           : {"path": "static/assets/plant_1.png", "has_status" : False, "is_movable" : False},
-    "plant_2"           : {"path": "static/assets/plant_2.png", "has_status" : False, "is_movable" : False},
-    "plate"             : {"path": "static/assets/plate.png", "has_status" : False, "is_movable" : True},
-    "pool"              : {"path": "static/assets/pool.png", "has_status" : False, "is_movable" : False},
-    "sink"              : {"path": "static/assets/sink.png", "has_status" : False, "is_movable" : False},
-    "small_table"       : {"path": "static/assets/small_table.png", "has_status" : False, "is_movable" : False},
-    "smartphone"        : {"path": "static/assets/smartphone.png", "has_status" : False, "is_movable" : True},
-    "sofa"              : {"path": "static/assets/sofa.png", "has_status" : False, "is_movable" : False},
-    "stove"             : {"path": "static/assets/stove.png", "has_status" : False, "is_movable" : False},
-    "studio_chair"      : {"path": "static/assets/studio_chair.png", "has_status" : False, "is_movable" : False},
-    "studio_table"      : {"path": "static/assets/studio_table.png", "has_status" : False, "is_movable" : False},
-    "toilet"            : {"path": "static/assets/toilet.png", "has_status" : False, "is_movable" : False},
-    "toilet_sink"       : {"path": "static/assets/toilet_sink.png", "has_status" : False, "is_movable" : False},
-    "tub"               : {"path": "static/assets/tub.png", "has_status" : False, "is_movable" : False},
-    "tv_off"            : {"path": "static/assets/tv_off.png", "has_status" : True, "is_movable" : False},
-    "tv_on"             : {"path": "static/assets/tv_on.png", "has_status" : True, "is_movable" : False}
+    "apple"             : {"path": "static/assets/apple.png",            "is_movable": True,    "w": 500,   "h": 500},
+    "armchair"          : {"path": "static/assets/armchair.png",         "is_movable": False,   "w": 250,   "h": 250},
+    "bed"               : {"path": "static/assets/bed.png",              "is_movable": False,   "w": 500,   "h": 500},
+    "big_table"         : {"path": "static/assets/big_table.png",        "is_movable": False,   "w": 500,   "h": 300},
+    "big_table_chairs"  : {"path": "static/assets/big_table_chairs.png", "is_movable":  False,  "w": 500,   "h": 400},
+    "cabinet"           : {"path": "static/assets/cabinet.png",          "is_movable": False,   "w": 500,   "h": 300},
+    "cards"             : {"path": "static/assets/cards.png",            "is_movable": True,    "w": 500,   "h": 500},
+    "chair"             : {"path": "static/assets/chair.png",            "is_movable": False,   "w": 300,   "h": 500},
+    "coffee"            : {"path": "static/assets/coffee.png",           "is_movable": True,    "w": 500,   "h": 500},
+    "glasses"           : {"path": "static/assets/glasses.png",          "is_movable": True,    "w": 500,   "h": 150},
+    "green_marker"      : {"path": "static/assets/green_marker.png",     "is_movable": True,    "w": 50,    "h": 500},
+    "kitchen"           : {"path": "static/assets/kitchen.png",          "is_movable": False,   "w": 1000,  "h": 300},
+    "orange"            : {"path": "static/assets/orange.png",           "is_movable": True,    "w": 500,   "h": 500},
+    "paper_notebook"    : {"path": "static/assets/paper_notebook.png",   "is_movable": True,    "w": 400,   "h": 500},
+    "pen"               : {"path": "static/assets/pen.png",              "is_movable": True,    "w": 50,    "h": 500},
+    "pencil"            : {"path": "static/assets/pencil.png",           "is_movable": True,    "w": 50,    "h": 500},
+    "plant_1"           : {"path": "static/assets/plant_1.png",          "is_movable": False,   "w": 500,   "h": 500},
+    "plant_2"           : {"path": "static/assets/plant_2.png",          "is_movable": False,   "w": 500,   "h": 500},
+    "plate"             : {"path": "static/assets/plate.png",            "is_movable": True,    "w": 500,   "h": 500},
+    "pool"              : {"path": "static/assets/pool.png",             "is_movable": False,   "w": 300,   "h": 500},
+    "sink"              : {"path": "static/assets/sink.png",             "is_movable": False,   "w": 500,   "h": 300},
+    "small_table"       : {"path": "static/assets/small_table.png",      "is_movable": False,   "w": 500,   "h": 250},
+    "smartphone"        : {"path": "static/assets/smartphone.png",       "is_movable": True,    "w": 300,   "h": 500},
+    "sofa"              : {"path": "static/assets/sofa.png",             "is_movable": False,   "w": 500,   "h": 250},
+    "stove"             : {"path": "static/assets/stove.png",            "is_movable": False,   "w": 500,   "h": 500},
+    "studio_chair"      : {"path": "static/assets/studio_chair.png",     "is_movable": False,   "w": 500,   "h": 500},
+    "studio_table"      : {"path": "static/assets/studio_table.png",     "is_movable": False,   "w": 1000,  "h": 600},
+    "toilet_water"      : {"path": "static/assets/toilet_water.png",     "is_movable": False,   "w": 250,   "h": 500},
+    "toilet_sink"       : {"path": "static/assets/toilet_sink.png",      "is_movable": False,   "w": 500,   "h": 300},
+    "tub"               : {"path": "static/assets/tub.png",              "is_movable": False,   "w": 250,   "h": 500},
+    "tv_off"            : {"path": "static/assets/tv_off.png",           "is_movable": False,   "w": 500,   "h": 250},
+    "tv_on"             : {"path": "static/assets/tv_on.png",            "is_movable": False,   "w": 500,   "h": 250}
 }
 
 rooms = []
@@ -96,6 +96,8 @@ class Rect(pg.sprite.Sprite):
         self.image.fill((*color, alpha))
         self.rect = self.image.get_rect()
         # self.rect.center = (x, y)
+        self.x = x
+        self.y = y
         self.rect.x = x             # fix top left corner position
         self.rect.y = y             # fix top left corner position
         self.type_DO = "rect"
@@ -504,9 +506,9 @@ class HouseElement(pg.sprite.Sprite):
             Function to call for central rotation during animation, this avoid the distortion from each approximation
         """
         self.image = pg.transform.rotate(image, angle)
-        self.rect = self.image.get_rect(center = self.rect.center)
+        self.rect = self.image.get_rect(center=self.rect.center)
 
-    def _rotate_pivot_anim(self, image, pivot, offset,angle):
+    def _rotate_pivot_anim(self, image, pivot, offset, angle):
         """
 
         :param image: the new image to be rotated
@@ -557,19 +559,26 @@ class HouseElement(pg.sprite.Sprite):
     def draw(self):
         self.screen.blit(self.image, self.rect)
 
-    def display_gfxRect(self):
-        self.rect_gfx = Rect(self.screen, self.rect.topleft[0], self.rect.topleft[1], self.rect.width, self.rect.height, (255,0,0), alpha= 100)
+    # create or remove the graphic representation of the rect containing  the surface
+
+    def display_gfxRect(self, x=None, y=None, width=None, height=None):
+        if (x == None) and (y == None) and (width == None) and (height == None):
+            self.rect_gfx = Rect(self.screen, self.rect.topleft[0], self.rect.topleft[1], self.rect.width, self.rect.height, (255,0,0), alpha= 100)
+        else:
+            self.rect_gfx = Rect(self.screen, x, y, width, height, (255, 0, 0), alpha=100)
 
     def remove_gfxRect(self):
         if self.rect_gfx: self.group.remove(self.rect_gfx)
         del self.rect_gfx
         self.rect_gfx = None
 
+    # functions for the debug mode in rendering
+
     def render_debug_vertices(self):
         vertices = self.get_vertices()
-        pg.draw.circle(self.screen, (0,0, 255), (self.x, self.y), radius=15)
+        pg.draw.circle(self.screen, (0,0, 255), (self.x, self.y), radius= 10)
         for v in list(vertices.values()):
-            pg.draw.circle(self.screen, (255,0,0), v, radius = 10)
+            pg.draw.circle(self.screen, (255,0,0), v, radius = 5)
 
     def render_debug_rect(self):
         try:
@@ -638,11 +647,6 @@ class Room(HouseElement):
         bounds = self.bounds[side]
         start_position = start; end_position = end
 
-        # print("side", side)
-        # print("start", start)
-        # print("end", end)
-        # print("bounds", bounds)
-
         # invert if wrongly assigned start and end
         if start > end:
             tmp = end
@@ -656,7 +660,6 @@ class Room(HouseElement):
         if   side == 'south' or side == 'north':   # check x
             for idx, bound in enumerate(bounds):
                 if start_position > bound[0][0] and end_position < bound[1][0]:
-                    print("passed -------")
                     first_new_bound  = (pg.math.Vector2(bound[0][0], bound[0][1]),pg.math.Vector2(start_position,bound[0][1]))
                     second_new_bound = (pg.math.Vector2(end_position,bound[1][1]),pg.math.Vector2(bound[1][0],bound[1][1]))
                     to_insert = [first_new_bound,second_new_bound]
@@ -666,7 +669,6 @@ class Room(HouseElement):
         elif side == 'west' or side == 'east':     # check y
             for idx, bound in enumerate(bounds):
                 if start_position > bound[0][1] and end_position < bound[1][1]:
-                    print("passed -------")
                     first_new_bound  = (pg.math.Vector2(bound[0][0], bound[0][1]),pg.math.Vector2(bound[0][0], start_position))
                     second_new_bound = (pg.math.Vector2(bound[1][0], end_position),pg.math.Vector2(bound[1][0],bound[1][1]))
                     to_insert = [first_new_bound,second_new_bound]
@@ -731,13 +733,15 @@ class Room(HouseElement):
         # print("y_midpoint", y_midpoint)
         # print("\n------------------------")
 
-        door_width = 100
+        door_width = 80
         wall_margin = 10
+
+        # print(self.name + "-" + other_room.name)
 
         # check adjacency rooms and if there is possibility to place the door, infer the side
         if (other_room.y + other_room.height/2 + wall_margin == self.y - self.height/2) \
-            and (((x_midpoint - door_width/2 in x_interval_other) and (x_midpoint + door_width/2 in x_interval_other))\
-            or  ( (x_midpoint_other - door_width/2 in x_interval) and (x_midpoint_other + door_width/2 in x_interval)) ):
+            and (((x_midpoint + displ - door_width/2 in x_interval_other) and (x_midpoint + displ + door_width/2 in x_interval_other))\
+            or  ( (x_midpoint_other + displ - door_width/2 in x_interval) and (x_midpoint_other + displ + door_width/2 in x_interval)) ):
 
             side = 'north'
             x_door = vertices['left-top'][0]
@@ -749,8 +753,8 @@ class Room(HouseElement):
                 displacement = self.width/2 + displ
 
         elif (other_room.x + other_room.width/2 + wall_margin == self.x - self.width/2)\
-            and (((y_midpoint - door_width/2 in y_interval_other) and (y_midpoint + door_width/2 in y_interval_other))\
-            or  ( (y_midpoint_other - door_width/2 in y_interval) and (y_midpoint_other + door_width/2 in y_interval)) ):
+            and (((y_midpoint + displ - door_width/2 in y_interval_other) and (y_midpoint + displ + door_width/2 in y_interval_other))\
+            or  ( (y_midpoint_other + displ - door_width/2 in y_interval) and (y_midpoint_other + displ + door_width/2 in y_interval)) ):
 
             side = 'west'
             x_door = vertices['left-down'][0]
@@ -762,8 +766,8 @@ class Room(HouseElement):
                 displacement = self.height/2 + displ
 
         elif (other_room.y - other_room.height/2 - wall_margin == self.y + self.height/2) \
-            and (((x_midpoint - door_width/2 in x_interval_other) and (x_midpoint + door_width/2 in x_interval_other))\
-            or  ( (x_midpoint_other - door_width/2 in x_interval) and (x_midpoint_other + door_width/2 in x_interval)) ):
+            and (((x_midpoint + displ - door_width/2 in x_interval_other) and (x_midpoint + displ + door_width/2 in x_interval_other))\
+            or  ( (x_midpoint_other + displ - door_width/2 in x_interval) and (x_midpoint_other + displ + door_width/2 in x_interval)) ):
 
             side = 'south'
             x_door = vertices['right-down'][0]
@@ -775,8 +779,8 @@ class Room(HouseElement):
                 displacement = self.width/2 + displ
 
         elif (other_room.x - other_room.width/2 - wall_margin == self.x + self.width/2)\
-            and (((y_midpoint - door_width/2 in y_interval_other) and (y_midpoint + door_width/2 in y_interval_other)) \
-            or  ( (y_midpoint_other - door_width/2 in y_interval) and (y_midpoint_other + door_width/2 in y_interval)) ):
+            and (((y_midpoint + displ - door_width/2 in y_interval_other) and (y_midpoint + displ + door_width/2 in y_interval_other)) \
+            or  ( (y_midpoint_other + displ - door_width/2 in y_interval) and (y_midpoint_other + displ + door_width/2 in y_interval)) ):
 
             side = 'east'
             x_door = vertices['right-top'][0]
@@ -802,26 +806,30 @@ class Room(HouseElement):
 
         # i do the same for the adjacent room, using the opposite cardinal direction
         if side == 'north':
+            self._edit_boundaries(side, x_door + displacement - door_width / 2, x_door + displacement + door_width / 2)
             other_room.doors['south'] = door
-            other_room._edit_boundaries("south", door.rect.center[0] - door_width/2,
-                                        door.rect.center[0] + door_width/2)
+            other_room._edit_boundaries("south", x_door + displacement - door_width/2,
+                                        x_door + displacement + door_width/2)
         elif side == 'west':
+            self._edit_boundaries(side, y_door - displacement - door_width / 2, y_door - displacement + door_width / 2)
             other_room.doors['east'] = door
-            other_room._edit_boundaries("east", door.rect.center[1] - door_width / 2,
-                                  door.rect.center[1] + door_width / 2)
+            other_room._edit_boundaries("east", y_door - displacement - door_width / 2,
+                                  y_door - displacement + door_width / 2)
         elif side == 'south':
+            self._edit_boundaries(side, x_door - displacement - door_width / 2, x_door - displacement + door_width / 2)
             other_room.doors['north'] = door
-            other_room._edit_boundaries("north", door.rect.center[0] - door_width / 2,
-                                        door.rect.center[0] + door_width / 2)
+            other_room._edit_boundaries("north", x_door - displacement - door_width / 2,
+                                        x_door - displacement + door_width / 2)
         elif side == 'east':
+            self._edit_boundaries(side, y_door + displacement - door_width / 2, y_door + displacement + door_width / 2)
             other_room.doors['west'] = door
-            other_room._edit_boundaries("west", door.rect.center[1] - door_width / 2,
-                                  door.rect.center[1] + door_width / 2)
+            other_room._edit_boundaries("west", y_door + displacement  - door_width / 2,
+                                  y_door + displacement  + door_width / 2)
 
-        if side == 'north' or side == 'south':
-            self._edit_boundaries(side, door.rect.center[0] - door_width/2, door.rect.center[0] + door_width/2)
-        elif side == 'west' or side == 'east':
-            self._edit_boundaries(side, door.rect.center[1] - door_width/2, door.rect.center[1] + door_width/2)
+        # if side == 'north' or side == 'south':
+        #     self._edit_boundaries(side, x_door + displacement - door_width/2, x_door + displacement + door_width/2)
+        # elif side == 'west' or side == 'east':
+        #     self._edit_boundaries(side, y_door + displacement - door_width/2, y_door + displacement + door_width/2)
 
         return door
 
@@ -875,7 +883,6 @@ class Room(HouseElement):
         self.furniture[type_forniture] = house_component
         self.group.add(house_component)
 
-
     def draw(self, width_line = 5):
         super().draw()
         if self.visible_boundaries:
@@ -888,9 +895,9 @@ class Room(HouseElement):
             for segment in self.bounds['west']:
                 pg.draw.line(self.screen, (255, 0, 0), start_pos= segment[0], end_pos=segment[1], width=width_line)
 
-class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
+class Door(HouseElement):  # used to connect two rooms or a room and the outdoor
     def __init__(self, name, screen, x, y, angle_side, displacement, door_width, side, status, room_a, room_b, group, is_main = False):
-        super().__init__(name, screen, group, x, y, width= door_width, height= 100)
+        super().__init__(name, screen, group, x, y, width= door_width, height= 100) # door_width = 80 ;height= 100
 
         self.status = status            # status(str) -> open || close
         self.side = side                # side(str) -> north || west || south || east
@@ -914,18 +921,21 @@ class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
         new_rect = self._correctionPos()
         self.rect = new_rect
 
+        # compute reduced rect for white surface of opened door
+        self.rect_open = self._get_reduced_rect()
+
         # correct angle based on status
         self._correctionStatus()
 
         # create debug rect
-        self.display_gfxRect()
+        x_, y_, w_, h_ = self._get_gfx_shape()
+        self.display_gfxRect(x_, y_, w_, h_)
 
         # load sound effects
         self.sound_open = pg.mixer.Sound("static/sounds/open_door.mp3")
         self.sound_close = pg.mixer.Sound("static/sounds/close_door.mp3")
 
-        # compute reduced rect for white surface of opened door
-        self.rect_open = self._get_reduced_rect()
+
 
     def _transformation_image(self, image):
         # upscale/downscale, rotate
@@ -938,6 +948,7 @@ class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
         :return: reduced rect from the transparent asset of the door, used to show when it's open
         """
         init_rect = self.rect.copy()
+
 
         if self.side == 'north':
             init_rect.height = 10
@@ -965,6 +976,29 @@ class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
             init_rect.y += 4
 
         return init_rect
+
+    def _get_gfx_shape(self):
+        if self.side in ["north", "south"]:
+            width = self.rect.width
+            height = 1/5 * self.rect.height
+            if self.status == "open":
+                width = math.ceil(width * 4/5)
+
+        elif self.side in ["east", "west"]:
+            width = 1/5 * self.rect.width
+            height = self.rect.height
+            if self.status == "open":
+                height= math.ceil(height * 4/5)
+
+        if self.status == "open":
+            tmp = width
+            width = height
+            height = tmp
+
+        x = self.rect.topleft[0] + math.ceil((self.rect.width - width) / 2)
+        y = self.rect.topleft[1] + math.ceil((self.rect.height - height) / 2)
+
+        return x, y, width, height
 
     def _load_images(self):
         if not(self.is_main):
@@ -1045,7 +1079,6 @@ class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
             self.rel_angle -= increment
         elif (self.status == 'close' and self.is_closing):
             self.rel_angle += increment
-            print(self.rel_angle)
 
         # animation update [Opening & Closing]
         if self.is_opening or self.is_closing:
@@ -1081,7 +1114,11 @@ class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
                 self.is_closing = False
 
         # display rect for debug
-        self.display_gfxRect()
+        if not(self.is_closing or self.is_opening):
+            x_, y_, w_, h_ = self._get_gfx_shape()
+            self.display_gfxRect(x_, y_, w_, h_)
+        else:
+            self.display_gfxRect()
 
     def draw(self):
         if abs(self.rel_angle) == abs(self.angle_open):
@@ -1090,13 +1127,13 @@ class Door(HouseElement):  #used to connect two rooms or a room and the outdoor
 
 class Window(HouseElement):
     def __init__(self, name, screen, x, y, angle_side, displacement, side, is_left: bool, status, room, group):
-        super().__init__(name, screen, group, x, y, width= 60, height= 100)
+        super().__init__(name, screen, group, x, y, width= 50, height= 80) # width = 60;height= 100
 
         self.status = status            # status(str) -> open || close
         self.side = side                # side(str) -> north || west || south || east
         self.angle_side = angle_side    # global angle (int) respect the world (screen) when windows are closed
         self.rel_angle = 0              # relative angle (int) from the creation reference frame
-        self.angle_open = - 135         # relative angle (int) that represent the open state
+        self.angle_open = - 90     #135    # relative angle (int) that represent the open state
         self.angle_close = 0            # relative angle (int) that represent the close state
 
         self.shape = (self.width, 10)
@@ -1119,18 +1156,19 @@ class Window(HouseElement):
         new_rect = self._correctionPos()
         self.rect = new_rect
 
+        # compute reduced rect for white surface of opened window
+        self.rect_open = self._get_reduced_rect()
+
         # correct angle based on status
         self._correctionStatus()
 
         # create debug rect
-        self.display_gfxRect()
+        x_, y_, w_, h_ = self._get_gfx_shape()
+        self.display_gfxRect(x_, y_, w_, h_)
 
         # load sound effects
         self.sound_open = pg.mixer.Sound("static/sounds/window_open.mp3")
         self.sound_close = pg.mixer.Sound("static/sounds/window_close.mp3")
-
-        # compute reduced rect for white surface of opened window
-        self.rect_open = self._get_reduced_rect()
 
     def _transformation_image(self, image):
         # flip if right window, upscale/downscale, rotate
@@ -1157,6 +1195,29 @@ class Window(HouseElement):
 
         init_rect.center = self.rect.center
         return init_rect
+
+    def _get_gfx_shape(self):
+        if self.side in ["north", "south"]:
+            width = self.rect.width
+            height = 1/5 * self.rect.height
+            if self.status == "open":
+                width = math.ceil(width * 3/5)
+
+        elif self.side in ["east", "west"]:
+            width = 1/5 * self.rect.width
+            height = self.rect.height
+            if self.status == "open":
+                height = math.ceil(height * 3/5)
+
+        if self.status == "open":
+            tmp = width
+            width = height
+            height = tmp
+
+        x = self.rect.topleft[0] + math.ceil((self.rect.width - width) / 2)
+        y = self.rect.topleft[1] + math.ceil((self.rect.height - height) / 2)
+
+        return x, y, width, height
 
     def _load_images(self):
         # load both images (no transformations)
@@ -1275,8 +1336,6 @@ class Window(HouseElement):
             else:
                 self.rel_angle -= increment
 
-            print(self.rel_angle)
-
         # animation update [Opening & Closing]
         if self.is_opening or self.is_closing:
 
@@ -1327,11 +1386,15 @@ class Window(HouseElement):
                 self.is_closing = False
 
         # display rect for debug
-        self.display_gfxRect()
+        if not (self.is_closing or self.is_opening):
+            x_, y_, w_, h_ = self._get_gfx_shape()
+            self.display_gfxRect(x_, y_, w_, h_)
+        else:
+            self.display_gfxRect()
 
     def draw(self):
         if abs(self.rel_angle) == abs(self.angle_open):
-            pg.draw.rect(surface= self.screen, color=(15, 255, 80), rect=self.rect_open)
+            pg.draw.rect(surface= self.screen, color=(255, 255, 51), rect=self.rect_open)
         super().draw()
 
 class Furniture(HouseElement):
@@ -1339,29 +1402,16 @@ class Furniture(HouseElement):
         super().__init__(name, screen, group, x, y, width, height)
         self.type_furniture = type_furniture
         self.rotation = rotation
-        self.has_status = assets_furniture[self.type_furniture]["has_status"]
-        # self.status = status
         self.is_movable = assets_furniture[self.type_furniture]["is_movable"]
+        self.asset_width = assets_furniture[self.type_furniture]["w"]
+        self.asset_height = assets_furniture[self.type_furniture]["h"]
+        self.name_asset = assets_furniture[self.type_furniture]["path"].split("/")[-1].replace(".png","")
         self._load_image()
         self.rect = self.image.get_rect()
         self.rect.center = (self.x, self.y)
-        self.display_gfxRect()
+        x_, y_, w_, h_ = self._get_gfx_shape()
+        self.display_gfxRect(x_, y_, w_, h_)
 
-
-    def _load_image(self):
-        if not(self.has_status):
-            self.image_asset = pg.image.load(assets_furniture[self.type_furniture]["path"]).convert_alpha()
-            self.image = self.image_asset.copy()
-        else:
-            status = self.type_furniture.split("_")[1]
-            type_asset = self.type_furniture.split("_")[0]
-            self.image_asset_on = pg.image.load(assets_furniture[type_asset  + "_on"]["path"]).convert_alpha()
-            self.image_asset_off = pg.image.load(assets_furniture[type_asset + '_off']["path"]).convert_alpha()
-            if status == 'on': self.image = self.image_asset_on.copy()
-            elif status == 'off': self.image = self.image_asset_off.copy()
-            else: raise ValueError("asset type selected not valid!")
-
-        self._transformation_image(self.image)
 
     def _transformation_image(self, image):
         # upscale/downscale, rotate
@@ -1369,6 +1419,29 @@ class Furniture(HouseElement):
         image = pg.transform.rotate(image, self.rotation)
         self.image = image
 
+    def _get_gfx_shape(self):
+        if not(self.name_asset in ["kitchen","studio_table"]):
+            print(self.name_asset, "reshape")
+
+            if abs(self.rotation) == 0 or abs(self.rotation) == 180:
+                width = (self.asset_width/500) * self.rect.width
+                height = (self.asset_height/500) * self.rect.height
+            elif abs(self.rotation) == 90 or abs(self.rotation) == 270:
+                width = (self.asset_height/500) * self.rect.width
+                height = (self.asset_width/500) * self.rect.height
+
+            x = self.rect.topleft[0] + math.ceil((self.rect.width - width)/2)
+            y = self.rect.topleft[1] + math.ceil((self.rect.height - height)/2)
+
+            return x, y, width, height
+        else:
+            return None, None, None, None
+
+
+    def _load_image(self):
+        self.image_asset = pg.image.load(assets_furniture[self.type_furniture]["path"]).convert_alpha()
+        self.image = self.image_asset.copy()
+        self._transformation_image(self.image)
 
 class Pepper(HouseElement):
     def __init__(self, screen, group, room):
@@ -1401,7 +1474,7 @@ class Pepper(HouseElement):
         pg.draw.circle(self.screen, color=self.color, center=(self.x, self.y), radius=10)
         self.p_letter.center_to(self.x, self.y)
 
-    def get_logo(self, width = 80, height = 80):
+    def get_logo(self, width = 60, height = 60):
         logo = StaticImage("static/assets/pepper.png", self.screen, self.x - width/2, self.y - height/2, width, height)
         return logo
 

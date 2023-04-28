@@ -1,10 +1,11 @@
-import pygame
 import pygame as pg
 import time
 import os
 import gc
 import sys
 import math
+
+# custom components
 from environment import create_UI, create_environment
 from services import InputInterpreter
 
@@ -45,15 +46,29 @@ def initialization():
 
     return screen, clock
 
-def debug_render(env_group):
-    for el in env_group:
-        if type(el).__name__ == "Room":
-            el.render_debug_vertices()
-            if not(el.visible_boundaries): el.show_boundaries()
-        if type(el).__name__ in ["Window", "Door", "Furniture"]:
-            el.render_debug_rect()
+def debug_render(env_group, debug, show_obstacles):
 
-def rendering(debug = True, extra_HUD = False):
+    if debug:
+        for el in env_group:
+            if type(el).__name__ == "Room":
+                el.render_debug_vertices()
+                if not(el.visible_boundaries): el.show_boundaries()
+            if type(el).__name__ in ["Window", "Door", "Furniture"]:
+                el.render_debug_rect()
+
+    elif show_obstacles:
+        for el in env_group:
+            if type(el).__name__ == "Room":
+                if not(el.visible_boundaries): el.show_boundaries()
+            if type(el).__name__ in ["Window", "Door", "Furniture"]:
+                el.render_debug_rect()
+    else:
+        for el in env_group:
+            if type(el).__name__ == "Room":
+                if el.visible_boundaries: el.hide_boundaries()
+
+
+def rendering(debug=False, show_obstacles=False, extra_HUD = False):
 
     # initialize the pygame engine, get main display object and clock for the rendering
     screen, clock = initialization()
@@ -72,7 +87,7 @@ def rendering(debug = True, extra_HUD = False):
     pressed_sx_mouse = False
 
     # custom object to execute user's inputs
-    input_interpreter = InputInterpreter()
+    input_interpreter = InputInterpreter({"UI_DOs": ui_group,"text_boxes": text_boxes,  "environment": env_group})
 
 
     # frame counter
@@ -102,7 +117,7 @@ def rendering(debug = True, extra_HUD = False):
                 # raise SystemExit
 
             if event.type == pg.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
+                if event.key == pg.K_ESCAPE:
                     print("Closed the window using the ESC key")
                     pg.quit()
                     # exit(0)
@@ -153,7 +168,7 @@ def rendering(debug = True, extra_HUD = False):
 
                         elif event.key == pg.K_RETURN: # reset the text in the box
                             deleting = None
-                            print(box.text_box)
+                            print("Text inserted: {}".format(box.text_box))
                             input_interpreter.execute(box.text_box)
                             box.box_active = False
                             box.restore_default()
@@ -167,21 +182,28 @@ def rendering(debug = True, extra_HUD = False):
             if event.type == pg.KEYUP:
                 if event.key == pg.K_BACKSPACE: deleting = None
 
-        # ---------------------------------------- Input Interpreter action
-        if input_interpreter.reset:
-            gc.collect()
-            # first option
-            # pg.display.quit()
-            # rendering()
+        # ---------------------------------------- Input Interpreter updates
 
-            # second option
-            del env_group; del extra_HUD_group
-            del ui_group; del text_boxes
+        debug = input_interpreter.update_debug(debug)
+
+        show_obstacles = input_interpreter.toggle_show_obstacles(show_obstacles)
+
+        if input_interpreter.reset:   # the reset is better to be handled directly in the main loop
+            # free memory
+            gc.collect()
+
+            # remove old groups
+            del env_group; del extra_HUD_group; del ui_group; del text_boxes
+
+            # create groups from beginning
             ui_group, text_boxes = create_UI(screen)
             env_group, extra_HUD_group = create_environment(screen)
-            input_interpreter.reset = False
 
+            # output message
+            text_boxes[1].add_message("The Environment has been reset")
 
+            # restore default value for input interpreter
+            input_interpreter = InputInterpreter({"UI_DOs": ui_group,"text_boxes": text_boxes,  "environment": env_group})
 
 
         # ---------------------------------------- Logical updates
@@ -196,25 +218,22 @@ def rendering(debug = True, extra_HUD = False):
 
         for ui_elem in ui_group:                      #  alternatively: ui_group.draw(screen)
             ui_elem.draw()
+
         for text_box in text_boxes:
             text_box.draw()
 
         # rendering House environment
-        for env_elem in env_group:                        #  alternatively: env_group.draw(screen)
+        for env_elem in env_group:                    #  alternatively: env_group.draw(screen)
             env_elem.draw()
 
-        # pg.draw.circle(screen, (30, 250, 70), (350,100), 10)
-        # pg.draw.circle(screen, (30, 250, 70), (250, 100), 10)
-
-
         # debug elements rendering
-        if debug: debug_render(env_group)
+        debug_render(env_group, debug, show_obstacles)
 
         # extra HUD rendering
         if extra_HUD: extra_HUD_group.draw(screen)
 
 
-        # ---------------------------------------- display update
+        # ---------------------------------------- display updates
 
         # update the screen with the current state of the display objects
         pg.display.flip()
