@@ -165,7 +165,7 @@ def create_environment(screen: Surface, verbose = True):
     living_room = Room(name="Living Room", screen= screen, x= toilet.x,\
                         y = toilet.y + toilet_h/2 + wall_size + living_room_h/2 , width= living_room_w,
                         height= living_room_h, env_group= env_group, tile_type='parquet_strips')
-    extra_hud_group.add(living_room.get_display_name(side='top', color=(255, 255, 255)))
+    extra_hud_group.add(living_room.get_display_name(side='bottom', color=(255, 255, 255)))
 
     # -- Dining
     dining_w = toilet_w; dining_h = 300
@@ -181,7 +181,7 @@ def create_environment(screen: Surface, verbose = True):
     bedroom = Room(name="Bedroom", screen= screen, x= studio.x,\
                         y = studio.y + studio_h/2 + wall_size + bedroom_h/2 , width= bedroom_w,
                         height= bedroom_h, env_group= env_group, tile_type='black_marble')
-    extra_hud_group.add(bedroom.get_display_name(side='top', color=(255, 255, 255)))
+    extra_hud_group.add(bedroom.get_display_name(side='bottom', color=(255, 255, 255)))
     bedroom.add_window("west", displacement=bedroom_h/2, status='open')
 
     # -- Kitchen
@@ -189,7 +189,7 @@ def create_environment(screen: Surface, verbose = True):
     kitchen = Room(name="Kitchen", screen= screen, x= studio.x,\
                         y = bedroom.y + bedroom_h/2 + wall_size + kitchen_h/2, width= kitchen_w,
                         height= kitchen_h, env_group= env_group, tile_type='ceramic')
-    extra_hud_group.add(kitchen.get_display_name(side='top', color=(0, 0, 0)))
+    extra_hud_group.add(kitchen.get_display_name(side='bottom', color=(0, 0, 0)))
     wind = kitchen.add_window("south", displacement= math.ceil(kitchen_w * 1/4), status='open')
 
     timer1 = threading.Timer(1, lambda: wind[0].close())
@@ -226,7 +226,8 @@ def create_environment(screen: Surface, verbose = True):
 
     # 3) Create pepper placeholder
 
-    pepper = Pepper(screen, env_group, studio)
+    pepper_displ_x = 0; pepper_displ_y = -math.ceil(foyer.height/2) + 80
+    pepper = Pepper(screen, env_group, foyer, pepper_displ_x, pepper_displ_y)
     extra_hud_group.add(pepper.get_logo())
 
 
@@ -248,17 +249,54 @@ def create_environment(screen: Surface, verbose = True):
                          y=studio.y - 25, width=pool_studio_w,\
                          height=pool_studio_h, rotation= 0)
 
+    plant_w = 50; plant_h = 50
+    studio.add_furniture("studio plant sx", "plant_1", x=math.ceil(studio.x - studio.width/2 + plant_w/2),\
+                         y= math.ceil(studio.y - studio.height/2 + plant_h/2) , width=plant_w,\
+                         height=plant_h, rotation= 0)
+
+    studio.add_furniture("studio plant dx", "plant_1", x=math.ceil(studio.x + studio.width/2 - plant_w/2),\
+                         y= math.ceil(studio.y - studio.height/2 + plant_h/2) , width=plant_w,\
+                         height=plant_h, rotation= 0, flip_x= True)
+
+
     # -- kitchen
     kitchen_furniture_w = kitchen_h; kitchen_furniture_h = math.ceil(kitchen_w/3)
     studio.add_furniture("kitchen furniture", "kitchen",x= kitchen.x - math.ceil(kitchen_w/2) + math.ceil(kitchen_furniture_h/2),\
                          y= kitchen.y, width=kitchen_furniture_w,\
                          height= kitchen_furniture_h, rotation= -90)
 
+    kitchen_big_table_w = 120; kitchen_big_table_h = 120
+    studio.add_furniture("kitchen big table", "big_table",x= kitchen.x + 50,\
+                         y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_big_table_h/2 * 3/5), width=kitchen_big_table_w,\
+                         height= kitchen_big_table_h, rotation=0)
+
+    kitchen_chair_w = 60; kitchen_chair_h = 60
+    studio.add_furniture("kitchen chair dx", "chair",x= kitchen.x + 50 + math.ceil(kitchen_big_table_w/2 + kitchen_chair_w/2 *3/5 + 5),\
+                         y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_chair_h/2), width=kitchen_chair_w,\
+                         height= kitchen_chair_h, rotation=0)
+    studio.add_furniture("kitchen chair sx", "chair",x= kitchen.x + 50 - math.ceil(kitchen_big_table_w/2 + kitchen_chair_w/2 *3/5 + 5),\
+                         y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_chair_h/2), width=kitchen_chair_w,\
+                         height= kitchen_chair_h, rotation=0)
+
     # -- bedroom
     bed_w = math.ceil(bedroom_w/3); bed_h=math.ceil(bedroom_h/2)
     bedroom.add_furniture("bed", "bed",x= bedroom.x,\
                          y= bedroom.y - math.ceil(bedroom_h/2) + math.ceil(bed_h/2), width=bed_w,\
                          height= bed_h, rotation= 0)
+
+    bedroom_tv_w = 100; bedroom_tv_h = 100;
+    bedroom.add_furniture("bedroom tv", "tv_off", x= bedroom.x,\
+                         y=math.ceil(bedroom.y + bedroom_h/2 - bedroom_tv_h/2 * 2/5),\
+                         width=bedroom_tv_w, height=bedroom_tv_h, rotation=180)
+
+    bedroom_cabinet_w = 80; bedroom_cabinet_h = 80
+    bedroom.add_furniture("bedroom cabinet", "cabinet", x=math.ceil(bedroom.x + bedroom_w/2 - bedroom_cabinet_w/2),\
+                         y= math.ceil(bedroom.y + bedroom_h/2 - (bedroom_cabinet_h/2 * 3/5)),\
+                         width=bedroom_cabinet_w, height= bedroom_cabinet_h, rotation=180)
+
+    bedroom.add_furniture("bedroom cabinet", "cabinet", x=math.ceil(bedroom.x - bedroom_w/2 + bedroom_cabinet_w/2),\
+                         y= math.ceil(bedroom.y + bedroom_h/2 - (bedroom_cabinet_h/2 * 3/5)),\
+                         width=bedroom_cabinet_w, height= bedroom_cabinet_h, rotation=180, flip_x =True)
 
     # -- toilet
     toilet_water_w = 50; toilet_water_h = 50
@@ -284,11 +322,65 @@ def create_environment(screen: Surface, verbose = True):
 
     # -- foyer
 
+    studio.add_furniture("foyer plant sx", "plant_2", x=math.ceil(foyer.x - foyer_w/2 + plant_w/2),\
+                         y= math.ceil(foyer.y- foyer_h/2 + plant_h/2), width=plant_w,\
+                         height=plant_h, rotation= 0, flip_x= False, flip_y=False)
+
+    studio.add_furniture("foyer plant dx", "plant_2", x=math.ceil(foyer.x + foyer_w/2 - plant_w/2),\
+                         y= math.ceil(foyer.y - foyer_h/2 + plant_h/2), width=plant_w,\
+                         height=plant_h, rotation= 0, flip_x= True, flip_y= False)
+
+    # -- living room
+    living_room_tv_w = 100; living_room_tv_h = 100
+    living_room.add_furniture("living room tv", "tv_on", x= living_room.x,\
+                         y= math.ceil(living_room.y - living_room_h/2 + living_room_tv_h/2 * 2/5),\
+                         width=living_room_tv_w, height= living_room_tv_h, rotation=0)
+
+    living_room_sofa_w = 130; living_room_sofa_h = 130
+    living_room.add_furniture("living room sofa", "sofa", x= living_room.x,\
+                         y= living_room.y + 10,\
+                         width=living_room_sofa_w, height= living_room_sofa_h, rotation=180)
+
+    small_table_sofa_w = 70; small_table_sofa_h = 70
+    living_room.add_furniture("living room small table", "small_table", x= living_room.x,\
+                         y=  math.ceil(living_room.y - (living_room_sofa_h/2 * 1/2) - (small_table_sofa_h/2 * 1/2)),\
+                         width=small_table_sofa_w, height= small_table_sofa_h, rotation=180)
+
+    armchair_w = 100; armchair_h = 100
+    living_room.add_furniture("living room armchair sx", "armchair", x= math.ceil(living_room.x - living_room_sofa_w/2 - armchair_w/2* 1/2) ,\
+                         y=  math.ceil(living_room.y - (living_room_sofa_h/2 * 1/2) - (small_table_sofa_h/2 * 1/2)),\
+                         width=armchair_w, height= armchair_h, rotation=90)
+    living_room.add_furniture("living room armchair dx", "armchair", x= math.ceil(living_room.x + living_room_sofa_w/2 + armchair_w/2* 1/2) ,\
+                         y=  math.ceil(living_room.y - (living_room_sofa_h/2 * 1/2) - (small_table_sofa_h/2 * 1/2)),\
+                         width=armchair_w, height= armchair_h, rotation= -90)
+
+    studio.add_furniture("living room plant sx", "plant_2", x=math.ceil(living_room.x - living_room_w/2 + plant_w/2),\
+                         y= math.ceil(living_room.y + living_room_h/2 - plant_h/2), width=plant_w,\
+                         height=plant_h, rotation= 90)
+
+    studio.add_furniture("living room plant dx", "plant_2", x=math.ceil(living_room.x + living_room_w/2 - plant_w/2),\
+                         y= math.ceil(living_room.y + living_room_h/2 - plant_h/2), width=plant_w,\
+                         height=plant_h, rotation= 90, flip_x= True)
+
+    # -- dining
+    dining_table_w = 180; dining_table_h = 180
+    toilet.add_furniture("dining table", "big_table_chairs", x= dining.x,\
+                         y= dining.y,\
+                         width=dining_table_w, height= dining_table_h, rotation=0)
+
+
+
+
+    # 4.2) include furniture (movable)
+    #  -- studio
+    # -- kitchen
+    # -- bedroom
+    # -- toilet
+    # -- foyer
+
     # -- living room
 
     # -- dining
-
-    # 4.2) include furniture (movable)
 
 
     return env_group, extra_hud_group

@@ -565,7 +565,10 @@ class HouseElement(pg.sprite.Sprite):
         if (x == None) and (y == None) and (width == None) and (height == None):
             self.rect_gfx = Rect(self.screen, self.rect.topleft[0], self.rect.topleft[1], self.rect.width, self.rect.height, (255,0,0), alpha= 100)
         else:
-            self.rect_gfx = Rect(self.screen, x, y, width, height, (255, 0, 0), alpha=100)
+            if type(self).__name__ == "Furniture" and self.is_movable:
+                self.rect_gfx = Rect(self.screen, x, y, width, height, (0, 0, 255), alpha=100)
+            else:
+                self.rect_gfx = Rect(self.screen, x, y, width, height, (255, 0, 0), alpha=100)
 
     def remove_gfxRect(self):
         if self.rect_gfx: self.group.remove(self.rect_gfx)
@@ -875,10 +878,10 @@ class Room(HouseElement):
 
         return window_l, window_r
 
-    def add_furniture(self, name, type_forniture, x, y, width, height, rotation):
+    def add_furniture(self, name, type_forniture, x, y, width, height, rotation, flip_x=False, flip_y=False):
 
         house_component = Furniture(name, self.screen, self.group, type_forniture, x, y,\
-                                    width, height, rotation)
+                                    width, height, rotation, flip_x, flip_y)
 
         self.furniture[type_forniture] = house_component
         self.group.add(house_component)
@@ -1398,10 +1401,12 @@ class Window(HouseElement):
         super().draw()
 
 class Furniture(HouseElement):
-    def __init__(self, name, screen, group, type_furniture, x, y, width, height, rotation):
+    def __init__(self, name, screen, group, type_furniture, x, y, width, height, rotation, flip_x = False, flip_y = False):
         super().__init__(name, screen, group, x, y, width, height)
         self.type_furniture = type_furniture
         self.rotation = rotation
+        self.flip_x = flip_x
+        self.flip_y = flip_y
         self.is_movable = assets_furniture[self.type_furniture]["is_movable"]
         self.asset_width = assets_furniture[self.type_furniture]["w"]
         self.asset_height = assets_furniture[self.type_furniture]["h"]
@@ -1417,6 +1422,8 @@ class Furniture(HouseElement):
         # upscale/downscale, rotate
         image = pg.transform.smoothscale(image, (self.width, self.height))
         image = pg.transform.rotate(image, self.rotation)
+        if self.flip_x or self.flip_y:
+            image = pg.transform.flip(image, self.flip_x, self.flip_y)
         self.image = image
 
     def _get_gfx_shape(self):
@@ -1444,8 +1451,8 @@ class Furniture(HouseElement):
         self._transformation_image(self.image)
 
 class Pepper(HouseElement):
-    def __init__(self, screen, group, room):
-        super().__init__('Pepper', screen, group, room.x, room.y, width = 20, height= 20)
+    def __init__(self, screen, group, room, displ_x, displ_y):
+        super().__init__('Pepper', screen, group, room.x + displ_x, room.y + displ_y, width = 20, height= 20)
         self.rel_angle = 0
         self.actual_room = room
         self.color = (255, 255, 255)
