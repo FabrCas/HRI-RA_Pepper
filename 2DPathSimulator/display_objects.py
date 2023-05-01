@@ -42,7 +42,10 @@ assets_furniture = {
     "green_marker"      : {"path": "static/assets/green_marker.png",     "is_movable": True,    "w": 50,    "h": 500},
     "kitchen"           : {"path": "static/assets/kitchen.png",          "is_movable": False,   "w": 1000,  "h": 300},
     "orange"            : {"path": "static/assets/orange.png",           "is_movable": True,    "w": 500,   "h": 500},
-    "paper_notebook"    : {"path": "static/assets/paper_notebook.png",   "is_movable": True,    "w": 400,   "h": 500},
+    "notebook_pink"     : {"path": "static/assets/notebook_pink.png",    "is_movable": True,    "w": 400,   "h": 500},
+    "notebook_green"    : {"path": "static/assets/notebook_green.png",   "is_movable": True,    "w": 400,   "h": 500},
+    "notebook_red"      : {"path": "static/assets/notebook_red.png",     "is_movable": True,    "w": 400,   "h": 500},
+    "notebook_yellow"   : {"path": "static/assets/notebook_yellow.png",  "is_movable": True,    "w": 400,   "h": 500},
     "pen"               : {"path": "static/assets/pen.png",              "is_movable": True,    "w": 50,    "h": 500},
     "pencil"            : {"path": "static/assets/pencil.png",           "is_movable": True,    "w": 50,    "h": 500},
     "plant_1"           : {"path": "static/assets/plant_1.png",          "is_movable": False,   "w": 500,   "h": 500},
@@ -584,10 +587,13 @@ class HouseElement(pg.sprite.Sprite):
             pg.draw.circle(self.screen, (255,0,0), v, radius = 5)
 
     def render_debug_rect(self):
-        try:
+        # try:
+        #     self.rect_gfx.draw()
+        # except:
+        #     raise ValueError("First instantiate the graphic rect of the display object!")
+
+        if not(self.rect_gfx is None):
             self.rect_gfx.draw()
-        except:
-            raise ValueError("First instantiate the graphic rect of the display object!")
 
 class Room(HouseElement):
 
@@ -611,7 +617,8 @@ class Room(HouseElement):
         self.bounds     = {}    # k: (str) side             v: list of tuple with x and y vector values for each segment
         self.windows    = {}    # k: (str) side             v: tuple for left window and right window
         self.doors      = {}    # k: (str) side             v: door display object
-        self.furniture  = {}    # k: (str) type_furniture   v: furniture display object
+        self.furniture  = {}    # k: tuple: ((str) name_furniture, (str) type_furniture)
+                                # v: furniture display object
 
         # add in the list of element for rendering
         self.group.add(self)
@@ -721,25 +728,8 @@ class Room(HouseElement):
         y_interval = range(vertices['left-top'][1]+1, vertices['left-down'][1])
         y_midpoint = math.ceil(vertices['left-top'][1] + (self.height/2))
 
-
-        # print("\n------------------------")
-        # print("vertices",vertices)
-        # print("vertices other", other_room.get_vertices())
-        # print(self.name)
-        # print("x_interval_other",x_interval_other)
-        # print("x_midpoint_other",x_midpoint_other)
-        # print("x_interval",x_interval)
-        # print("x_midpoint",x_midpoint)
-        # print("y_interval_other", y_interval_other)
-        # print("y_midpoint_other", y_midpoint_other)
-        # print("y_interval", y_interval)
-        # print("y_midpoint", y_midpoint)
-        # print("\n------------------------")
-
         door_width = 80
         wall_margin = 10
-
-        # print(self.name + "-" + other_room.name)
 
         # check adjacency rooms and if there is possibility to place the door, infer the side
         if (other_room.y + other_room.height/2 + wall_margin == self.y - self.height/2) \
@@ -829,11 +819,6 @@ class Room(HouseElement):
             other_room._edit_boundaries("west", y_door + displacement  - door_width / 2,
                                   y_door + displacement  + door_width / 2)
 
-        # if side == 'north' or side == 'south':
-        #     self._edit_boundaries(side, x_door + displacement - door_width/2, x_door + displacement + door_width/2)
-        # elif side == 'west' or side == 'east':
-        #     self._edit_boundaries(side, y_door + displacement - door_width/2, y_door + displacement + door_width/2)
-
         return door
 
     def add_window(self, side: str, displacement: int, status='close'):
@@ -881,9 +866,9 @@ class Room(HouseElement):
     def add_furniture(self, name, type_forniture, x, y, width, height, rotation, flip_x=False, flip_y=False):
 
         house_component = Furniture(name, self.screen, self.group, type_forniture, x, y,\
-                                    width, height, rotation, flip_x, flip_y)
+                                    width, height, rotation, self, flip_x, flip_y)
 
-        self.furniture[type_forniture] = house_component
+        self.furniture[(name, type_forniture)] = house_component
         self.group.add(house_component)
 
     def draw(self, width_line = 5):
@@ -1121,7 +1106,7 @@ class Door(HouseElement):  # used to connect two rooms or a room and the outdoor
             x_, y_, w_, h_ = self._get_gfx_shape()
             self.display_gfxRect(x_, y_, w_, h_)
         else:
-            self.display_gfxRect()
+            self.remove_gfxRect()
 
     def draw(self):
         if abs(self.rel_angle) == abs(self.angle_open):
@@ -1388,12 +1373,12 @@ class Window(HouseElement):
             if abs(self.rel_angle) == abs(self.angle_close):
                 self.is_closing = False
 
-        # display rect for debug
+        # display rect for debug (hit box like)
         if not (self.is_closing or self.is_opening):
             x_, y_, w_, h_ = self._get_gfx_shape()
             self.display_gfxRect(x_, y_, w_, h_)
         else:
-            self.display_gfxRect()
+            self.remove_gfxRect()
 
     def draw(self):
         if abs(self.rel_angle) == abs(self.angle_open):
@@ -1401,21 +1386,25 @@ class Window(HouseElement):
         super().draw()
 
 class Furniture(HouseElement):
-    def __init__(self, name, screen, group, type_furniture, x, y, width, height, rotation, flip_x = False, flip_y = False):
+    def __init__(self, name, screen, group, type_furniture, x, y, width, height, rotation, room, flip_x = False, flip_y = False):
         super().__init__(name, screen, group, x, y, width, height)
         self.type_furniture = type_furniture
         self.rotation = rotation
+        self.room = room
         self.flip_x = flip_x
         self.flip_y = flip_y
-        self.is_movable = assets_furniture[self.type_furniture]["is_movable"]
+        self.is_movable = assets_furniture[self.type_furniture]["is_movable"]  # if is movable can be considered an object not mobilia
         self.asset_width = assets_furniture[self.type_furniture]["w"]
         self.asset_height = assets_furniture[self.type_furniture]["h"]
-        self.name_asset = assets_furniture[self.type_furniture]["path"].split("/")[-1].replace(".png","")
+        self.name_asset = assets_furniture[self.type_furniture]["path"].split("/")[-1].replace(".png", "")
         self._load_image()
         self.rect = self.image.get_rect()
         self.rect.center = (self.x, self.y)
         x_, y_, w_, h_ = self._get_gfx_shape()
         self.display_gfxRect(x_, y_, w_, h_)
+        self.is_on = []
+        self.has_on = []
+        self._compute_bottom_furniture()
 
 
     def _transformation_image(self, image):
@@ -1426,9 +1415,19 @@ class Furniture(HouseElement):
             image = pg.transform.flip(image, self.flip_x, self.flip_y)
         self.image = image
 
+    def _compute_bottom_furniture(self):
+        for k,v in  self.room.furniture.items():
+            rect = v.rect_gfx.rect
+            if (self.x >= rect.left and self.x <= rect.right) and\
+                (self.y>= rect.top and self.y<= rect.bottom):
+                    self.is_on.append(v)  # add to object
+                    v.has_on.append(self)
+                    # print(f"{self.name} self.is_on" , self.is_on)
+                    # print(f"{v.name}    v.has_on"   , v.has_on)
+                    # print(f"{self.name} self.has_on", self.has_on)
+
     def _get_gfx_shape(self):
         if not(self.name_asset in ["kitchen","studio_table"]):
-            print(self.name_asset, "reshape")
 
             if abs(self.rotation) == 0 or abs(self.rotation) == 180:
                 width = (self.asset_width/500) * self.rect.width

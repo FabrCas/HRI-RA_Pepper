@@ -234,7 +234,7 @@ def create_environment(screen: Surface, verbose = True):
     # 4.1) include furniture (fixed)
 
     #  -- studio
-    desk_studio_w = math.ceil(studio_w /3) + 50 ; desk_studio_h = math.ceil(studio_h /5)
+    desk_studio_w = math.ceil(studio_w /3) + 50 ; desk_studio_h = math.ceil(studio_h /4)
     studio.add_furniture("studio desk", "studio_table",x=math.ceil(studio.x - studio.width/2 + desk_studio_w/2),\
                          y=math.ceil(studio.y + studio.height/2 - desk_studio_h/2 - 20), width=desk_studio_w,\
                          height=desk_studio_h, rotation= 180)
@@ -246,7 +246,7 @@ def create_environment(screen: Surface, verbose = True):
 
     pool_studio_w = 150; pool_studio_h = 150
     studio.add_furniture("studio pool", "pool",x=math.ceil(studio.x - studio.width/2 + pool_studio_w/2 * 3/5) + 50,\
-                         y=studio.y - 25, width=pool_studio_w,\
+                         y=studio.y -40, width=pool_studio_w,\
                          height=pool_studio_h, rotation= 0)
 
     plant_w = 50; plant_h = 50
@@ -261,20 +261,20 @@ def create_environment(screen: Surface, verbose = True):
 
     # -- kitchen
     kitchen_furniture_w = kitchen_h; kitchen_furniture_h = math.ceil(kitchen_w/3)
-    studio.add_furniture("kitchen furniture", "kitchen",x= kitchen.x - math.ceil(kitchen_w/2) + math.ceil(kitchen_furniture_h/2),\
+    kitchen.add_furniture("kitchen furniture", "kitchen",x= kitchen.x - math.ceil(kitchen_w/2) + math.ceil(kitchen_furniture_h/2),\
                          y= kitchen.y, width=kitchen_furniture_w,\
                          height= kitchen_furniture_h, rotation= -90)
 
     kitchen_big_table_w = 120; kitchen_big_table_h = 120
-    studio.add_furniture("kitchen big table", "big_table",x= kitchen.x + 50,\
+    kitchen.add_furniture("kitchen big table", "big_table",x= kitchen.x + 50,\
                          y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_big_table_h/2 * 3/5), width=kitchen_big_table_w,\
                          height= kitchen_big_table_h, rotation=0)
 
     kitchen_chair_w = 60; kitchen_chair_h = 60
-    studio.add_furniture("kitchen chair dx", "chair",x= kitchen.x + 50 + math.ceil(kitchen_big_table_w/2 + kitchen_chair_w/2 *3/5 + 5),\
+    kitchen.add_furniture("kitchen chair dx", "chair",x= kitchen.x + 50 + math.ceil(kitchen_big_table_w/2 + kitchen_chair_w/2 *3/5 + 5),\
                          y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_chair_h/2), width=kitchen_chair_w,\
                          height= kitchen_chair_h, rotation=0)
-    studio.add_furniture("kitchen chair sx", "chair",x= kitchen.x + 50 - math.ceil(kitchen_big_table_w/2 + kitchen_chair_w/2 *3/5 + 5),\
+    kitchen.add_furniture("kitchen chair sx", "chair",x= kitchen.x + 50 - math.ceil(kitchen_big_table_w/2 + kitchen_chair_w/2 *3/5 + 5),\
                          y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_chair_h/2), width=kitchen_chair_w,\
                          height= kitchen_chair_h, rotation=0)
 
@@ -290,13 +290,14 @@ def create_environment(screen: Surface, verbose = True):
                          width=bedroom_tv_w, height=bedroom_tv_h, rotation=180)
 
     bedroom_cabinet_w = 80; bedroom_cabinet_h = 80
-    bedroom.add_furniture("bedroom cabinet", "cabinet", x=math.ceil(bedroom.x + bedroom_w/2 - bedroom_cabinet_w/2),\
+    bedroom.add_furniture("bedroom cabinet dx", "cabinet", x=math.ceil(bedroom.x + bedroom_w/2 - bedroom_cabinet_w/2),\
                          y= math.ceil(bedroom.y + bedroom_h/2 - (bedroom_cabinet_h/2 * 3/5)),\
                          width=bedroom_cabinet_w, height= bedroom_cabinet_h, rotation=180)
 
-    bedroom.add_furniture("bedroom cabinet", "cabinet", x=math.ceil(bedroom.x - bedroom_w/2 + bedroom_cabinet_w/2),\
+    bedroom.add_furniture("bedroom cabinet sx", "cabinet", x=math.ceil(bedroom.x - bedroom_w/2 + bedroom_cabinet_w/2),\
                          y= math.ceil(bedroom.y + bedroom_h/2 - (bedroom_cabinet_h/2 * 3/5)),\
                          width=bedroom_cabinet_w, height= bedroom_cabinet_h, rotation=180, flip_x =True)
+
 
     # -- toilet
     toilet_water_w = 50; toilet_water_h = 50
@@ -322,11 +323,11 @@ def create_environment(screen: Surface, verbose = True):
 
     # -- foyer
 
-    studio.add_furniture("foyer plant sx", "plant_2", x=math.ceil(foyer.x - foyer_w/2 + plant_w/2),\
+    foyer.add_furniture("foyer plant sx", "plant_2", x=math.ceil(foyer.x - foyer_w/2 + plant_w/2),\
                          y= math.ceil(foyer.y- foyer_h/2 + plant_h/2), width=plant_w,\
                          height=plant_h, rotation= 0, flip_x= False, flip_y=False)
 
-    studio.add_furniture("foyer plant dx", "plant_2", x=math.ceil(foyer.x + foyer_w/2 - plant_w/2),\
+    foyer.add_furniture("foyer plant dx", "plant_2", x=math.ceil(foyer.x + foyer_w/2 - plant_w/2),\
                          y= math.ceil(foyer.y - foyer_h/2 + plant_h/2), width=plant_w,\
                          height=plant_h, rotation= 0, flip_x= True, flip_y= False)
 
@@ -354,34 +355,127 @@ def create_environment(screen: Surface, verbose = True):
                          y=  math.ceil(living_room.y - (living_room_sofa_h/2 * 1/2) - (small_table_sofa_h/2 * 1/2)),\
                          width=armchair_w, height= armchair_h, rotation= -90)
 
-    studio.add_furniture("living room plant sx", "plant_2", x=math.ceil(living_room.x - living_room_w/2 + plant_w/2),\
+    living_room.add_furniture("living room plant sx", "plant_2", x=math.ceil(living_room.x - living_room_w/2 + plant_w/2),\
                          y= math.ceil(living_room.y + living_room_h/2 - plant_h/2), width=plant_w,\
                          height=plant_h, rotation= 90)
 
-    studio.add_furniture("living room plant dx", "plant_2", x=math.ceil(living_room.x + living_room_w/2 - plant_w/2),\
+    living_room.add_furniture("living room plant dx", "plant_2", x=math.ceil(living_room.x + living_room_w/2 - plant_w/2),\
                          y= math.ceil(living_room.y + living_room_h/2 - plant_h/2), width=plant_w,\
                          height=plant_h, rotation= 90, flip_x= True)
 
     # -- dining
-    dining_table_w = 180; dining_table_h = 180
-    toilet.add_furniture("dining table", "big_table_chairs", x= dining.x,\
+    dining.add_furniture("dining chair top", "chair",x= dining.x,\
+                         y= dining.y - 70, width=kitchen_chair_w,\
+                         height= kitchen_chair_h, rotation=0)
+
+    dining.add_furniture("dining chair right", "chair",x= dining.x + 80,\
+                         y= dining.y, width=kitchen_chair_w,\
+                         height= kitchen_chair_h, rotation=-90)
+
+    dining.add_furniture("dining chair left", "chair",x= dining.x - 70,\
+                         y= dining.y, width=kitchen_chair_w,\
+                         height= kitchen_chair_h, rotation=+90)
+
+    dining.add_furniture("dining chair bottom", "chair",x= dining.x + 20,\
+                         y= dining.y + 60, width=kitchen_chair_w,\
+                         height= kitchen_chair_h, rotation=180)
+
+    dining_table_w = 140; dining_table_h = 140;
+    dining.add_furniture("dining table", "big_table", x= dining.x,\
                          y= dining.y,\
                          width=dining_table_w, height= dining_table_h, rotation=0)
 
-
-
-
     # 4.2) include furniture (movable)
-    #  -- studio
+
+    # -- studio
+    pens_w  = 25; pens_h = 25
+    studio.add_furniture("green marker", "green_marker",x=math.ceil(studio.x - studio.width/2 + desk_studio_w/2)- 75,\
+                         y=math.ceil(studio.y + studio.height/2 - desk_studio_h/2 - 20)-30, width=pens_w,\
+                         height=pens_h, rotation= 180)
+
+    studio.add_furniture("pen", "pen",x=math.ceil(studio.x - studio.width/2 + desk_studio_w/2) -70,\
+                         y=math.ceil(studio.y + studio.height/2 - desk_studio_h/2 - 20)-30, width=pens_w,\
+                         height=pens_h, rotation= 180)
+
+    studio.add_furniture("pencil", "pencil",x=math.ceil(studio.x - studio.width/2 + desk_studio_w/2) -65,\
+                         y=math.ceil(studio.y + studio.height/2 - desk_studio_h/2 - 20) -30, width=pens_w,\
+                         height=pens_h, rotation= 180)
+
     # -- kitchen
+    plate_w = 25; plate_h = 25
+    kitchen.add_furniture("plate empty", "plate", x= kitchen.x - math.ceil(kitchen_w/2) + math.ceil(kitchen_furniture_h/2) + 20,\
+                         y= kitchen.y + 25, width= plate_w,\
+                         height= plate_h, rotation=0)
+    cup_w = 15; cup_h=15
+    kitchen.add_furniture("cup coffee", "coffee", x= kitchen.x - math.ceil(kitchen_w/2) + math.ceil(kitchen_furniture_h/2) + 20,\
+                         y= kitchen.y + 50, width= cup_w,\
+                         height= cup_h, rotation=0)
+
+    kitchen.add_furniture("plate oranges", "plate",x= kitchen.x + 75,\
+                         y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_big_table_h/2 * 3/5) + 20, width=plate_w,\
+                         height= plate_h, rotation=0)
+
+    kitchen.add_furniture("plate apples", "plate",x= kitchen.x + 25,\
+                         y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_big_table_h/2 * 3/5) + 20, width=plate_w,\
+                         height= plate_h, rotation=0)
+
+    orange_w = 10; orange_h = 10
+
+    kitchen.add_furniture("orange", "orange",x= kitchen.x + 80,\
+                         y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_big_table_h/2 * 3/5) + 25, width=orange_w,\
+                         height= orange_h, rotation=0)
+    kitchen.add_furniture("orange", "orange",x= kitchen.x + 70,\
+                         y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_big_table_h/2 * 3/5) + 25, width=orange_w,\
+                         height= orange_h, rotation=0)
+    kitchen.add_furniture("orange", "orange",x= kitchen.x + 75,\
+                         y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_big_table_h/2 * 3/5) + 15, width=orange_w,\
+                         height= orange_h, rotation=0)
+
+    apple_w = 10; apple_h = 10
+    kitchen.add_furniture("apple", "apple",x= kitchen.x + 30,\
+                         y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_big_table_h/2 * 3/5) + 25, width=apple_w,\
+                         height= apple_h, rotation=0)
+    kitchen.add_furniture("apple", "apple",x= kitchen.x + 20,\
+                         y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_big_table_h/2 * 3/5) + 25, width=apple_w,\
+                         height= apple_h, rotation=0)
+
+
     # -- bedroom
+    smartphone_w = 15; smartphone_h = 15
+    bedroom.add_furniture("smartphone", "smartphone",x= bedroom.x + 45,\
+                         y= bedroom.y - math.ceil(bedroom_h/2) + math.ceil(bed_h/2) + 5, width=smartphone_w,\
+                         height= smartphone_h, rotation= 0)
+
+    notebook_w = 25; notebook_h = 25
+    bedroom.add_furniture("red notebook", "notebook_red", x= math.ceil(bedroom.x - bedroom_w/2 + bedroom_cabinet_w/2) + 20,\
+                         y= math.ceil(bedroom.y + bedroom_h/2 - (bedroom_cabinet_h/2 * 3/5)) + 5,\
+                         width=notebook_w, height= notebook_h, rotation=180)
+
+    bedroom.add_furniture("green notebook", "notebook_green", x= math.ceil(bedroom.x + bedroom_w/2 - bedroom_cabinet_w/2) + 20,\
+                         y= math.ceil(bedroom.y + bedroom_h/2 - (bedroom_cabinet_h/2 * 3/5)) + 5,\
+                         width=notebook_w, height= notebook_h, rotation=180)
+
     # -- toilet
-    # -- foyer
+    glasses_w = 25; glasses_h = 25
+    toilet.add_furniture("glasses", "glasses", x= math.ceil(toilet.x + toilet_sink_w/2 - glasses_w/2),\
+                         y= toilet.y + math.ceil(toilet_h/2 - toilet_sink_h/2 * 3/5 + 15),\
+                         width=glasses_w, height= glasses_h, rotation=180)
+
+    toilet.add_furniture("yellow notebook", "notebook_yellow", x=toilet.x + math.ceil(toilet_w/2) - math.ceil(toilet_cabinet_h/2 * 3/5) +5,\
+                         y= toilet.y - math.ceil(toilet_cabinet_w/2) + 2,\
+                         width=notebook_w, height= notebook_h, rotation=-90)
+
 
     # -- living room
+    cards_sofa_w = 25; cards_sofa_h = 25
+    living_room.add_furniture("cards", "cards", x= living_room.x + 20,\
+                         y=  math.ceil(living_room.y - (living_room_sofa_h/2 * 1/2) - (small_table_sofa_h/2 * 1/2)) -10,\
+                         width=cards_sofa_w, height= cards_sofa_h, rotation=180)
 
     # -- dining
-
+    dining.add_furniture("pink notebook", "notebook_pink", x= dining.x + 55,\
+                         y= dining.y - 30,\
+                         width=notebook_w, height= notebook_h, rotation=0)
 
     return env_group, extra_hud_group
 

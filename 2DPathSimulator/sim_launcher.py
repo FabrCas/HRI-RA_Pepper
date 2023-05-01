@@ -68,7 +68,7 @@ def debug_render(env_group, debug, show_obstacles):
                 if el.visible_boundaries: el.hide_boundaries()
 
 
-def rendering(debug=False, show_obstacles=False, extra_HUD = False):
+def rendering(debug=False, show_obstacles=True, extra_HUD = False):
 
     # initialize the pygame engine, get main display object and clock for the rendering
     screen, clock = initialization()
