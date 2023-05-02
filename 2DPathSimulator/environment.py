@@ -1,6 +1,7 @@
 import pygame as pg
 from pygame import Surface
 import math
+from random import randint
 import threading
 from display_objects import StaticImage, Rect, Text, InputTextBox, Button,\
                             OutputTextBox, Room, Pepper, get_rooms
@@ -219,19 +220,12 @@ def create_environment(screen: Surface, verbose = True):
     # dining -> kitchen
     door_d = dining.add_door(kitchen, status='close')
 
-    timer1 = threading.Timer(1, lambda: door_f.close())
-    timer2 = threading.Timer(1, lambda: door_d.open())
-    timer1.start()
-    timer2.start()
+    # timer1 = threading.Timer(1, lambda: door_f.close())
+    # timer2 = threading.Timer(1, lambda: door_d.open())
+    # timer1.start()
+    # timer2.start()
 
-    # 3) Create pepper placeholder
-
-    pepper_displ_x = 0; pepper_displ_y = -math.ceil(foyer.height/2) + 80
-    pepper = Pepper(screen, env_group, foyer, pepper_displ_x, pepper_displ_y)
-    extra_hud_group.add(pepper.get_logo())
-
-
-    # 4.1) include furniture (fixed)
+    # 3.1) include furniture (fixed)
 
     #  -- studio
     desk_studio_w = math.ceil(studio_w /3) + 50 ; desk_studio_h = math.ceil(studio_h /4)
@@ -385,7 +379,7 @@ def create_environment(screen: Surface, verbose = True):
                          y= dining.y,\
                          width=dining_table_w, height= dining_table_h, rotation=0)
 
-    # 4.2) include furniture (movable)
+    # 3.2) include furniture (movable)
 
     # -- studio
     pens_w  = 25; pens_h = 25
@@ -477,7 +471,15 @@ def create_environment(screen: Surface, verbose = True):
                          y= dining.y - 30,\
                          width=notebook_w, height= notebook_h, rotation=0)
 
-    return env_group, extra_hud_group
+    # 4) Create pepper placeholder
+
+    random_room = foyer
+    pepper_displ_x = 0 ; pepper_displ_y = 0 # pepper_displ_x = 0; pepper_displ_y = -math.ceil(foyer.height/2) + 80
+    pepper = Pepper(screen, env_group, random_room, pepper_displ_x, pepper_displ_y)
+    pepper.compute_clearance()
+    extra_hud_group.add(pepper.get_logo())
+
+    return env_group, extra_hud_group, pepper
 
 # ----------------------------------- test functions -------------------------------------
 def test_messages(system_box, screen):

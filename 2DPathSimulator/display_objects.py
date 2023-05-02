@@ -1,5 +1,6 @@
 import pygame as pg
 import math
+from random import randint
 from services import PepperSocket
 
 # ---------------------------------------------- static and global variables
@@ -87,7 +88,6 @@ class Rect(pg.sprite.Sprite):
     """
         simple rect subclass that inherits the Sprite superclass, used for the creation of rectangular figures
     """
-
 
     def __init__(self, screen, x, y, width = 50, height = 50, color = (0,0,0), alpha = 255):
         super().__init__()
@@ -587,11 +587,6 @@ class HouseElement(pg.sprite.Sprite):
             pg.draw.circle(self.screen, (255,0,0), v, radius = 5)
 
     def render_debug_rect(self):
-        # try:
-        #     self.rect_gfx.draw()
-        # except:
-        #     raise ValueError("First instantiate the graphic rect of the display object!")
-
         if not(self.rect_gfx is None):
             self.rect_gfx.draw()
 
@@ -1466,13 +1461,43 @@ class Pepper(HouseElement):
         self.group.add(self.p_letter)
 
         # pepper socket for communication with simulator
-        self.socket = PepperSocket()
+        self.socket: PepperSocket = PepperSocket(self)
 
-    def move_to(self, position):
-        pass
+        print(f"Pepper is in the {self.actual_room.name}")
+        self.clearance = None
+        self.changed_position = False
+
+    def set_random_position(self):
+        margin_from_wall = 20
+        rand_increment = self.socket.random_position(self.actual_room.width, self.actual_room.height, margin_from_wall)
+        rand_pos_x = self.actual_room.rect.topleft[0] +  rand_increment[0]
+        rand_pos_y = self.actual_room.rect.topleft[1] + rand_increment[1]
+        print(f"Random position: {(rand_pos_x,rand_pos_y)}")
+        self.x = rand_pos_x
+        self.y = rand_pos_y
+        self.changed_position = True
+
+    def set_random_room(self):
+        rooms = get_rooms()
+        random_room = rooms[randint(0, len(rooms)-1)]
+        self.actual_room = random_room
+        self.x = random_room.rect.center[0]
+        self.y = random_room.rect.center[1]
+        self.changed_position = True
+
+    def set_random_room_position(self):
+        self.set_random_room()
+        self.set_random_position()
+
+
+
+
 
     def set_color(self, color):
         self.color = color
+
+    def compute_clearance(self):
+        self.clearance, _ = self.socket.compute_clearance()
 
     def draw(self):
         # draw a circle to track the position
@@ -1480,9 +1505,22 @@ class Pepper(HouseElement):
         pg.draw.circle(self.screen, color=self.color, center=(self.x, self.y), radius=10)
         self.p_letter.center_to(self.x, self.y)
 
+        if not(self.clearance is None):
+            pg.draw.circle(self.screen, color=(0, 0, 255), center=(self.clearance.x, self.clearance.y), radius=5)
+
     def get_logo(self, width = 60, height = 60):
         logo = StaticImage("static/assets/pepper.png", self.screen, self.x - width/2, self.y - height/2, width, height)
-        return logo
+        self.logo = logo
+        return self.logo
+
+
+    def update(self, width_logo = 60, height_logo = 60):
+        if self.changed_position:
+            self.logo.rect.x = self.x - width_logo/2
+            self.logo.rect.y = self.y - height_logo/2
+            self.changed_position = False
+
+
 
 
 

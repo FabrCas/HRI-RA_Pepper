@@ -75,10 +75,11 @@ def rendering(debug=False, show_obstacles=True, extra_HUD = False):
     # create display objects for the UI
     ui_group, text_boxes = create_UI(screen)
     # create display objects for the simulation
-    env_group, extra_HUD_group = create_environment(screen)
+    env_group, extra_HUD_group, pepper = create_environment(screen)
 
-    # for elem in env_group:
-    #     print(elem)
+
+    # custom event raiser every x milliseconds
+    pg.time.set_timer( pg.USEREVENT + 0 , 1000)
 
     # variables used for the continuous elimination of characters when pressing backspace
     deleting = None; time_delete = time.time(); deleting_wait = 0.15
@@ -87,7 +88,7 @@ def rendering(debug=False, show_obstacles=True, extra_HUD = False):
     pressed_sx_mouse = False
 
     # custom object to execute user's inputs
-    input_interpreter = InputInterpreter({"UI_DOs": ui_group,"text_boxes": text_boxes,  "environment": env_group})
+    input_interpreter = InputInterpreter({"UI_DOs": ui_group,"text_boxes": text_boxes, "environment": env_group, "pepper": pepper})
 
 
     # frame counter
@@ -182,6 +183,10 @@ def rendering(debug=False, show_obstacles=True, extra_HUD = False):
             if event.type == pg.KEYUP:
                 if event.key == pg.K_BACKSPACE: deleting = None
 
+            if event.type == pg.USEREVENT + 0:
+                # print("ao")
+                pepper.set_random_room_position()
+                pepper.compute_clearance()
         # ---------------------------------------- Input Interpreter updates
 
         debug = input_interpreter.update_debug(debug)
@@ -193,17 +198,18 @@ def rendering(debug=False, show_obstacles=True, extra_HUD = False):
             gc.collect()
 
             # remove old groups
-            del env_group; del extra_HUD_group; del ui_group; del text_boxes
+            del env_group; del extra_HUD_group; del ui_group; del text_boxes; del pepper
 
             # create groups from beginning
             ui_group, text_boxes = create_UI(screen)
-            env_group, extra_HUD_group = create_environment(screen)
+            env_group, extra_HUD_group, pepper = create_environment(screen)
 
             # output message
             text_boxes[1].add_message("The Environment has been reset")
 
             # restore default value for input interpreter
-            input_interpreter = InputInterpreter({"UI_DOs": ui_group,"text_boxes": text_boxes,  "environment": env_group})
+            input_interpreter = InputInterpreter({"UI_DOs": ui_group,"text_boxes": text_boxes, "environment": env_group, "pepper": pepper})
+
 
 
         # ---------------------------------------- Logical updates
