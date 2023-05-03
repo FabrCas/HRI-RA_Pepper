@@ -10,18 +10,24 @@ class InputInterpreter(object):
         self.boxes = simulation_objects['text_boxes']
         self.env = simulation_objects['environment']
         self.pepper = simulation_objects['pepper']
-        self.reset = False
-        self.changed_debug = False
+        self.reset                  = False
+        self.changed_debug          = False
+        self.changed_test_clearance = False
+        self.changed_test_motion    = False
         self.changed_show_obstacles = False
+        self.changed_show_clearance = False
+        self.changed_show_direction = False
+        self.changed_show_target    = False
         self.boxes[1].add_message("Started the simulation")
 
         # self.auto_run()
 
     def auto_run(self):
-        print("Computing the clearance...")
-        self.pepper.socket._distances_wall()
+        pass
 
     def execute(self, message):
+        # set boolean flag for change based on input to True
+
         if "daje roma" in message.strip().lower():
             daje_roma = pg.mixer.Sound('static/sounds/daje_roma_daje.mp3')
             pg.mixer.Sound.play(daje_roma)
@@ -34,12 +40,24 @@ class InputInterpreter(object):
         if "obs" in message.strip().lower():
             print("Changing the show obstacles mode...")
             self.changed_show_obstacles = True
-        if "clearance" in message.strip().lower():   #clearance
-            pass
+        if "test_c" in message.strip().lower():   # test clearance
+            print("Started the clearance test")
+            self.changed_test_clearance = True
+        if "test_m" in message.strip().lower():   # test motion
+            print("Started the motion test")
+            self.changed_test_motion = True
+        if "clearance" in message.strip().lower():   # clearance
+            print("Changing the show of clearance...")
+            self.changed_show_clearance = True
+        if "target" in message.strip().lower():   # clearance
+            print("Changing the show of target...")
+            self.changed_show_target = True
+        if "direction" in message.strip().lower():   # clearance
+            print("Changing the show of direction...")
+            self.changed_show_direction = True
 
 
-
-    def update_debug(self, debug):
+    def toggle_debug(self, debug):
         if self.changed_debug:
 
             # change value
@@ -65,16 +83,105 @@ class InputInterpreter(object):
             self.changed_show_obstacles = False
 
             # output message
-            self.boxes[1].add_message(f"show obstacles mode: {show_obstacles}")
+            self.boxes[1].add_message(f"Show obstacles mode: {show_obstacles}")
 
         return show_obstacles
 
+    def toggle_test_clearance(self, test_clearance):
+        if self.changed_test_clearance:
 
-class PepperSocket():
+            # change value
+            if test_clearance:test_clearance = False;
+            else: test_clearance = True
+
+            # restore default value for input interpreter
+            self.changed_test_clearance = False
+
+            # output message
+            self.boxes[1].add_message(f"Test clearance: {test_clearance}")
+
+        return test_clearance
+
+    def toggle_clearance(self, show_clearance):
+        if self.changed_show_clearance:
+
+            # change value
+            if show_clearance:show_clearance = False
+            else:show_clearance = True
+
+            # restore default value for input interpreter
+            self.changed_show_clearance = False
+
+            # output message
+            self.boxes[1].add_message(f"Show clearance: {show_clearance}")
+
+        return show_clearance
+
+    def toggle_target(self, show_target):
+        if self.changed_show_target:
+
+            # change value
+            if show_target:show_target = False
+            else:show_target = True
+
+            # restore default value for input interpreter
+            self.changed_show_target = False
+
+            # output message
+            self.boxes[1].add_message(f"Show target: {show_target}")
+
+        return show_target
+
+    def toggle_direction(self, show_direction):
+        if self.changed_show_direction:
+
+            # change value
+            if show_direction:show_direction = False
+            else:show_direction = True
+
+            # restore default value for input interpreter
+            self.changed_show_direction = False
+
+            # output message
+            self.boxes[1].add_message(f"Show direction: {show_direction}")
+
+        return show_direction
+
+    def toggle_test_motion(self, test_motion):
+        if self.changed_test_motion:
+
+            # change value
+            if test_motion:test_motion = False;
+            else: test_motion = True
+
+            # restore default value for input interpreter
+            self.changed_test_motion = False
+
+            # output message
+            self.boxes[1].add_message(f"Test motion: {test_motion}")
+
+        return test_motion
+
+
+
+
+class PepperSocket(object):
     def __init__(self, pepper):
         super().__init__()
         self.pepper = pepper
 
+    def in_rect(self, rect: pg.Rect, pos: pg.math.Vector2):
+        """
+        :param rect: rect shape for the control (pg.Rect)
+        :param pos: point to the check (pg.math.Vector2)
+        :return: boolean variable that represent if a point is in a rect (bounds included)
+        """
+        if pos.x < rect.x or pos.x > rect.x + rect.width:
+            return False
+        elif pos.y < rect.y or pos.y > rect.y + rect.height:
+            return False
+        else:
+            return True
 
     def euclidean_distance(self, v1, v2):
         """
@@ -89,17 +196,14 @@ class PepperSocket():
         y_r = random.randint(0 + margin, height - margin)
         return x_r, y_r
 
-
     def _clearance_walls(self):
         walls = self.pepper.actual_room.bounds
         v1 = pg.math.Vector2(int(self.pepper.x), int(self.pepper.y))
         min_distance = math.inf
         point_min_distance = None
-        # print("v1", v1)
+
         for side, segments in walls.items():
-            # print(f"side: {side}")
             for segment in segments:
-                # print(f"segment {segment}")
                 points = []
                 if side == "north":
                     xs = range(int(segment[0].x), int(segment[1].x)+1)    # compute variable xs
@@ -113,7 +217,6 @@ class PepperSocket():
                 elif side == "west":
                     ys = range(int(segment[0].y), int(segment[1].y)+1)    # compute variable ys
                     points = list(zip([int(segment[0].x)] * len(ys), ys))
-                # print(f"points {list(points)}")
 
                 for point in points:
                     v2 = pg.math.Vector2(point[0], point[1])
@@ -121,10 +224,8 @@ class PepperSocket():
                     if dis < min_distance:
                         min_distance = dis
                         point_min_distance = v2
-                        # print(f"new point min distance: {point_min_distance} {min_distance}")
 
         return point_min_distance, min_distance
-
 
     def _clearance_obstacles(self):
 
@@ -140,10 +241,6 @@ class PepperSocket():
         doors =     list(self.pepper.actual_room.doors.values())
         all_furniture = list(self.pepper.actual_room.furniture.values())
 
-        print(f"numbers of windows: {len(windows)}")
-        print(f"numbers of doors: {len(doors)}")
-        print(f"numbers of furniture: {len(all_furniture)}")
-
         # full set of points for the distance
         points_window = []
         points_door = []
@@ -153,8 +250,6 @@ class PepperSocket():
         for win in windows:
             win_left_rect = win[0].rect_gfx.rect
             win_right_rect = win[1].rect_gfx.rect
-            # print(win_left_rect)
-            # print(win_right_rect)
 
             # compute the points relative to the edge for the left window
             xs = list(range(win_left_rect.left, win_left_rect.right))
@@ -164,11 +259,6 @@ class PepperSocket():
             left_points_l   = list(zip([win_left_rect.left] * len(ys), ys))
             right_points_l  = list(zip([win_left_rect.right] * len(ys), ys))
             bottom_points_l = list(zip(xs, [win_left_rect.bottom] * len(xs)))
-
-            # print(top_points_l)
-            # print(left_points_l)
-            # print(right_points_l)
-            # print(bottom_points_l)
 
             # compute the points relative to the edge for the right window
             xs = list(range(win_right_rect.left, win_right_rect.right))
@@ -222,10 +312,7 @@ class PepperSocket():
                 min_distance = dis
                 point_min_distance = v2
 
-
-
         return point_min_distance, min_distance
-
 
     def compute_clearance(self):
         point_min_distance_walls, min_distance_walls = self._clearance_walls()

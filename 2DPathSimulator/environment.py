@@ -473,10 +473,8 @@ def create_environment(screen: Surface, verbose = True):
 
     # 4) Create pepper placeholder
 
-    random_room = foyer
     pepper_displ_x = 0 ; pepper_displ_y = 0 # pepper_displ_x = 0; pepper_displ_y = -math.ceil(foyer.height/2) + 80
-    pepper = Pepper(screen, env_group, random_room, pepper_displ_x, pepper_displ_y)
-    pepper.compute_clearance()
+    pepper = Pepper(screen, env_group, foyer, pepper_displ_x, pepper_displ_y)
     extra_hud_group.add(pepper.get_logo())
 
     return env_group, extra_hud_group, pepper

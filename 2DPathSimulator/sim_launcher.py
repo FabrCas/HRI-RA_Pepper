@@ -68,7 +68,18 @@ def debug_render(env_group, debug, show_obstacles):
                 if el.visible_boundaries: el.hide_boundaries()
 
 
-def rendering(debug=False, show_obstacles=True, extra_HUD = False):
+def rendering():
+    # execution flags
+    debug               = False
+    show_obstacles      = False
+    show_clearance      = True
+    show_target         = True
+    show_direction      = True
+    extra_HUD           = False
+    test_clearance      = False
+    test_motion         = False
+
+
 
     # initialize the pygame engine, get main display object and clock for the rendering
     screen, clock = initialization()
@@ -78,8 +89,12 @@ def rendering(debug=False, show_obstacles=True, extra_HUD = False):
     env_group, extra_HUD_group, pepper = create_environment(screen)
 
 
-    # custom event raiser every x milliseconds
-    pg.time.set_timer( pg.USEREVENT + 0 , 1000)
+    # custom event raiser every x milliseconds for testing
+    test_time_interval   = 2500  # [ms]
+    motion_time_interval = 100 # [ms]
+    pg.time.set_timer( pg.USEREVENT + 0, test_time_interval)
+    pg.time.set_timer(pg.USEREVENT + 1, motion_time_interval) # motion event for each tenth of second
+
 
     # variables used for the continuous elimination of characters when pressing backspace
     deleting = None; time_delete = time.time(); deleting_wait = 0.15
@@ -90,6 +105,9 @@ def rendering(debug=False, show_obstacles=True, extra_HUD = False):
     # custom object to execute user's inputs
     input_interpreter = InputInterpreter({"UI_DOs": ui_group,"text_boxes": text_boxes, "environment": env_group, "pepper": pepper})
 
+    if show_clearance:
+        # print("-----------------------------ao ")
+        pepper.compute_clearance()
 
     # frame counter
     counter_frame = 0
@@ -171,8 +189,8 @@ def rendering(debug=False, show_obstacles=True, extra_HUD = False):
                             deleting = None
                             print("Text inserted: {}".format(box.text_box))
                             input_interpreter.execute(box.text_box)
-                            box.box_active = False
-                            box.restore_default()
+                            # box.box_active = False
+                            box.restore_empty()
 
                         elif event.unicode.isprintable(): # insert unicode chars in the prompt
                             deleting = None
@@ -183,16 +201,41 @@ def rendering(debug=False, show_obstacles=True, extra_HUD = False):
             if event.type == pg.KEYUP:
                 if event.key == pg.K_BACKSPACE: deleting = None
 
-            if event.type == pg.USEREVENT + 0:
-                # print("ao")
-                pepper.set_random_room_position()
-                pepper.compute_clearance()
+
+
         # ---------------------------------------- Input Interpreter updates
 
-        debug = input_interpreter.update_debug(debug)
+            # periodic custom event
+            if test_clearance and event.type == pg.USEREVENT + 0:
+                print("---------------------------------ao")
+                pepper.set_random_room_position()
+                pepper.compute_clearance()
 
-        show_obstacles = input_interpreter.toggle_show_obstacles(show_obstacles)
+            # motion custom event
+            if  event.type == pg.USEREVENT + 1:
+                if pepper.in_motion: pepper.move()
 
+
+        # update flags based on input
+        debug           = input_interpreter.toggle_debug(debug)
+        show_obstacles  = input_interpreter.toggle_show_obstacles(show_obstacles)
+        test_clearance  = input_interpreter.toggle_test_clearance(test_clearance)
+        test_motion     = input_interpreter.toggle_test_motion(test_motion)
+        show_clearance  = input_interpreter.toggle_clearance(show_clearance)
+        show_target     = input_interpreter.toggle_target(show_target)
+        show_direction  = input_interpreter.toggle_direction(show_direction)
+
+        # update flags for pepper
+        pepper.show_clearance   = show_clearance
+        pepper.show_target      = show_target
+        pepper.show_direction   = show_direction
+
+        if test_motion:
+            pepper.move_to(pg.math.Vector2(pepper.x + 80, pepper.y + 180), motion_time_interval)
+            test_motion = False
+
+
+        # handle reset
         if input_interpreter.reset:   # the reset is better to be handled directly in the main loop
             # free memory
             gc.collect()
@@ -209,7 +252,6 @@ def rendering(debug=False, show_obstacles=True, extra_HUD = False):
 
             # restore default value for input interpreter
             input_interpreter = InputInterpreter({"UI_DOs": ui_group,"text_boxes": text_boxes, "environment": env_group, "pepper": pepper})
-
 
 
         # ---------------------------------------- Logical updates

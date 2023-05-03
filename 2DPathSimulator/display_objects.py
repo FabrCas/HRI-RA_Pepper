@@ -1,5 +1,6 @@
 import pygame as pg
 import math
+import time
 from random import randint
 from services import PepperSocket
 
@@ -307,6 +308,10 @@ class InputTextBox():
     def restore_default(self):
         self.rect.w = self.min_width
         self.text_box = self.default_text
+
+    def restore_empty(self):
+        self.rect.w = self.min_width
+        self.text_box = ""
 
 class OutputTextBox():
 
@@ -1464,8 +1469,31 @@ class Pepper(HouseElement):
         self.socket: PepperSocket = PepperSocket(self)
 
         print(f"Pepper is in the {self.actual_room.name}")
-        self.clearance = None
+
+        # flags vfx
+        self.show_clearance = False
+        self.show_target = False
+        self.show_direction = False
+
+        # flags motion
         self.changed_position = False
+        self.in_motion = False
+
+        # motion variables
+        self.m2pixels = lambda x: x * 100       # Each 100 pixels represent 1 meter
+        self.orientation = 270
+        self.clearance = None
+        self.target = None
+        self.range = None
+        self.bearing = None
+        self.direction = None
+        self.direction_norm = None
+        self.motion_time_interval = None
+
+        # motion constants
+        self.SPEED = 0.2 / 10             # [m/(s/10] 1/10 of seconds in time interval for the update time]
+        self.MAX_SPEED = 0.5            # [m/s] approximated max speed from PEPPER-Technical Specifications
+        self.POS_TOLERANCE = 1
 
     def set_random_position(self):
         margin_from_wall = 20
@@ -1476,6 +1504,30 @@ class Pepper(HouseElement):
         self.x = rand_pos_x
         self.y = rand_pos_y
         self.changed_position = True
+
+        # check if the position lies on obstacles, in that case, recompute
+        for k, window in self.actual_room.windows.items():
+            if not(window[0].rect_gfx is None):     # left window
+                if self.socket.in_rect(window[0].rect_gfx.rect, pg.math.Vector2(self.x, self.y)):
+                    self.set_random_position()
+                    return
+            if not(window[1].rect_gfx is None):     # right window
+                if self.socket.in_rect(window[1].rect_gfx.rect, pg.math.Vector2(self.x, self.y)):
+                    self.set_random_position()
+                    return
+
+        for k, door in self.actual_room.doors.items():
+            if not(door.rect_gfx is None):
+                if self.socket.in_rect(door.rect_gfx.rect, pg.math.Vector2(self.x, self.y)):
+                    self.set_random_position()
+                    return
+
+        for k, furniture in self.actual_room.furniture.items():
+            if not(furniture.rect_gfx is None):
+                if self.socket.in_rect(furniture.rect_gfx.rect, pg.math.Vector2(self.x, self.y)):
+                    self.set_random_position()
+                    return
+        return
 
     def set_random_room(self):
         rooms = get_rooms()
@@ -1489,15 +1541,71 @@ class Pepper(HouseElement):
         self.set_random_room()
         self.set_random_position()
 
-
-
-
-
     def set_color(self, color):
         self.color = color
 
     def compute_clearance(self):
         self.clearance, _ = self.socket.compute_clearance()
+
+    def get_logo(self, width = 60, height = 60):
+        logo = StaticImage("static/assets/pepper.png", self.screen, self.x - width/2, self.y - height/2, width, height)
+        self.logo = logo
+        return self.logo
+
+    def get_position(self):
+        return pg.math.Vector2(self.x, self.y)
+
+    def move_to(self, target: pg.math.Vector2, motion_time_interval):
+        # compute direction and the normalized direction vector
+        direction: pg.math.Vector2 = target - pg.math.Vector2(self.x, self.y)
+        self.direction = direction
+        self.direction_norm = pg.math.Vector2.normalize(self.direction)
+
+        # round and save the target
+        self.target = target # pg.math.Vector2(round(target.x), round(target.y))
+        # set the time interval
+        self.motion_time_interval = motion_time_interval
+
+        # self.range = direction.length()
+        # self.bearing = math.degrees(math.atan2((self.x - target.x), (self.y - target.y)))  # invert the y subtraction since the reference frame y axis is inverted
+        # print(f"atan2: {self.bearing}")
+
+        # set flags on
+        self.in_motion = True
+
+        print(f'started the motion: {time.strftime("%H:%M:%S")}')
+        print(f'target: {self.target}')
+
+    def move(self, verbose = True):
+        #  from m/s to pixel/s (compute pixel speed)
+        p_speed = self.m2pixels(self.SPEED)  # [pixel/second]
+
+        # do motion
+        self.x += p_speed * self.direction_norm.x
+        self.y += p_speed * self.direction_norm.y
+
+        if verbose: print(f"New position {(self.get_position())}")  # [876, 422.5]
+
+        distance = (self.get_position() - self.target).length()
+        if verbose: print(f"Distance {distance}")
+
+        if distance < 1:
+            self.in_motion = False
+            print(f'completed the motion: {time.strftime("%H:%M:%S")}')
+        else:
+            self.changed_position = True
+
+    def update(self, width_logo=60, height_logo=60):
+        if self.changed_position:    # for testing, instantaneous changing of position
+            # update the logo
+            self.logo.rect.x = self.x - width_logo/2
+            self.logo.rect.y = self.y - height_logo/2
+
+        if self.show_clearance:
+            if (self.clearance is None) or self.changed_position:
+                self.compute_clearance()
+
+        if self.changed_position: self.changed_position = False # restore default False value
 
     def draw(self):
         # draw a circle to track the position
@@ -1505,20 +1613,29 @@ class Pepper(HouseElement):
         pg.draw.circle(self.screen, color=self.color, center=(self.x, self.y), radius=10)
         self.p_letter.center_to(self.x, self.y)
 
-        if not(self.clearance is None):
+        if (self.show_clearance and not(self.clearance is None)):
             pg.draw.circle(self.screen, color=(0, 0, 255), center=(self.clearance.x, self.clearance.y), radius=5)
 
-    def get_logo(self, width = 60, height = 60):
-        logo = StaticImage("static/assets/pepper.png", self.screen, self.x - width/2, self.y - height/2, width, height)
-        self.logo = logo
-        return self.logo
+        if (self.show_target and not(self.target is None)):
+            pg.draw.circle(self.screen, (0, 255, 0), (self.target.x, self.target.y), radius=10)
 
+        if (self.show_direction and not(self.direction is None)):
+            # draw the arrow: the line
+            pg.draw.line(self.screen, (0, 255, 0), (self.x, self.y), (self.x + (self.direction_norm.x * 50), self.y + (self.direction_norm.y * 50)), width = 3)
 
-    def update(self, width_logo = 60, height_logo = 60):
-        if self.changed_position:
-            self.logo.rect.x = self.x - width_logo/2
-            self.logo.rect.y = self.y - height_logo/2
-            self.changed_position = False
+            # draw the arrow: the triangle
+            # angle = math.degrees(math.atan2(self.direction_norm.y, self.direction_norm.x))
+            arc_angle_points = 12  # degrees
+            direction_offset_1 = self.direction_norm.rotate(-int(arc_angle_points/2))
+            direction_offset_2 = self.direction_norm.rotate( int(arc_angle_points/2))
+
+            point_offset_1 = pg.math.Vector2((self.x + (direction_offset_1.x * 40)), (self.y + (direction_offset_1.y * 40)))
+            point_offset_2 = pg.math.Vector2((self.x + (direction_offset_2.x * 40)), (self.y + (direction_offset_2.y * 40)))
+            point_target = pg.math.Vector2((self.x + (self.direction_norm.x * 50)), (self.y + (self.direction_norm.y * 50)))
+
+            points =  [point_offset_1, point_offset_2, point_target]
+            pg.draw.polygon(self.screen, (0, 255, 0), points, width=0)
+
 
 
 
