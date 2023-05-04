@@ -18,7 +18,6 @@ class InputInterpreter(object):
         self.changed_show_clearance = False
         self.changed_show_direction = False
         self.changed_show_target    = False
-        self.boxes[1].add_message("Started the simulation")
 
         # self.auto_run()
 
@@ -163,12 +162,12 @@ class InputInterpreter(object):
         return test_motion
 
 
-
-
 class PepperSocket(object):
     def __init__(self, pepper):
         super().__init__()
         self.pepper = pepper
+
+        self.apf_not_switched = True
 
     def in_rect(self, rect: pg.Rect, pos: pg.math.Vector2):
         """
@@ -196,6 +195,7 @@ class PepperSocket(object):
         y_r = random.randint(0 + margin, height - margin)
         return x_r, y_r
 
+    # APF
     def _clearance_walls(self):
         walls = self.pepper.actual_room.bounds
         v1 = pg.math.Vector2(int(self.pepper.x), int(self.pepper.y))
@@ -322,5 +322,47 @@ class PepperSocket(object):
             return point_min_distance_walls, min_distance_walls
         else:
             return point_min_distance_obs, min_distance_obs
+
+    def apf(self, goal_position: pg.math.Vector2, speed, profile = "conical"): # valid values for profile = "conical", "paraboloidal", "mixed".
+
+        # compute the attractive force
+        error = goal_position - self.pepper.get_position()
+        ka = 0.05; kb = speed
+
+        if profile == 'conical':
+            ka = speed
+            f_a = ka * (error/error.length())   # constant force
+        elif profile == "paraboloidal":
+            f_a = ka * error
+        elif profile == 'mixed':                                   # use mixed version
+            p = kb/ka
+            if error.length() <= p: # use paraboloidal when close to the goal
+                f_a = ka * error
+
+                if (self.apf_not_switched):
+                    self.pepper.output_box.add_message(f"Mixed profile: switching from Conical to Paraboloidal")
+                    self.apf_not_switched = False
+
+            else:                   # use conic when too far
+                f_a = kb * (error / error.length())
+        else:
+            raise ValueError("Invalid type for the APF profile!")
+
+        # avoid saturation (by paraboloidal profile) clipping to cruise standard speed
+        if f_a.length() > speed:
+            f_a = pg.math.Vector2.normalize(f_a)
+            f_a = speed * f_a
+
+        # compute the repulsive force
+
+        # estimate the total resulting force
+        f_t = f_a
+
+        return f_t
+
+
+
+
+
 
 

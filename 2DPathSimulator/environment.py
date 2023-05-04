@@ -58,6 +58,7 @@ def create_UI(screen: Surface, verbose = True):
     # 4) create system Output box
     system_box = OutputTextBox(screen, x= lateral_panel_ltc_x + 10, y= lateral_panel_height - 410, width=lateral_panel_width -20, height= 400,
                                color_text=(0, 0, 0), color_bg=(200,200,200),size_font=20)
+    system_box.add_message("Started the simulation")
 
     text_system_box = Text("System output", screen=screen, x=lateral_panel_ltc_x + 10, y= system_box.y-30,  color=(255, 255, 255), size_font=20)
     text_system_box.center_to(x = lateral_panel_ltc_x + lateral_panel_width/2)
@@ -68,7 +69,7 @@ def create_UI(screen: Surface, verbose = True):
     # test_messages(system_box, screen)
     return ui_group, text_boxes
 
-def create_environment(screen: Surface, verbose = True):
+def create_environment(screen: Surface, output_box: OutputTextBox, verbose = True):
 
     if verbose: print("\n         [sketching the House environment]          ")
 
@@ -474,7 +475,7 @@ def create_environment(screen: Surface, verbose = True):
     # 4) Create pepper placeholder
 
     pepper_displ_x = 0 ; pepper_displ_y = 0 # pepper_displ_x = 0; pepper_displ_y = -math.ceil(foyer.height/2) + 80
-    pepper = Pepper(screen, env_group, foyer, pepper_displ_x, pepper_displ_y)
+    pepper = Pepper(screen, env_group, foyer, pepper_displ_x, pepper_displ_y, output_box)
     extra_hud_group.add(pepper.get_logo())
 
     return env_group, extra_hud_group, pepper

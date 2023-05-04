@@ -86,7 +86,8 @@ def rendering():
     # create display objects for the UI
     ui_group, text_boxes = create_UI(screen)
     # create display objects for the simulation
-    env_group, extra_HUD_group, pepper = create_environment(screen)
+    env_group, extra_HUD_group, pepper = create_environment(screen, text_boxes[1])
+
 
 
     # custom event raiser every x milliseconds for testing
@@ -104,10 +105,6 @@ def rendering():
 
     # custom object to execute user's inputs
     input_interpreter = InputInterpreter({"UI_DOs": ui_group,"text_boxes": text_boxes, "environment": env_group, "pepper": pepper})
-
-    if show_clearance:
-        # print("-----------------------------ao ")
-        pepper.compute_clearance()
 
     # frame counter
     counter_frame = 0
@@ -234,7 +231,6 @@ def rendering():
             pepper.move_to(pg.math.Vector2(pepper.x + 80, pepper.y + 180), motion_time_interval)
             test_motion = False
 
-
         # handle reset
         if input_interpreter.reset:   # the reset is better to be handled directly in the main loop
             # free memory
@@ -245,14 +241,13 @@ def rendering():
 
             # create groups from beginning
             ui_group, text_boxes = create_UI(screen)
-            env_group, extra_HUD_group, pepper = create_environment(screen)
+            env_group, extra_HUD_group, pepper = create_environment(screen, text_boxes[1])
 
             # output message
             text_boxes[1].add_message("The Environment has been reset")
 
             # restore default value for input interpreter
             input_interpreter = InputInterpreter({"UI_DOs": ui_group,"text_boxes": text_boxes, "environment": env_group, "pepper": pepper})
-
 
         # ---------------------------------------- Logical updates
         ui_group.update()

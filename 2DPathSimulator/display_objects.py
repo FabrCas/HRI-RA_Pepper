@@ -1450,12 +1450,13 @@ class Furniture(HouseElement):
         self._transformation_image(self.image)
 
 class Pepper(HouseElement):
-    def __init__(self, screen, group, room, displ_x, displ_y):
+    def __init__(self, screen, group, room, displ_x, displ_y, output_box):
         super().__init__('Pepper', screen, group, room.x + displ_x, room.y + displ_y, width = 20, height= 20)
         self.rel_angle = 0
         self.actual_room = room
         self.color = (255, 255, 255)
         self.p_letter = Text("P", self.screen, self.x, self.y, color=(0, 0, 0), size_font= 21)
+        self.output_box = output_box
 
         # homing data
         self.homing_room_name = 'Studio'
@@ -1470,6 +1471,7 @@ class Pepper(HouseElement):
 
         print(f"Pepper is in the {self.actual_room.name}")
 
+
         # flags vfx
         self.show_clearance = False
         self.show_target = False
@@ -1478,6 +1480,7 @@ class Pepper(HouseElement):
         # flags motion
         self.changed_position = False
         self.in_motion = False
+        self.use_apf = True
 
         # motion variables
         self.m2pixels = lambda x: x * 100       # Each 100 pixels represent 1 meter
@@ -1489,12 +1492,21 @@ class Pepper(HouseElement):
         self.direction = None
         self.direction_norm = None
         self.motion_time_interval = None
+        self.profile  = 'mixed'
+        #  from m/s to pixel/s (compute pixel speed)
 
         # motion constants
         self.SPEED = 0.2 / 10             # [m/(s/10] 1/10 of seconds in time interval for the update time]
         self.MAX_SPEED = 0.5            # [m/s] approximated max speed from PEPPER-Technical Specifications
         self.POS_TOLERANCE = 1
+        self.P_SPEED = self.m2pixels(self.SPEED)  # 2 [pixel/second]
 
+        # instantiation messages
+        self.output_box.add_message(f"Pepper is in the {self.actual_room.name}")
+        self.output_box.add_message(f"Pepper APF profile: {self.profile}")
+
+
+    # change position methods
     def set_random_position(self):
         margin_from_wall = 20
         rand_increment = self.socket.random_position(self.actual_room.width, self.actual_room.height, margin_from_wall)
@@ -1541,28 +1553,30 @@ class Pepper(HouseElement):
         self.set_random_room()
         self.set_random_position()
 
-    def set_color(self, color):
-        self.color = color
-
-    def compute_clearance(self):
-        self.clearance, _ = self.socket.compute_clearance()
-
-    def get_logo(self, width = 60, height = 60):
-        logo = StaticImage("static/assets/pepper.png", self.screen, self.x - width/2, self.y - height/2, width, height)
-        self.logo = logo
-        return self.logo
-
     def get_position(self):
         return pg.math.Vector2(self.x, self.y)
 
-    def move_to(self, target: pg.math.Vector2, motion_time_interval):
-        # compute direction and the normalized direction vector
-        direction: pg.math.Vector2 = target - pg.math.Vector2(self.x, self.y)
-        self.direction = direction
-        self.direction_norm = pg.math.Vector2.normalize(self.direction)
+    # motion methods
+    def compute_clearance(self):
+        self.clearance, _ = self.socket.compute_clearance()
 
-        # round and save the target
-        self.target = target # pg.math.Vector2(round(target.x), round(target.y))
+    def move_to(self, target: pg.math.Vector2, motion_time_interval):
+
+        self.target = target
+        if not self.use_apf : # linear motion
+            # compute direction and the normalized direction vector
+            direction: pg.math.Vector2 = target - pg.math.Vector2(self.x, self.y)
+            self.direction = direction
+            self.direction_norm = pg.math.Vector2.normalize(self.direction)
+        else:
+            # compute the total force using APF methods
+            f_t = self.socket.apf(self.target,self.P_SPEED, profile=self.profile)
+
+            print(f_t)
+            # we use this force as a generalized velocity
+            self.direction = f_t
+            self.direction_norm = pg.math.Vector2.normalize(self.direction)
+
         # set the time interval
         self.motion_time_interval = motion_time_interval
 
@@ -1576,25 +1590,44 @@ class Pepper(HouseElement):
         print(f'started the motion: {time.strftime("%H:%M:%S")}')
         print(f'target: {self.target}')
 
-    def move(self, verbose = True):
-        #  from m/s to pixel/s (compute pixel speed)
-        p_speed = self.m2pixels(self.SPEED)  # [pixel/second]
+    def reset_motion_variables(self):
+        self.in_motion = False
+        self.target = None
+        self.clearance = None
+        self.direction = None
+        self.direction_norm = None
 
+    def move(self, verbose = False):
         # do motion
-        self.x += p_speed * self.direction_norm.x
-        self.y += p_speed * self.direction_norm.y
+        if self.use_apf:
+            self.x += self.direction.x  # in this case direction contains the generalized velocity
+            self.y += self.direction.y
+        else:
+            self.x += self.P_SPEED * self.direction_norm.x  # x0 + vx [p/s] * 1 [s]
+            self.y += self.P_SPEED * self.direction_norm.y  # y0 + vy [p/s] * 1 [s]
+            # print(p_speed)
+            # print(p_speed * self.direction_norm.x)
+            # print(p_speed * self.direction_norm.y)
 
-        if verbose: print(f"New position {(self.get_position())}")  # [876, 422.5]
-
+        if verbose: print(f"New position {(self.get_position())}")
         distance = (self.get_position() - self.target).length()
         if verbose: print(f"Distance {distance}")
 
-        if distance < 1:
-            self.in_motion = False
+        if distance < self.POS_TOLERANCE:
+            self.reset_motion_variables()
+            self.socket.apf_not_switched = False   # for output message when switching profile
             print(f'completed the motion: {time.strftime("%H:%M:%S")}')
         else:
-            self.changed_position = True
+            # if apf compute the new direction for the next step
+            if self.use_apf:
+                # compute the total force using APF methods
+                f_t = self.socket.apf(self.target, self.P_SPEED, profile=self.profile)
+                # we use this force as a generalized velocity
+                self.direction = f_t
+                self.direction_norm = pg.math.Vector2.normalize(self.direction)
 
+        self.changed_position = True
+        
     def update(self, width_logo=60, height_logo=60):
         if self.changed_position:    # for testing, instantaneous changing of position
             # update the logo
@@ -1606,6 +1639,17 @@ class Pepper(HouseElement):
                 self.compute_clearance()
 
         if self.changed_position: self.changed_position = False # restore default False value
+
+    # graphic methods
+
+    def set_color(self, color):
+        self.color = color
+
+    def get_logo(self, width=60, height=60):
+        logo = StaticImage("static/assets/pepper.png", self.screen, self.x - width / 2, self.y - height / 2, width,
+                           height)
+        self.logo = logo
+        return self.logo
 
     def draw(self):
         # draw a circle to track the position
