@@ -74,7 +74,8 @@ def rendering():
     show_obstacles      = False
     show_clearance      = True
     show_target         = True
-    show_direction      = True
+    show_direction      = False
+    show_forces         = True   # show forces from APF method
     extra_HUD           = False
     test_clearance      = False
     test_motion         = False
@@ -88,8 +89,7 @@ def rendering():
     # create display objects for the simulation
     env_group, extra_HUD_group, pepper = create_environment(screen, text_boxes[1])
 
-
-
+    pepper.y += 250
     # custom event raiser every x milliseconds for testing
     test_time_interval   = 2500  # [ms]
     motion_time_interval = 100 # [ms]
@@ -221,14 +221,17 @@ def rendering():
         show_clearance  = input_interpreter.toggle_clearance(show_clearance)
         show_target     = input_interpreter.toggle_target(show_target)
         show_direction  = input_interpreter.toggle_direction(show_direction)
+        show_forces     = input_interpreter.toggle_forces(show_forces)
 
         # update flags for pepper
         pepper.show_clearance   = show_clearance
         pepper.show_target      = show_target
         pepper.show_direction   = show_direction
+        pepper.show_forces = show_forces
 
         if test_motion:
-            pepper.move_to(pg.math.Vector2(pepper.x + 80, pepper.y + 180), motion_time_interval)
+            # pepper.move_to(pg.math.Vector2(pepper.x + 80, pepper.y + 180), motion_time_interval)
+            pepper.move_to(pg.math.Vector2(pepper.actual_room.doors['west'].rect.x, pepper.actual_room.doors['west'].rect.y), motion_time_interval)
             test_motion = False
 
         # handle reset
@@ -274,7 +277,6 @@ def rendering():
 
         # extra HUD rendering
         if extra_HUD: extra_HUD_group.draw(screen)
-
 
         # ---------------------------------------- display updates
 

@@ -17,9 +17,10 @@ class InputInterpreter(object):
         self.changed_show_obstacles = False
         self.changed_show_clearance = False
         self.changed_show_direction = False
+        self.changed_show_forces    = False
         self.changed_show_target    = False
 
-        # self.auto_run()
+        self.auto_run()
 
     def auto_run(self):
         pass
@@ -54,7 +55,9 @@ class InputInterpreter(object):
         if "direction" in message.strip().lower():   # clearance
             print("Changing the show of direction...")
             self.changed_show_direction = True
-
+        if "forces" in message.strip().lower():
+            print("Changing the show of forces (APF)...")
+            self.changed_show_forces = True
 
     def toggle_debug(self, debug):
         if self.changed_debug:
@@ -146,6 +149,21 @@ class InputInterpreter(object):
 
         return show_direction
 
+    def toggle_forces(self, show_forces):
+        if self.changed_show_forces:
+
+            # change value
+            if show_forces:show_forces = False
+            else:show_forces = True
+
+            # restore default value for input interpreter
+            self.changed_show_forces = False
+
+            # output message
+            self.boxes[1].add_message(f"Show forces: {show_forces}")
+
+        return show_forces
+
     def toggle_test_motion(self, test_motion):
         if self.changed_test_motion:
 
@@ -167,7 +185,9 @@ class PepperSocket(object):
         super().__init__()
         self.pepper = pepper
 
-        self.apf_not_switched = True
+        # APF variables
+        self.apf_not_switched = True    # used for the mixed profile: from conical to paraboloidal
+        self.last_apf = {}
 
     def in_rect(self, rect: pg.Rect, pos: pg.math.Vector2):
         """
@@ -339,7 +359,7 @@ class PepperSocket(object):
             if error.length() <= p: # use paraboloidal when close to the goal
                 f_a = ka * error
 
-                if (self.apf_not_switched):
+                if self.apf_not_switched:
                     self.pepper.output_box.add_message(f"Mixed profile: switching from Conical to Paraboloidal")
                     self.apf_not_switched = False
 
@@ -349,15 +369,49 @@ class PepperSocket(object):
             raise ValueError("Invalid type for the APF profile!")
 
         # avoid saturation (by paraboloidal profile) clipping to cruise standard speed
-        if f_a.length() > speed:
-            f_a = pg.math.Vector2.normalize(f_a)
-            f_a = speed * f_a
+        # if f_a.length() > speed:
+        #     f_a = pg.math.Vector2.normalize(f_a)
+        #     f_a = speed * f_a
 
         # compute the repulsive force
+        gamma = 2
+        range_influence = 50
+        k_r = 500
+        clearance_point, clearance = self.compute_clearance()
+        print(f"clarance {clearance}")
+
+        if clearance > range_influence:
+            f_r = pg.math.Vector2(0,0)
+        else:
+            # if clearance == 0:
+            #     return pg.math.Vector2(0,0)
+            # else:
+            # print("repulsive")
+            repulsive_gain = (k_r/(clearance**2)) * ((1/clearance) - (1/range_influence))**(gamma-1)
+            clearance_gradient = (self.pepper.get_position() - clearance_point)
+
+            f_r = repulsive_gain * clearance_gradient
+            print(f"repulsive force {f_r}")
+            # f_r = speed * pg.math.Vector2.normalize(self.pepper.get_position() - clearance_point)
+
+        # if f_r.length() > speed:
+        #     f_r = pg.math.Vector2.normalize(f_r)
+        #     f_r = speed * f_r
+
+
 
         # estimate the total resulting force
-        f_t = f_a
+        f_t = f_a + f_r
 
+        # avoid saturation (by paraboloidal profile) clipping to cruise standard speed
+        if f_t.length() > speed:
+            f_t = pg.math.Vector2.normalize(f_t)
+            f_t = speed * f_t
+
+
+        self.last_apf['f_a'] = f_a
+        self.last_apf['f_r'] = f_r
+        self.last_apf['f_t'] = f_t
         return f_t
 
 
