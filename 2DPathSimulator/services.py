@@ -380,7 +380,7 @@ class PepperSocket(object):
         # -------------------------- compute the repulsive force
         gamma = 2
         range_influence = 20 # 50
-        k_r = 600  #500
+        k_r = 600  # 500
         clearance_point, clearance = self.compute_clearance()
 
         if clearance > range_influence:
@@ -426,14 +426,12 @@ class PepperSocket(object):
 
         # -------------------------- estimate the total resulting force
 
-        # if (abs(f_a.angle_to(f_r)) > 175 and abs(f_a.angle_to(f_r)) < 185)\
-        #         or f_r.length() > f_a.length():
-        # if ((f_a + f_r + f_v).length() < 1) and clearance < 15:
-
         # standard form without heuristics
         f_t = f_a + f_r + f_v
 
-        if f_r.length() >= 4/5* f_a.length():
+
+        detach_vortex = 0.9
+        if f_r.length() >= detach_vortex * f_a.length():
             f_a  = pg.math.Vector2(0,0)
             f_r = pg.math.Vector2(0,0)
             f_t = f_v

@@ -88,7 +88,7 @@ def rendering():
     # create display objects for the simulation
     env_group, extra_HUD_group, pepper = create_environment(screen, text_boxes[1])
 
-    pepper.x += 40
+    pepper.y += 250
     # custom event raiser every x milliseconds for testing
     test_time_interval   = 2500  # [ms]
     motion_time_interval = 100 # [ms]
@@ -229,9 +229,9 @@ def rendering():
         pepper.show_forces = show_forces
 
         if test_motion:
-            # pepper.move2Door("west")
+            pepper.move2Door("west")
             # pepper.move2Win("east", "right")
-            pepper.move2pos(pg.math.Vector2(pepper.x +40, pepper.y +180))
+            # pepper.move2pos(pg.math.Vector2(pepper.x +40, pepper.y +180))
             test_motion = False
 
 

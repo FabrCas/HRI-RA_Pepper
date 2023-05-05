@@ -1592,7 +1592,7 @@ class Pepper(HouseElement):
         print(f'started the motion: {time.strftime("%H:%M:%S")}')
         print(f'target: {self.target}')
 
-    def move2Door(self, side, motion_time_interval= 100):
+    def move2Door(self, side, distance_wall = 25, motion_time_interval= 100):
 
         # set the time interval
         self.motion_time_interval = motion_time_interval
@@ -1600,18 +1600,26 @@ class Pepper(HouseElement):
 
         try:
             door = self.actual_room.doors[side]
-            print(door.name)
         except Exception as e:
             print(e)
             print(f"No door in the direction selected {side}")
             return
 
         # if door.status == 'open':
-        self.target = pg.math.Vector2(door.rect_open.center)
+        # self.target = pg.math.Vector2(door.rect_open.center)
         # else:
         #     self.target = pg.math.Vector2(door.rect.center)
-        # apf method
 
+        if side == "north":
+            self.target = pg.math.Vector2(door.rect_open.center[0], door.rect_open.center[1] + distance_wall)
+        elif side == "south":
+            self.target = pg.math.Vector2(door.rect_open.center[0], door.rect_open.center[1] - distance_wall)
+        elif side == "east":
+            self.target = pg.math.Vector2(door.rect_open.center[0] - distance_wall, door.rect_open.center[1])
+        elif side == "west":
+            self.target = pg.math.Vector2(door.rect_open.center[0] + distance_wall, door.rect_open.center[1])
+
+        # apf method
         # compute the total force using APF methods
         f_t = self.socket.apf(self.target, self.P_SPEED, profile=self.profile)
         print(f_t)
@@ -1653,9 +1661,14 @@ class Pepper(HouseElement):
             # else:
             #     rect_c = window[0].rect.center
             if side == "north" or side == "south":
-                self.target = pg.math.Vector2(rect_c[0], rect_c[1] -distance_wall)
-            elif side == "east" or side == "west":
+                self.target = pg.math.Vector2(rect_c[0], rect_c[1] +distance_wall)
+            elif side == "south":
+                self.target = pg.math.Vector2(rect_c[0], rect_c[1] - distance_wall)
+            elif side == "east":
                 self.target = pg.math.Vector2(rect_c[0] - distance_wall, rect_c[1])
+            elif side == "west":
+                self.target = pg.math.Vector2(rect_c[0] + distance_wall, rect_c[1])
+
 
         elif window_part == 'right':
             # if window[0].status == 'open':
@@ -1663,9 +1676,13 @@ class Pepper(HouseElement):
             # else:
             #     rect_c = window[0].rect.center
             if side == "north" or side == "south":
+                self.target = pg.math.Vector2(rect_c[0], rect_c[1] +distance_wall)
+            elif side == "south":
                 self.target = pg.math.Vector2(rect_c[0], rect_c[1] - distance_wall)
-            elif side == "east" or side == "west":
+            elif side == "east":
                 self.target = pg.math.Vector2(rect_c[0] - distance_wall, rect_c[1])
+            elif side == "west":
+                self.target = pg.math.Vector2(rect_c[0] + distance_wall, rect_c[1])
 
         elif window_part == "whole":
 
