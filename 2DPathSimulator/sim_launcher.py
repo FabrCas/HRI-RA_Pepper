@@ -78,8 +78,7 @@ def rendering():
     show_forces         = True   # show forces from APF method
     extra_HUD           = False
     test_clearance      = False
-    test_motion         = False
-
+    test_motion         = True
 
 
     # initialize the pygame engine, get main display object and clock for the rendering
@@ -89,7 +88,7 @@ def rendering():
     # create display objects for the simulation
     env_group, extra_HUD_group, pepper = create_environment(screen, text_boxes[1])
 
-    pepper.y += 250
+    pepper.x += 40
     # custom event raiser every x milliseconds for testing
     test_time_interval   = 2500  # [ms]
     motion_time_interval = 100 # [ms]
@@ -230,9 +229,9 @@ def rendering():
         pepper.show_forces = show_forces
 
         if test_motion:
-            # pepper.move2pos(pg.math.Vector2(pepper.x + 80, pepper.y + 180), motion_time_interval)
-            # pepper.move2pos(pg.math.Vector2(pepper.actual_room.doors['west'].rect.x, pepper.actual_room.doors['west'].rect.y), motion_time_interval)
-            pepper.move2Door("west")
+            # pepper.move2Door("west")
+            # pepper.move2Win("east", "right")
+            pepper.move2pos(pg.math.Vector2(pepper.x +40, pepper.y +180))
             test_motion = False
 
 
@@ -247,7 +246,6 @@ def rendering():
             # create groups from beginning
             ui_group, text_boxes = create_UI(screen)
             env_group, extra_HUD_group, pepper = create_environment(screen, text_boxes[1])
-
             # output message
             text_boxes[1].add_message("The Environment has been reset")
 

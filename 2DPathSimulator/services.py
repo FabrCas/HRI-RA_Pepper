@@ -351,9 +351,9 @@ class PepperSocket(object):
 
     def apf(self, goal_position: pg.math.Vector2, speed, profile = "conical"): # valid values for profile = "conical", "paraboloidal", "mixed".
 
-        # compute the attractive force
-        error = goal_position - self.pepper.get_position()
-        ka = 0.05; kb = speed
+        # -------------------------- compute the attractive force
+        error: pg.math.Vector2 = goal_position - self.pepper.get_position()
+        ka = 0.05; kb = 2  # ka = 0.05; kb = speed
 
         if profile == 'conical':
             ka = speed
@@ -364,11 +364,9 @@ class PepperSocket(object):
             p = kb/ka
             if error.length() <= p: # use paraboloidal when close to the goal
                 f_a = ka * error
-
                 if self.apf_not_switched:
                     self.pepper.output_box.add_message(f"Mixed profile: switching from Conical to Paraboloidal")
                     self.apf_not_switched = False
-
             else:                   # use conic when too far
                 f_a = kb * (error / error.length())
         else:
@@ -379,74 +377,79 @@ class PepperSocket(object):
         #     f_a = pg.math.Vector2.normalize(f_a)
         #     f_a = speed * f_a
 
-        # compute the repulsive force
+        # -------------------------- compute the repulsive force
         gamma = 2
-        range_influence = 25 #50
-        k_r = 500  #500
+        range_influence = 20 # 50
+        k_r = 600  #500
         clearance_point, clearance = self.compute_clearance()
-        # print(f"clarance {clearance}")
 
         if clearance > range_influence:
-            f_r = pg.math.Vector2(0,0)
+            f_r = pg.math.Vector2(0, 0)
         else:
             repulsive_gain = (k_r/(clearance**2)) * ((1/clearance) - (1/range_influence))**(gamma-1)
             clearance_gradient = (self.pepper.get_position() - clearance_point)
-
             f_r = repulsive_gain * clearance_gradient
-            # print(f"repulsive force {f_r}")
-            # f_r = speed * pg.math.Vector2.normalize(self.pepper.get_position() - clearance_point)
 
-        # if f_r.length() > speed:
-        #     f_r = pg.math.Vector2.normalize(f_r)
-        #     f_r = speed * f_r
+        # -------------------------- compute the vortex field heuristic force
 
-
-        # compute the vortex field heuristic force
-        if f_r.x == 0 and f_r.y == 0:
-            f_v = pg.math.Vector2(f_r.x, f_r.y)
+        if f_r.length() == 0:               # if there is no repulsive force neither vortex filed force is present
+            f_v = pg.math.Vector2(0, 0)
         else:
-            angle_ra = f_r.angle_to(f_a)
-            # print("angle repulsive-attractive {}".format(angle_ra))
+            # compute the angle between attractive and repulsive force
+            # angle_entrance = pg.math.Vector2(1,0).angle_to(f_a)
+            angle_entrance = f_a.angle_to(pg.math.Vector2(1, 0))
+
+            print("angle entrance {}".format(angle_entrance))
 
             # estimate the vortex force verse
-            if angle_ra > 180:
+            if angle_entrance >= 0 and angle_entrance <= 90:
                 verse = 1
-            else:
+            elif angle_entrance > 90 and angle_entrance <= 180:
                 verse = -1
+            elif angle_entrance < 0 and angle_entrance >= -90:
+                verse = -1
+            elif angle_entrance < -90 and angle_entrance > -180:
+                verse = 1
+
+            # elif angle_entrance > 180 and angle_entrance <= 270:
+            #     verse = -1
+            # elif angle_entrance > 270 and angle_entrance <= 360:
+            #     verse = 1
 
             f_v = f_r.rotate(90 * verse)
 
             # reduce the vortex field force when angle between f_r and f_v reduces
-            angle_va = f_a.angle_to(f_v)
-            f_v *= math.sin(math.radians(angle_va))
+            # BE CAREFUL IT CHANGES TO DIRECTION IF IS NEGATIVE! SHOULD BE CONTROLLED THE ANGLE FIRST (not done)
+            # angle_va = f_v.angle_to(f_a)
+            # if angle_va < 0: angle_va += 360    # only CCW angle
+            # f_v *= math.sin(math.radians(angle_va))
 
-        # estimate the total resulting force
-        f_t = f_a + f_r  # standard form without heuristics
+        # -------------------------- estimate the total resulting force
 
-        # if not(self.last_position == None):
-        #     position_change = pg.math.Vector2(self.pepper.x + f_t.x, self.pepper.y + f_t.y)  - self.pepper.get_position()
-        #     print(position_change.length())
-        #     if position_change.length() < 1:
-        #
-        #         f_t = f_v
+        # if (abs(f_a.angle_to(f_r)) > 175 and abs(f_a.angle_to(f_r)) < 185)\
+        #         or f_r.length() > f_a.length():
+        # if ((f_a + f_r + f_v).length() < 1) and clearance < 15:
 
-        if f_r.length() > f_a.length():
+        # standard form without heuristics
+        f_t = f_a + f_r + f_v
+
+        if f_r.length() >= 4/5* f_a.length():
+            f_a  = pg.math.Vector2(0,0)
+            f_r = pg.math.Vector2(0,0)
             f_t = f_v
-            f_a = None
-            f_r = None
-        else:
-            f_v = None
+
+        # print(f"||f_a|| -> {f_a.length()}, ||f_r|| -> {f_r.length()},\n||f_v|| -> {f_v.length()}, ||f_t|| -> {f_t.length()}")
 
         # avoid saturation (by paraboloidal profile) clipping to cruise standard speed
         if f_t.length() > speed:
             f_t = pg.math.Vector2.normalize(f_t)
             f_t = speed * f_t
 
+        # save info forces
         self.last_apf['f_a'] = f_a
         self.last_apf['f_r'] = f_r
         self.last_apf['f_v'] = f_v
         self.last_apf['f_t'] = f_t
-
 
         return f_t
 

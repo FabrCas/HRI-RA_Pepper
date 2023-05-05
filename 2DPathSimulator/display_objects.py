@@ -1479,8 +1479,8 @@ class Pepper(HouseElement):
         self.show_forces    = False
 
         # flags motion
-        self.changed_position   = False
-        self.in_motion          = False
+        self.changed_position   = False             # to update clearance and logo
+        self.in_motion          = False             # to handle start and end of a motion, is used in the rendering to call pepper.move()
         self.use_apf            = True
 
         # motion variables
@@ -1488,12 +1488,13 @@ class Pepper(HouseElement):
         self.orientation = 270
         self.clearance = None
         self.target = None
+        self.target_name  = None
         self.range = None
         self.bearing = None
         self.direction = None
         self.direction_norm = None
         self.motion_time_interval = None
-        self.profile  = 'mixed'
+        self.profile  = 'conical'                 # choose btw: "conical", "paraboloidal", "mixed"
         #  from m/s to pixel/s (compute pixel speed)
 
         # motion constants
@@ -1505,7 +1506,6 @@ class Pepper(HouseElement):
         # instantiation messages
         self.output_box.add_message(f"Pepper is in the {self.actual_room.name}")
         self.output_box.add_message(f"Pepper APF profile: {self.profile}")
-
 
     # change position methods
     def set_random_position(self):
@@ -1561,14 +1561,19 @@ class Pepper(HouseElement):
     def compute_clearance(self):
         self.clearance, _ = self.socket.compute_clearance()
 
-    def move2pos(self, target: pg.math.Vector2, motion_time_interval):
+    def move2pos(self, target: pg.math.Vector2, motion_time_interval = 100):
 
         self.target = target
+        self.target_name = f"Position: x = {target.x}, y = {target.y}"
+
         if not self.use_apf : # linear motion
             # compute direction and the normalized direction vector
             direction: pg.math.Vector2 = target - pg.math.Vector2(self.x, self.y)
             self.direction = direction
-            self.direction_norm = pg.math.Vector2.normalize(self.direction)
+            try:
+                self.direction_norm = pg.math.Vector2.normalize(self.direction)
+            except:
+                self.direction_norm = pg.math.Vector2(0,0)
         else:
             # compute the total force using APF methods
             f_t = self.socket.apf(self.target,self.P_SPEED, profile=self.profile)
@@ -1576,16 +1581,13 @@ class Pepper(HouseElement):
             print(f_t)
             # we use this force as a generalized velocity
             self.direction = f_t
-            self.direction_norm = pg.math.Vector2.normalize(self.direction)
-
-
-
-        # self.range = direction.length()
-        # self.bearing = math.degrees(math.atan2((self.x - target.x), (self.y - target.y)))  # invert the y subtraction since the reference frame y axis is inverted
-        # print(f"atan2: {self.bearing}")
+            try:
+                self.direction_norm = pg.math.Vector2.normalize(self.direction)
+            except:
+                self.direction_norm = pg.math.Vector2(0,0)
 
         # set flags on
-        self.in_motion = True
+        if not(self.in_motion): self.in_motion = True
 
         print(f'started the motion: {time.strftime("%H:%M:%S")}')
         print(f'target: {self.target}')
@@ -1594,33 +1596,104 @@ class Pepper(HouseElement):
 
         # set the time interval
         self.motion_time_interval = motion_time_interval
+        self.target_name = f"{side} door"
 
-        door = self.actual_room.doors[side]
+        try:
+            door = self.actual_room.doors[side]
+            print(door.name)
+        except Exception as e:
+            print(e)
+            print(f"No door in the direction selected {side}")
+            return
 
-        if door.status == 'open':
-            self.target = pg.math.Vector2(door.rect_open.center)
-        else:
-            self.target = pg.math.Vector2(door.rect.center)
+        # if door.status == 'open':
+        self.target = pg.math.Vector2(door.rect_open.center)
+        # else:
+        #     self.target = pg.math.Vector2(door.rect.center)
         # apf method
 
         # compute the total force using APF methods
         f_t = self.socket.apf(self.target, self.P_SPEED, profile=self.profile)
         print(f_t)
         self.direction = f_t
-        self.direction_norm = pg.math.Vector2.normalize(self.direction)
+        try:
+            self.direction_norm = pg.math.Vector2.normalize(self.direction)
+        except:
+            self.direction_norm = pg.math.Vector2(0, 0)
 
         # set flags on
-        self.in_motion = True
+        if not(self.in_motion): self.in_motion = True
 
         print(f'started the motion: {time.strftime("%H:%M:%S")}')
         print(f'target: {self.target}')
 
+    def move2Win(self, side, window_part, distance_wall = 25, motion_time_interval=100):
+        """
+        :param side: cardinal coordinates for the window target
+        :param window_part: "whole","left" or "right" to select the correct target
+        :param motion_time_interval: motion time interval: default 100 [ms]
+        :return: None
+        """
+
+        # set the time interval
+        self.motion_time_interval = motion_time_interval
+        self.target_name = f"{side} window"
+
+        try:
+            window = self.actual_room.windows[side]
+        except Exception as e:
+            print(e)
+            print(f"No window in the direction selected {side}")
+            return
 
 
+        if window_part == 'left':
+            # if window[0].status == 'open':
+            rect_c = window[0].rect_open.center
+            # else:
+            #     rect_c = window[0].rect.center
+            if side == "north" or side == "south":
+                self.target = pg.math.Vector2(rect_c[0], rect_c[1] -distance_wall)
+            elif side == "east" or side == "west":
+                self.target = pg.math.Vector2(rect_c[0] - distance_wall, rect_c[1])
+
+        elif window_part == 'right':
+            # if window[0].status == 'open':
+            rect_c = window[1].rect_open.center
+            # else:
+            #     rect_c = window[0].rect.center
+            if side == "north" or side == "south":
+                self.target = pg.math.Vector2(rect_c[0], rect_c[1] - distance_wall)
+            elif side == "east" or side == "west":
+                self.target = pg.math.Vector2(rect_c[0] - distance_wall, rect_c[1])
+
+        elif window_part == "whole":
+
+            if side == "north" or side == "south":
+                self.target = pg.math.Vector2((window[0].rect_open.center[0] + window[1].rect_open.center[0])/2, (window[0].rect_open.center[1]) - distance_wall)
+            elif side == "east" or side == "west":
+                self.target = pg.math.Vector2((window[0].rect_open.center[0]) - distance_wall,(window[0].rect_open.center[1] + window[1].rect_open.center[1])/2)
+
+        # apf method
+
+        # compute the total force using APF methods
+        f_t = self.socket.apf(self.target, self.P_SPEED, profile=self.profile)
+        self.direction = f_t
+        try:
+            self.direction_norm = pg.math.Vector2.normalize(self.direction)
+        except:
+            self.direction_norm = pg.math.Vector2(0, 0)
+
+        # set flags on
+        if not(self.in_motion): self.in_motion = True
+
+        print(f'started the motion: {time.strftime("%H:%M:%S")}')
+        print(f'target: {self.target}')
 
     def reset_motion_variables(self):
         self.in_motion = False
         self.target = None
+        self.target_name = None
         self.clearance = None
         self.direction = None
         self.direction_norm = None
@@ -1633,9 +1706,6 @@ class Pepper(HouseElement):
         else:
             self.x += self.P_SPEED * self.direction_norm.x  # x0 + vx [p/s] * 1 [s]
             self.y += self.P_SPEED * self.direction_norm.y  # y0 + vy [p/s] * 1 [s]
-            # print(p_speed)
-            # print(p_speed * self.direction_norm.x)
-            # print(p_speed * self.direction_norm.y)
 
         self.socket.last_position = pg.math.Vector2(self.x, self.y)
 
@@ -1643,10 +1713,13 @@ class Pepper(HouseElement):
         distance = (self.get_position() - self.target).length()
         if verbose: print(f"Distance {distance}")
 
+        # print(distance)
         if distance < self.POS_TOLERANCE:   # motion complete
+            self.output_box.add_message(f"Pepper has reached {self.target_name}")
+            print(f'completed the motion: {time.strftime("%H:%M:%S")}')
             self.reset_motion_variables()
             self.socket.reset_motion_variables()
-            print(f'completed the motion: {time.strftime("%H:%M:%S")}')
+
         else:
             # if apf compute the new direction for the next step
             if self.use_apf:
@@ -1654,24 +1727,29 @@ class Pepper(HouseElement):
                 f_t = self.socket.apf(self.target, self.P_SPEED, profile=self.profile)
                 # we use this force as a generalized velocity
                 self.direction = f_t
-                self.direction_norm = pg.math.Vector2.normalize(self.direction)
+                try:
+                    self.direction_norm = pg.math.Vector2.normalize(self.direction)
+                except:
+                    self.direction_norm = pg.math.Vector2(0, 0)
 
         self.changed_position = True
 
     def update(self, width_logo=60, height_logo=60):
-        if self.changed_position:    # for testing, instantaneous changing of position
+        # update logo
+        if self.changed_position:
             # update the logo
             self.logo.rect.x = self.x - width_logo/2
             self.logo.rect.y = self.y - height_logo/2
 
+        # compute new clarance if pepper is moving
         if self.show_clearance:
             if (self.clearance is None) or self.changed_position:
                 self.compute_clearance()
 
+        # set to false the changed position (if in motion will be set to True again from move function)
         if self.changed_position: self.changed_position = False # restore default False value
 
     # graphic methods
-
     def set_color(self, color):
         self.color = color
 
@@ -1681,7 +1759,7 @@ class Pepper(HouseElement):
         self.logo = logo
         return self.logo
 
-    def draw(self, direction_normalized = False):
+    def draw(self, direction_normalized = True):
 
         # draw a circle to track the position of pepper
         pg.draw.circle(self.screen, color=(0, 0, 0), center=(self.x, self.y), radius=13)  # thick circle
@@ -1689,7 +1767,7 @@ class Pepper(HouseElement):
         self.p_letter.center_to(self.x, self.y)
 
         if (self.show_clearance and not(self.clearance is None)):
-            pg.draw.circle(self.screen, color=(0, 0, 255), center=(self.clearance.x, self.clearance.y), radius=5)
+            pg.draw.circle(self.screen, color=(255, 0, 0), center=(self.clearance.x, self.clearance.y), radius=5)
 
         if (self.show_target and not(self.target is None)):
             pg.draw.circle(self.screen, (0, 130, 0), (self.target.x, self.target.y), radius=5)
