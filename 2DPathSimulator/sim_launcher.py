@@ -74,7 +74,7 @@ def rendering():
     show_obstacles      = False
     show_clearance      = True
     show_target         = True
-    show_direction      = False
+    show_direction      = True
     show_forces         = True   # show forces from APF method
     extra_HUD           = False
     test_clearance      = False
@@ -230,9 +230,11 @@ def rendering():
         pepper.show_forces = show_forces
 
         if test_motion:
-            # pepper.move_to(pg.math.Vector2(pepper.x + 80, pepper.y + 180), motion_time_interval)
-            pepper.move_to(pg.math.Vector2(pepper.actual_room.doors['west'].rect.x, pepper.actual_room.doors['west'].rect.y), motion_time_interval)
+            # pepper.move2pos(pg.math.Vector2(pepper.x + 80, pepper.y + 180), motion_time_interval)
+            # pepper.move2pos(pg.math.Vector2(pepper.actual_room.doors['west'].rect.x, pepper.actual_room.doors['west'].rect.y), motion_time_interval)
+            pepper.move2Door("west")
             test_motion = False
+
 
         # handle reset
         if input_interpreter.reset:   # the reset is better to be handled directly in the main loop

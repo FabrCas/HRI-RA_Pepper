@@ -1561,7 +1561,7 @@ class Pepper(HouseElement):
     def compute_clearance(self):
         self.clearance, _ = self.socket.compute_clearance()
 
-    def move_to(self, target: pg.math.Vector2, motion_time_interval):
+    def move2pos(self, target: pg.math.Vector2, motion_time_interval):
 
         self.target = target
         if not self.use_apf : # linear motion
@@ -1578,8 +1578,7 @@ class Pepper(HouseElement):
             self.direction = f_t
             self.direction_norm = pg.math.Vector2.normalize(self.direction)
 
-        # set the time interval
-        self.motion_time_interval = motion_time_interval
+
 
         # self.range = direction.length()
         # self.bearing = math.degrees(math.atan2((self.x - target.x), (self.y - target.y)))  # invert the y subtraction since the reference frame y axis is inverted
@@ -1590,6 +1589,34 @@ class Pepper(HouseElement):
 
         print(f'started the motion: {time.strftime("%H:%M:%S")}')
         print(f'target: {self.target}')
+
+    def move2Door(self, side, motion_time_interval= 100):
+
+        # set the time interval
+        self.motion_time_interval = motion_time_interval
+
+        door = self.actual_room.doors[side]
+
+        if door.status == 'open':
+            self.target = pg.math.Vector2(door.rect_open.center)
+        else:
+            self.target = pg.math.Vector2(door.rect.center)
+        # apf method
+
+        # compute the total force using APF methods
+        f_t = self.socket.apf(self.target, self.P_SPEED, profile=self.profile)
+        print(f_t)
+        self.direction = f_t
+        self.direction_norm = pg.math.Vector2.normalize(self.direction)
+
+        # set flags on
+        self.in_motion = True
+
+        print(f'started the motion: {time.strftime("%H:%M:%S")}')
+        print(f'target: {self.target}')
+
+
+
 
     def reset_motion_variables(self):
         self.in_motion = False
@@ -1610,14 +1637,15 @@ class Pepper(HouseElement):
             # print(p_speed * self.direction_norm.x)
             # print(p_speed * self.direction_norm.y)
 
+        self.socket.last_position = pg.math.Vector2(self.x, self.y)
+
         if verbose: print(f"New position {(self.get_position())}")
         distance = (self.get_position() - self.target).length()
         if verbose: print(f"Distance {distance}")
 
-        if distance < self.POS_TOLERANCE:
+        if distance < self.POS_TOLERANCE:   # motion complete
             self.reset_motion_variables()
-            self.socket.apf_not_switched = False   # for output message when switching profile
-            self.socket.last_apf = {}
+            self.socket.reset_motion_variables()
             print(f'completed the motion: {time.strftime("%H:%M:%S")}')
         else:
             # if apf compute the new direction for the next step
@@ -1653,8 +1681,9 @@ class Pepper(HouseElement):
         self.logo = logo
         return self.logo
 
-    def draw(self):
-        # draw a circle to track the position
+    def draw(self, direction_normalized = False):
+
+        # draw a circle to track the position of pepper
         pg.draw.circle(self.screen, color=(0, 0, 0), center=(self.x, self.y), radius=13)  # thick circle
         pg.draw.circle(self.screen, color=self.color, center=(self.x, self.y), radius=10)
         self.p_letter.center_to(self.x, self.y)
@@ -1666,10 +1695,11 @@ class Pepper(HouseElement):
             pg.draw.circle(self.screen, (0, 130, 0), (self.target.x, self.target.y), radius=5)
 
         if (self.show_forces and not(self.socket.last_apf == {})):
+            arc_angle_points = 12  # angle to compute points for the arrow
 
-            if ((self.socket.last_apf['f_a'].x != 0) or (self.socket.last_apf['f_a'].y != 0)):
+            if ((self.socket.last_apf['f_a'] != None) and \
+                    ((self.socket.last_apf['f_a'].x != 0) or (self.socket.last_apf['f_a'].y != 0))):
 
-                arc_angle_points = 12 # angle to compute points for the arrow
                 # attractive force
                 pg.draw.line(self.screen, (0, 0, 255), (self.x, self.y),
                              (self.x + (self.socket.last_apf['f_a'].x * 25), self.y + (self.socket.last_apf['f_a'].y * 25)), width=3)
@@ -1688,7 +1718,8 @@ class Pepper(HouseElement):
                 pg.draw.polygon(self.screen, (0, 0, 255), points, width=0)
 
             # repulsive force
-            if ((self.socket.last_apf['f_r'].x != 0) or (self.socket.last_apf['f_r'].y != 0)):
+            if ((self.socket.last_apf['f_r'] != None) and \
+                    ((self.socket.last_apf['f_r'].x != 0) or (self.socket.last_apf['f_r'].y != 0))):
                 pg.draw.line(self.screen, (255, 0, 0), (self.x, self.y),
                              (self.x + (self.socket.last_apf['f_r'].x * 25), self.y + (self.socket.last_apf['f_r'].y * 25)), width=3)
 
@@ -1705,35 +1736,54 @@ class Pepper(HouseElement):
                 points = [point_offset_1, point_offset_2, point_target]
                 pg.draw.polygon(self.screen, (255, 0, 0), points, width=0)
 
-            # total force
+            # vortex field force
+            if ((self.socket.last_apf['f_v'] != None) and \
+                    ((self.socket.last_apf['f_v'].x != 0) or (self.socket.last_apf['f_v'].y != 0))):
+                pg.draw.line(self.screen, (0, 255, 255), (self.x, self.y),
+                             (self.x + (self.socket.last_apf['f_v'].x * 25), self.y + (self.socket.last_apf['f_v'].y * 25)), width=3)
 
+                direction_offset_1 = self.socket.last_apf['f_v'].rotate(-int(arc_angle_points / 2))
+                direction_offset_2 = self.socket.last_apf['f_v'].rotate(int(arc_angle_points / 2))
+
+                point_offset_1 = pg.math.Vector2((self.x + (direction_offset_1.x * 20)),
+                                                 (self.y + (direction_offset_1.y * 20)))
+                point_offset_2 = pg.math.Vector2((self.x + (direction_offset_2.x * 20)),
+                                                 (self.y + (direction_offset_2.y * 20)))
+                point_target = pg.math.Vector2((self.x + (self.socket.last_apf['f_v'].x * 25)),
+                                               (self.y + (self.socket.last_apf['f_v'].y * 25)))
+
+                points = [point_offset_1, point_offset_2, point_target]
+                pg.draw.polygon(self.screen, (0, 255, 255), points, width=0)
+
+
+        # show total force
         if (self.show_direction and not(self.direction is None) and not(self.show_forces)): # priority to show forces
-            # # draw the arrow: the line
-            # pg.draw.line(self.screen, (0, 255, 0), (self.x, self.y), (self.x + (self.direction_norm.x * 50), self.y + (self.direction_norm.y * 50)), width = 3)
-            #
-            # # draw the arrow: the triangle
-            # arc_angle_points = 12  # degrees
-            # direction_offset_1 = self.direction_norm.rotate(-int(arc_angle_points/2))
-            # direction_offset_2 = self.direction_norm.rotate( int(arc_angle_points/2))
-            #
-            # point_offset_1 = pg.math.Vector2((self.x + (direction_offset_1.x * 40)), (self.y + (direction_offset_1.y * 40)))
-            # point_offset_2 = pg.math.Vector2((self.x + (direction_offset_2.x * 40)), (self.y + (direction_offset_2.y * 40)))
-            # point_target = pg.math.Vector2((self.x + (self.direction_norm.x * 50)), (self.y + (self.direction_norm.y * 50)))
-            #
-            # points =  [point_offset_1, point_offset_2, point_target]
-            # pg.draw.polygon(self.screen, (0, 255, 0), points, width=0)
+            if direction_normalized:
+                # draw the arrow: the line
+                pg.draw.line(self.screen, (0, 255, 0), (self.x, self.y), (self.x + (self.direction_norm.x * 50), self.y + (self.direction_norm.y * 50)), width = 3)
 
-            pg.draw.line(self.screen, (0, 255, 0), (self.x, self.y), (self.x + (self.direction.x * 50), self.y + (self.direction.y * 50)), width = 3)
+                # draw the arrow: the triangle
+                arc_angle_points = 12  # degrees
+                direction_offset_1 = self.direction_norm.rotate(-int(arc_angle_points/2))
+                direction_offset_2 = self.direction_norm.rotate( int(arc_angle_points/2))
 
-            # draw the arrow: the triangle
-            # angle = math.degrees(math.atan2(self.direction_norm.y, self.direction_norm.x))
-            arc_angle_points = 12  # degrees
-            direction_offset_1 = self.direction.rotate(-int(arc_angle_points/2))
-            direction_offset_2 = self.direction.rotate( int(arc_angle_points/2))
+                point_offset_1 = pg.math.Vector2((self.x + (direction_offset_1.x * 40)), (self.y + (direction_offset_1.y * 40)))
+                point_offset_2 = pg.math.Vector2((self.x + (direction_offset_2.x * 40)), (self.y + (direction_offset_2.y * 40)))
+                point_target = pg.math.Vector2((self.x + (self.direction_norm.x * 50)), (self.y + (self.direction_norm.y * 50)))
 
-            point_offset_1 = pg.math.Vector2((self.x + (direction_offset_1.x * 40)), (self.y + (direction_offset_1.y * 40)))
-            point_offset_2 = pg.math.Vector2((self.x + (direction_offset_2.x * 40)), (self.y + (direction_offset_2.y * 40)))
-            point_target = pg.math.Vector2((self.x + (self.direction.x * 50)), (self.y + (self.direction.y * 50)))
+                points =  [point_offset_1, point_offset_2, point_target]
+                pg.draw.polygon(self.screen, (0, 255, 0), points, width=0)
+            else:
+                pg.draw.line(self.screen, (0, 255, 0), (self.x, self.y), (self.x + (self.direction.x * 50), self.y + (self.direction.y * 50)), width = 3)
 
-            points =  [point_offset_1, point_offset_2, point_target]
-            pg.draw.polygon(self.screen, (0, 255, 0), points, width=0)
+                # draw the arrow: the triangle
+                arc_angle_points = 12  # degrees
+                direction_offset_1 = self.direction.rotate(-int(arc_angle_points/2))
+                direction_offset_2 = self.direction.rotate( int(arc_angle_points/2))
+
+                point_offset_1 = pg.math.Vector2((self.x + (direction_offset_1.x * 40)), (self.y + (direction_offset_1.y * 40)))
+                point_offset_2 = pg.math.Vector2((self.x + (direction_offset_2.x * 40)), (self.y + (direction_offset_2.y * 40)))
+                point_target = pg.math.Vector2((self.x + (self.direction.x * 50)), (self.y + (self.direction.y * 50)))
+
+                points =  [point_offset_1, point_offset_2, point_target]
+                pg.draw.polygon(self.screen, (0, 255, 0), points, width=0)

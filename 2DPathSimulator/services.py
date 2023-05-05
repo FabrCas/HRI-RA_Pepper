@@ -186,8 +186,14 @@ class PepperSocket(object):
         self.pepper = pepper
 
         # APF variables
-        self.apf_not_switched = True    # used for the mixed profile: from conical to paraboloidal
+        self.apf_not_switched = True    # to show message when change profile in mixed configuration
+        self.last_apf = {}              # to print force vectors
+        self.last_position = None       # to activate vortex heuristic
+
+    def reset_motion_variables(self):
+        self.apf_not_switched = True
         self.last_apf = {}
+        self.last_positions = None      # last 2 positions
 
     def in_rect(self, rect: pg.Rect, pos: pg.math.Vector2):
         """
@@ -375,23 +381,19 @@ class PepperSocket(object):
 
         # compute the repulsive force
         gamma = 2
-        range_influence = 50
-        k_r = 500
+        range_influence = 25 #50
+        k_r = 500  #500
         clearance_point, clearance = self.compute_clearance()
-        print(f"clarance {clearance}")
+        # print(f"clarance {clearance}")
 
         if clearance > range_influence:
             f_r = pg.math.Vector2(0,0)
         else:
-            # if clearance == 0:
-            #     return pg.math.Vector2(0,0)
-            # else:
-            # print("repulsive")
             repulsive_gain = (k_r/(clearance**2)) * ((1/clearance) - (1/range_influence))**(gamma-1)
             clearance_gradient = (self.pepper.get_position() - clearance_point)
 
             f_r = repulsive_gain * clearance_gradient
-            print(f"repulsive force {f_r}")
+            # print(f"repulsive force {f_r}")
             # f_r = speed * pg.math.Vector2.normalize(self.pepper.get_position() - clearance_point)
 
         # if f_r.length() > speed:
@@ -399,19 +401,53 @@ class PepperSocket(object):
         #     f_r = speed * f_r
 
 
+        # compute the vortex field heuristic force
+        if f_r.x == 0 and f_r.y == 0:
+            f_v = pg.math.Vector2(f_r.x, f_r.y)
+        else:
+            angle_ra = f_r.angle_to(f_a)
+            # print("angle repulsive-attractive {}".format(angle_ra))
+
+            # estimate the vortex force verse
+            if angle_ra > 180:
+                verse = 1
+            else:
+                verse = -1
+
+            f_v = f_r.rotate(90 * verse)
+
+            # reduce the vortex field force when angle between f_r and f_v reduces
+            angle_va = f_a.angle_to(f_v)
+            f_v *= math.sin(math.radians(angle_va))
 
         # estimate the total resulting force
-        f_t = f_a + f_r
+        f_t = f_a + f_r  # standard form without heuristics
+
+        # if not(self.last_position == None):
+        #     position_change = pg.math.Vector2(self.pepper.x + f_t.x, self.pepper.y + f_t.y)  - self.pepper.get_position()
+        #     print(position_change.length())
+        #     if position_change.length() < 1:
+        #
+        #         f_t = f_v
+
+        if f_r.length() > f_a.length():
+            f_t = f_v
+            f_a = None
+            f_r = None
+        else:
+            f_v = None
 
         # avoid saturation (by paraboloidal profile) clipping to cruise standard speed
         if f_t.length() > speed:
             f_t = pg.math.Vector2.normalize(f_t)
             f_t = speed * f_t
 
-
         self.last_apf['f_a'] = f_a
         self.last_apf['f_r'] = f_r
+        self.last_apf['f_v'] = f_v
         self.last_apf['f_t'] = f_t
+
+
         return f_t
 
 
