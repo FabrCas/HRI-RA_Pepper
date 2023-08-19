@@ -78,7 +78,7 @@ def rendering():
     show_forces         = True   # show forces from APF method
     extra_HUD           = False
     test_clearance      = False
-    test_motion         = True
+    test_motion         = False
 
 
     # initialize the pygame engine, get main display object and clock for the rendering
@@ -88,7 +88,8 @@ def rendering():
     # create display objects for the simulation
     env_group, extra_HUD_group, pepper = create_environment(screen, text_boxes[1])
 
-    pepper.y += 250
+    pepper.y  += 250
+
     # custom event raiser every x milliseconds for testing
     test_time_interval   = 2500  # [ms]
     motion_time_interval = 100 # [ms]
@@ -127,9 +128,8 @@ def rendering():
                 print("Closed the window using the button")
                 pg.quit()
                 # sys.exit()
-                return
-
                 # raise SystemExit
+                return
 
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_ESCAPE:
@@ -246,6 +246,7 @@ def rendering():
             # create groups from beginning
             ui_group, text_boxes = create_UI(screen)
             env_group, extra_HUD_group, pepper = create_environment(screen, text_boxes[1])
+            pepper.y += 250
             # output message
             text_boxes[1].add_message("The Environment has been reset")
 

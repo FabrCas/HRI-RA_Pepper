@@ -1685,7 +1685,6 @@ class Pepper(HouseElement):
                 self.target = pg.math.Vector2(rect_c[0] + distance_wall, rect_c[1])
 
         elif window_part == "whole":
-
             if side == "north" or side == "south":
                 self.target = pg.math.Vector2((window[0].rect_open.center[0] + window[1].rect_open.center[0])/2, (window[0].rect_open.center[1]) - distance_wall)
             elif side == "east" or side == "west":
