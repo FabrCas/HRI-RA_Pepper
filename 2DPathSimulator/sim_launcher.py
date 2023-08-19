@@ -7,7 +7,7 @@ import math
 
 # custom components
 from environment import create_UI, create_environment
-from services import InputInterpreter
+from services import InputInterpreter, HouseSimulatorSocket
 
 
 # Definition of constants as default values
@@ -15,7 +15,7 @@ WIDTH_WIN = 1920; HEIGHT_WIN = 1080
 X_WIN = 0; Y_WIN = 0
 FPS = 60
 XC_WIN = lambda: math.ceil(WIDTH_WIN/2); YC_WIN = lambda: math.ceil(HEIGHT_WIN/2)
-os_systems = ['linux', 'windows']; os_selected = os_systems[1]
+os_systems = ['linux', 'windows']; os_selected = os_systems[0]
 
 def update_win_size():
     global WIDTH_WIN
@@ -29,6 +29,14 @@ def update_win_size():
     Y_WIN = 35
 
 def initialization():
+    
+    # change folder location
+    if os_selected == 'linux' and not ('2DPathSimulator' in os.getcwd()):
+        os.chdir('./2DPathSimulator')
+        
+    print(os.getcwd())
+    
+    
     # initialize pygame
     pg.init()
     update_win_size()
@@ -106,6 +114,10 @@ def rendering():
     # custom object to execute user's inputs
     input_interpreter = InputInterpreter({"UI_DOs": ui_group,"text_boxes": text_boxes, "environment": env_group, "pepper": pepper})
 
+    # custom socket for handling client/server communication between simualtors
+    sim_socket = HouseSimulatorSocket(input_interpreter)    # auto exe of listening function
+
+    
     # frame counter
     counter_frame = 0
 

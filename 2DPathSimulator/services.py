@@ -1,7 +1,10 @@
 import pygame as pg
 import random
 import math
-
+import os
+import threading
+import time
+import asyncio
 
 class InputInterpreter(object):
     def __init__(self, simulation_objects):
@@ -452,8 +455,82 @@ class PepperSocket(object):
         return f_t
 
 
+class HouseSimulatorSocket(object):
+    
+    def __init__(self, interpreter):
+        super().__init__()
+        self.pipe_path = "./tmp/pipe_sim"
+        self.mode  = 0o600 # octal
+        self.interpreter = interpreter
+        self.createFIFO()
+        
+        # list for command received during the exectuion
+        self.command_history = []
+        
+        # create a new deamon thread to listen (background thread)
+        
+        time.sleep(0.2)
+        self.listener_thread = threading.Thread(target = self.receive_command)
+        self.listener_thread.daemon = True
+        self.listener_thread.start()
+        
 
+    def createFIFO(self):
+        # go back to path pointer to ./EAI2
+        if "2DPathSimulator" in os.getcwd():
+            os.chdir("../")
+            print(f"Current location (cwd): {os.getcwd()}")
+        
+        if not os.path.exists("./tmp/"):
+            print("not exists tmp folder")
+            os.mkdir('./tmp/')
+            
+        if not os.path.exists(self.pipe_path):
+            os.mkfifo(self.pipe_path, self.mode)
+        
+    def send_command(self, command):
+        with open(self.pipe_path, "w") as pipe:
+            # while True:
+            if command is None:
+                command = input("Enter a command to send: ")
+            else:
+                pipe.write(command + "\n")
+            pipe.flush()
+    
+    def receive_command(self, verbose = False):
+        # loop = asyncio.new_event_loop()
+        # asyncio.set_event_loop(loop)
+        
+        # async def listen_for_messages():
+        with open(self.pipe_path, "r") as pipe:
+            while True:
+                command = pipe.readline()                       #.strip()
+                
+                # optional: check syntax of the command
+                if command:
+                    print(f"Received command: {command}")
+                
+                # exe
+                if self.interpreter is not None:
+                    self.interpreter.execute(command)
+                
+                # save the story for the actual session
+                self.command_history.append(command)
+                    
+                # await asyncio.sleep(2)  # Simulate listening
 
+        # loop.run_until_complete(listen_for_messages())
+      
+            
+ 
+"""
+                                                test section
+"""
 
-
+# command_socket = HouseSimulatorSocket(None)
+# i = 0
+# while True:
+#     print(i)
+#     i+= 1
+#     time.sleep(5)
 
