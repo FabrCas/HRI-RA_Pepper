@@ -4,7 +4,6 @@ import math
 import os
 import threading
 import time
-import asyncio
 
 class InputInterpreter(object):
     def __init__(self, simulation_objects):
@@ -13,7 +12,7 @@ class InputInterpreter(object):
         self.boxes = simulation_objects['text_boxes']
         self.env = simulation_objects['environment']
         self.pepper = simulation_objects['pepper']
-        self.reset                  = False
+        self.changed_reset          = False
         self.changed_debug          = False
         self.changed_test_clearance = False
         self.changed_test_motion    = False
@@ -28,6 +27,7 @@ class InputInterpreter(object):
     def auto_run(self):
         pass
 
+        
     def execute(self, message):
         # set boolean flag for change based on input to True
 
@@ -36,7 +36,8 @@ class InputInterpreter(object):
             pg.mixer.Sound.play(daje_roma)
         if "reset" in message.strip().lower():
             print("Resetting the environment...")
-            self.reset = True
+            self.changed_reset = True
+            print(self.changed_reset)
         if "debug" in message.strip().lower():
             print("Changing the debug mode...")
             self.changed_debug = True
@@ -61,7 +62,23 @@ class InputInterpreter(object):
         if "forces" in message.strip().lower():
             print("Changing the show of forces (APF)...")
             self.changed_show_forces = True
+    
+    def toggle_reset(self):
+        
+        if self.changed_reset:
+            reset  = True
+            print(f"------------------------------- {reset} -------------------------")
+        else:
+            reset  = False
+        
+        # restore default value for input interpreter
+        self.changed_reset = False
+            
 
+        
+        return reset
+    
+    
     def toggle_debug(self, debug):
         if self.changed_debug:
 
@@ -183,7 +200,7 @@ class InputInterpreter(object):
         return test_motion
 
 
-class PepperSocket(object):
+class PepperMotion(object):
     def __init__(self, pepper):
         super().__init__()
         self.pepper = pepper
@@ -459,50 +476,72 @@ class HouseSimulatorSocket(object):
     
     def __init__(self, interpreter):
         super().__init__()
-        self.pipe_path = "./tmp/pipe_sim"
+        # self.pipe_path = "../tmp/pipe_sim"
+        self.pipe_path_HS2P = "./tmp/pipe_sim_HS2P"      # house simulator to pepper simulator
+        self.pipe_path_P2HS = "./tmp/pipe_sim_P2HS"      # pepper simulator to house simulator
+        
+        
         self.mode  = 0o600 # octal
         self.interpreter = interpreter
-        self.createFIFO()
+        
+        # create pipes
+        self.createFIFO(self.pipe_path_HS2P)
+        self.createFIFO(self.pipe_path_P2HS)
         
         # list for command received during the exectuion
-        self.command_history = []
+        self.command_list = []
         
         # create a new deamon thread to listen (background thread)
         
-        time.sleep(0.2)
+        # time.sleep(0.2)
         self.listener_thread = threading.Thread(target = self.receive_command)
         self.listener_thread.daemon = True
         self.listener_thread.start()
         
-
-    def createFIFO(self):
+    # function to exe the commands as a queue of instructions
+    def exe_commmands(self):
+        while len(self.command_list) != 0:
+            command = self.command_list.pop(0)
+            # if self.interpreter is not None:
+            self.interpreter.execute(command)
+    
+    def setInterpreter(self, interpreter):
+        self.interpreter = interpreter
+    
+    def createFIFO(self, path):
+        print(os.getcwd())
+        
         # go back to path pointer to ./EAI2
         if "2DPathSimulator" in os.getcwd():
             os.chdir("../")
             print(f"Current location (cwd): {os.getcwd()}")
         
+        # if not os.path.exists("../tmp/"):
+        #     print("not exists tmp folder")
+        #     os.mkdir('../tmp/')
+        
         if not os.path.exists("./tmp/"):
             print("not exists tmp folder")
             os.mkdir('./tmp/')
             
-        if not os.path.exists(self.pipe_path):
-            os.mkfifo(self.pipe_path, self.mode)
+        if not os.path.exists(path):
+            os.mkfifo(path, self.mode)
+            
+
         
     def send_command(self, command):
-        with open(self.pipe_path, "w") as pipe:
+        with open(self.pipe_path_HS2P, "w") as pipe:
             # while True:
             if command is None:
                 command = input("Enter a command to send: ")
-            else:
-                pipe.write(command + "\n")
+
+            pipe.write(command + "\n")
             pipe.flush()
-    
-    def receive_command(self, verbose = False):
-        # loop = asyncio.new_event_loop()
-        # asyncio.set_event_loop(loop)
-        
-        # async def listen_for_messages():
-        with open(self.pipe_path, "r") as pipe:
+            print("command has been flushed")
+            
+    def receive_command(self):
+
+        with open(self.pipe_path_P2HS, "r") as pipe:
             while True:
                 command = pipe.readline()                       #.strip()
                 
@@ -515,22 +554,33 @@ class HouseSimulatorSocket(object):
                     self.interpreter.execute(command)
                 
                 # save the story for the actual session
-                self.command_history.append(command)
-                    
-                # await asyncio.sleep(2)  # Simulate listening
-
-        # loop.run_until_complete(listen_for_messages())
+                self.command_list.append(command)
+                
+                # do something with the command
+ 
       
             
- 
 """
                                                 test section
 """
 
-# command_socket = HouseSimulatorSocket(None)
-# i = 0
-# while True:
-#     print(i)
-#     i+= 1
-#     time.sleep(5)
+testing = 0
+if testing:
+    command_socket = HouseSimulatorSocket(None)
+    test_send = False
+
+    #   [request]
+    if test_send:
+        while True:
+            command_socket.send_command(None)
+            
+    #   [receive]
+    else:
+        i = 0
+        while True:
+            print(i)
+            i+= 1
+            time.sleep(5)
+
+
 

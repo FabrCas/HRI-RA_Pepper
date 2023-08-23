@@ -5,8 +5,17 @@ from random import randint
 import threading
 from display_objects import StaticImage, Rect, Text, InputTextBox, Button,\
                             OutputTextBox, Room, Pepper, get_rooms
+import os
 
 def create_UI(screen: Surface, verbose = True):
+    
+    # move to the correct folder
+    
+    print(os.getcwd())
+    if not "2DPathSimulator" in os.getcwd():
+        os.chdir("./2DPathSimulator")
+    
+    
 
     if verbose: print("\n         [sketching the UI panel]          ")
 
@@ -71,6 +80,10 @@ def create_UI(screen: Surface, verbose = True):
 
 def create_environment(screen: Surface, output_box: OutputTextBox, verbose = True):
 
+    # move to the correct folder
+    if not "2DPathSimulator" in os.getcwd():
+        os.chdir("./2DPathSimulator")
+    
     if verbose: print("\n         [sketching the House environment]          ")
 
     # create environment group

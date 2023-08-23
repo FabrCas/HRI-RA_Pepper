@@ -30,7 +30,8 @@ def update_win_size():
 
 def initialization():
     
-    # change folder location
+    # change default folder position for the path, from .EAI2  to ./EAI2/2DPathSimulator
+
     if os_selected == 'linux' and not ('2DPathSimulator' in os.getcwd()):
         os.chdir('./2DPathSimulator')
         
@@ -77,7 +78,9 @@ def debug_render(env_group, debug, show_obstacles):
 
 
 def rendering():
-    # execution flags
+    
+    # execution flags at beginning
+    # reset               = False
     debug               = False
     show_obstacles      = False
     show_clearance      = True
@@ -117,6 +120,7 @@ def rendering():
     # custom socket for handling client/server communication between simualtors
     sim_socket = HouseSimulatorSocket(input_interpreter)    # auto exe of listening function
 
+    # use sim socket to request command for the other simulator
     
     # frame counter
     counter_frame = 0
@@ -225,6 +229,7 @@ def rendering():
 
 
         # update flags based on input
+        #reset           = input_interpreter.toggle_reset()
         debug           = input_interpreter.toggle_debug(debug)
         show_obstacles  = input_interpreter.toggle_show_obstacles(show_obstacles)
         test_clearance  = input_interpreter.toggle_test_clearance(test_clearance)
@@ -238,7 +243,7 @@ def rendering():
         pepper.show_clearance   = show_clearance
         pepper.show_target      = show_target
         pepper.show_direction   = show_direction
-        pepper.show_forces = show_forces
+        pepper.show_forces      = show_forces
 
         if test_motion:
             pepper.move2Door("west")
@@ -248,13 +253,12 @@ def rendering():
 
 
         # handle reset
-        if input_interpreter.reset:   # the reset is better to be handled directly in the main loop
-            # free memory
-            gc.collect()
+        if input_interpreter.changed_reset:   # the reset is better to be handled directly in the main loop
 
             # remove old groups
             del env_group; del extra_HUD_group; del ui_group; del text_boxes; del pepper
-
+            del input_interpreter
+            
             # create groups from beginning
             ui_group, text_boxes = create_UI(screen)
             env_group, extra_HUD_group, pepper = create_environment(screen, text_boxes[1])
@@ -262,9 +266,20 @@ def rendering():
             # output message
             text_boxes[1].add_message("The Environment has been reset")
 
+            
             # restore default value for input interpreter
             input_interpreter = InputInterpreter({"UI_DOs": ui_group,"text_boxes": text_boxes, "environment": env_group, "pepper": pepper})
 
+            # new socket for the new interpreter
+            sim_socket.setInterpreter(input_interpreter)
+            
+            input_interpreter.changed_reset = False
+            
+            # free memory
+            gc.collect()
+        
+        
+        # sim_socket.exe_commmands()
         # ---------------------------------------- Logical updates
         ui_group.update()
         env_group.update()

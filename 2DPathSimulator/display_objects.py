@@ -2,7 +2,7 @@ import pygame as pg
 import math
 import time
 from random import randint
-from services import PepperSocket
+from services import PepperMotion
 
 # ---------------------------------------------- static and global variables
 
@@ -1467,7 +1467,7 @@ class Pepper(HouseElement):
         self.group.add(self.p_letter)
 
         # pepper socket for communication with simulator
-        self.socket: PepperSocket = PepperSocket(self)
+        self.socket: PepperMotion = PepperMotion(self)
 
         print(f"Pepper is in the {self.actual_room.name}")
 
