@@ -219,7 +219,6 @@ def rendering():
 
             # periodic custom event
             if test_clearance and event.type == pg.USEREVENT + 0:
-                print("---------------------------------ao")
                 pepper.set_random_room_position()
                 pepper.compute_clearance()
 

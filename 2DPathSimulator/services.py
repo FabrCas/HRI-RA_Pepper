@@ -4,6 +4,7 @@ import math
 import os
 import threading
 import time
+from flask import Flask
 
 class InputInterpreter(object):
     def __init__(self, simulation_objects):
@@ -477,8 +478,8 @@ class HouseSimulatorSocket(object):
     def __init__(self, interpreter):
         super().__init__()
         # self.pipe_path = "../tmp/pipe_sim"
-        self.pipe_path_HS2P = "./tmp/pipe_sim_HS2P"      # house simulator to pepper simulator
-        self.pipe_path_P2HS = "./tmp/pipe_sim_P2HS"      # pepper simulator to house simulator
+        self.pipe_path_HS2P = "./../tmp/pipe_sim_HS2P"      # house simulator to pepper simulator
+        self.pipe_path_P2HS = "./../tmp/pipe_sim_P2HS"      # pepper simulator to house simulator
         
         
         self.mode  = 0o600 # octal
@@ -512,9 +513,9 @@ class HouseSimulatorSocket(object):
         print(os.getcwd())
         
         # go back to path pointer to ./EAI2
-        if "2DPathSimulator" in os.getcwd():
-            os.chdir("../")
-            print(f"Current location (cwd): {os.getcwd()}")
+        # if "2DPathSimulator" in os.getcwd():
+        #     os.chdir("../")
+        #     print(f"Current location (cwd): {os.getcwd()}")
         
         # if not os.path.exists("../tmp/"):
         #     print("not exists tmp folder")
@@ -522,7 +523,7 @@ class HouseSimulatorSocket(object):
         
         if not os.path.exists("./tmp/"):
             print("not exists tmp folder")
-            os.mkdir('./tmp/')
+            os.mkdir('./../tmp/')
             
         if not os.path.exists(path):
             os.mkfifo(path, self.mode)
@@ -557,17 +558,32 @@ class HouseSimulatorSocket(object):
                 self.command_list.append(command)
                 
                 # do something with the command
- 
-      
-            
+
+
+# class HouseSimulatorSocket(object):
+    
+#     def __init__(self, interpreter):
+#         super().__init__()
+#         self.app = Flask(__name__) 
+
+
+
+#     def hello(self):
+#         @self.app.route('/')
+#             return "Hello from the host!"
+
+#     def send(self):
+#         self.app.run(host='0.0.0.0', port=8000) 
 """
                                                 test section
 """
 
-testing = 0
-if testing:
+testing_pipe = 0
+# testing_flask = 0
+test_send = 1
+
+if testing_pipe:
     command_socket = HouseSimulatorSocket(None)
-    test_send = False
 
     #   [request]
     if test_send:
@@ -581,6 +597,5 @@ if testing:
             print(i)
             i+= 1
             time.sleep(5)
-
 
 
