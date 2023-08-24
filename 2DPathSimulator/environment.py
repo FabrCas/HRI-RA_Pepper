@@ -68,6 +68,7 @@ def create_UI(screen: Surface, verbose = True):
     system_box = OutputTextBox(screen, x= lateral_panel_ltc_x + 10, y= lateral_panel_height - 410, width=lateral_panel_width -20, height= 400,
                                color_text=(0, 0, 0), color_bg=(200,200,200),size_font=20)
     system_box.add_message("Started the simulation")
+    system_box.add_message("Use the 'help' command for the input functionalities of the console")
 
     text_system_box = Text("System output", screen=screen, x=lateral_panel_ltc_x + 10, y= system_box.y-30,  color=(255, 255, 255), size_font=20)
     text_system_box.center_to(x = lateral_panel_ltc_x + lateral_panel_width/2)

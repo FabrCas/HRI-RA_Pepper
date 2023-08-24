@@ -4,7 +4,6 @@ import math
 import os
 import threading
 import time
-from flask import Flask
 
 class InputInterpreter(object):
     def __init__(self, simulation_objects):
@@ -13,6 +12,7 @@ class InputInterpreter(object):
         self.boxes = simulation_objects['text_boxes']
         self.env = simulation_objects['environment']
         self.pepper = simulation_objects['pepper']
+        
         self.changed_reset          = False
         self.changed_debug          = False
         self.changed_test_clearance = False
@@ -22,8 +22,8 @@ class InputInterpreter(object):
         self.changed_show_direction = False
         self.changed_show_forces    = False
         self.changed_show_target    = False
-
         self.auto_run()
+        
 
     def auto_run(self):
         pass
@@ -63,6 +63,31 @@ class InputInterpreter(object):
         if "forces" in message.strip().lower():
             print("Changing the show of forces (APF)...")
             self.changed_show_forces = True
+        if "commands" in message.strip().lower() or 'help' in message.strip().lower():
+            print("showing the command list in the console...")
+            self.show_commands()
+    
+    
+    def show_commands(self):
+        
+        command_map = {
+            'reset'     :'Reset simulation',
+            'debug'     :'toggle debug mode',
+            'obs'       :'toggle obstacle mode',
+            'test_c'    :'start the clearance test',
+            'test_m'    :'start the motion test',
+            'clerance'  :'show neearest point',
+            'target'    :'show target of the motion',
+            'direction' :"show motion's direction",
+            'forces'    :'toggle forces visibility ',
+        }
+        
+        self.boxes[1].add_message("List of available commands:")
+        for command, description in command_map.items():
+            self.boxes[1].add_message(f"> {command}: {description}")
+        
+        
+    # ---- toggle functions
     
     def toggle_reset(self):
         
@@ -475,11 +500,16 @@ class PepperMotion(object):
 
 class HouseSimulatorSocket(object):
     
-    def __init__(self, interpreter):
+    def __init__(self, interpreter, local_folder = False):
         super().__init__()
+        self.local_folder = local_folder
         # self.pipe_path = "../tmp/pipe_sim"
-        self.pipe_path_HS2P = "./../tmp/pipe_sim_HS2P"      # house simulator to pepper simulator
-        self.pipe_path_P2HS = "./../tmp/pipe_sim_P2HS"      # pepper simulator to house simulator
+        if not local_folder:
+            self.pipe_path_HS2P = "./../tmp/pipe_sim_HS2P"      # house simulator to pepper simulator
+            self.pipe_path_P2HS = "./../tmp/pipe_sim_P2HS"      # pepper simulator to house simulator
+        else:
+            self.pipe_path_HS2P = "./tmp/pipe_sim_HS2P"      # house simulator to pepper simulator
+            self.pipe_path_P2HS = "./tmp/pipe_sim_P2HS"      # pepper simulator to house simulator
         
         
         self.mode  = 0o600 # octal
@@ -520,10 +550,14 @@ class HouseSimulatorSocket(object):
         # if not os.path.exists("../tmp/"):
         #     print("not exists tmp folder")
         #     os.mkdir('../tmp/')
-        
-        if not os.path.exists("./tmp/"):
-            print("not exists tmp folder")
-            os.mkdir('./../tmp/')
+        if not self.local_folder:
+            if not os.path.exists("./../tmp/"):
+                print("not exists tmp folder")
+                os.mkdir('./../tmp/')
+        else:
+            if not os.path.exists("./tmp/"):
+                print("not exists tmp folder")
+                os.mkdir('./tmp/')
             
         if not os.path.exists(path):
             os.mkfifo(path, self.mode)
@@ -559,31 +593,15 @@ class HouseSimulatorSocket(object):
                 
                 # do something with the command
 
-
-# class HouseSimulatorSocket(object):
-    
-#     def __init__(self, interpreter):
-#         super().__init__()
-#         self.app = Flask(__name__) 
-
-
-
-#     def hello(self):
-#         @self.app.route('/')
-#             return "Hello from the host!"
-
-#     def send(self):
-#         self.app.run(host='0.0.0.0', port=8000) 
 """
                                                 test section
 """
 
 testing_pipe = 0
-# testing_flask = 0
-test_send = 1
+test_send = 0
 
 if testing_pipe:
-    command_socket = HouseSimulatorSocket(None)
+    command_socket = HouseSimulatorSocket(None, local_folder= True)
 
     #   [request]
     if test_send:
