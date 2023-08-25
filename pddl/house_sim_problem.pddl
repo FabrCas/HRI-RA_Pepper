@@ -1,10 +1,14 @@
 (define (problem house-motion)
     (:domain house_sim)
     (:objects
-        foyer living_room dining toilet studio bedroom kitchen outdoor - room
-        d_foyer_outdoor d_foyer_living  d_toiler_living d_studio_living d_bedroom_living d_living_dining d_dining_kitchen - door
-        ;- window
-        ;- item 
+        foyer living_room dining toilet studio bedroom kitchen outdoor          - room
+        d_foyer_outdoor d_foyer_living  d_toilet_living d_studio_living         - door
+        d_bedroom_living d_living_dining d_dining_kitchen                       - door
+        wl_foyer  wl_toilet wl_studio wl_bedroom wl_dining wl_kitchen           - window
+        wr_foyer  wr_toilet wr_studio wr_bedroom wr_dining wr_kitchen           - window
+        green_marker pen pencil plate_empty cup_coffee plate_oranges            - item
+        plate_apples orange1 orange2 orange3 apple1 apple2 smartphone           - item
+        red_notebook green_notebook glasses yellow_notebook cards pink_notebook - item
     )
     
     (:init
@@ -12,12 +16,28 @@
         ;                           room connections
         (connected outdoor foyer  north)
         (connected foyer outdoor  south)
-        ; (connected ?r1 - room ?r2 - room  ?d - direction)
-        ; (connected ?r1 - room ?r2 - room  ?d - direction)
-        ; (connected ?r1 - room ?r2 - room  ?d - direction)
-        ; (connected ?r1 - room ?r2 - room  ?d - direction)
-        ; (connected ?r1 - room ?r2 - room  ?d - direction)
-        ; (connected ?r1 - room ?r2 - room  ?d - direction)
+        (connected foyer living_room  west)
+        (connected living_room foyer  east)
+        (connected toilet living_room  south)
+        (connected living_room toilet  north)
+        (connected studio living_room  east)
+        (connected living_room studio  west)
+        (connected bedroom living_room  east)
+        (connected living_room bedroom  west)
+        (connected dining living_room  north)
+        (connected living_room dining  south)
+        (connected kitchen dining  east)
+        (connected dining kitchen  west)
+        
+        
+        ;                           free space rooms defintion
+        (in free_space foyer)
+        (in free_space living_room)
+        (in free_space dining)
+        (in free_space toilet)
+        (in free_space studio)
+        (in free_space bedroom)
+        (in free_space outdoor)
         
         ;                           doors definition
         (in d_foyer_outdoor foyer)
@@ -30,7 +50,111 @@
         (in d_foyer_living living_room)
         (isPositioned d_foyer_living foyer west)
         (isPositioned d_foyer_living living_room east)
+        (openDoor d_foyer_living)
+        
+        (in d_toilet_living toilet)
+        (in d_toilet_living living_room)
+        (isPositioned d_toilet_living toilet south)
+        (isPositioned d_toilet_living living_room north)
+        (openDoor d_toilet_living)
+        
+        (in d_studio_living studio)
+        (in d_studio_living living_room)
+        (isPositioned d_studio_living studio east)
+        (isPositioned d_studio_living living_room west)
+        (openDoor d_studio_living)
+        
+        (in d_bedroom_living bedroom)
+        (in d_bedroom_living living_room)
+        (isPositioned d_bedroom_living bedroom east)
+        (isPositioned d_bedroom_living living_room west)
+        (openDoor d_bedroom_living)
+        
+        (in d_living_dining living_room)
+        (in d_living_dining dining)
+        (isPositioned d_living_dining living_room south)
+        (isPositioned d_living_dining dining north)
+        (openDoor d_living_dining)
+        
+        (in d_dining_kitchen dining)
+        (in d_dining_kitchen kitchen)
+        (isPositioned d_dining_kitchen dining west)
+        (isPositioned d_dining_kitchen kitchen east)
+        ; (openDoor d_dining_kitchen)
+        
+        ;                           window definition [left]
+        (in wl_foyer foyer)
+        (isPositioned wl_foyer foyer east)
+        (openWin wl_foyer)
+        
+        (in wl_toilet toilet)
+        (isPositioned wl_toilet toilet north)
+        (openWin wl_toilet)
+        
+        (in wl_studio studio)
+        (isPositioned wl_studio studio north)
+        (openWin wl_studio)
+        
+        (in wl_bedroom bedroom)
+        (isPositioned wl_bedroom bedroom west)
+        (openWin wl_bedroom)
+        
+        (in wl_kitchen kitchen)
+        (isPositioned wl_kitchen kitchen south)
+        ; (openWin wl_kitchen)
+        
+        (in wl_dining dining)
+        (isPositioned wl_dining dining east)
+        (openWin wl_dining)
 
+        ;                           window definition [right]
+        (in wr_foyer foyer)
+        (isPositioned wr_foyer foyer east)
+        (openWin wr_foyer)
+        
+        (in wr_toilet toilet)
+        (isPositioned wr_toilet toilet north)
+        (openWin wr_toilet)
+        
+        (in wr_studio studio)
+        (isPositioned wr_studio studio north)
+        (openWin wr_studio)
+        
+        (in wr_bedroom bedroom)
+        (isPositioned wr_bedroom bedroom west)
+        (openWin wr_bedroom)
+        
+        (in wr_kitchen kitchen)
+        (isPositioned wr_kitchen kitchen south)
+        (openWin wr_kitchen)
+        
+        (in wr_dining dining)
+        (isPositioned wr_dining dining east)
+        (openWin wr_dining)
+        
+        
+        ;                           house objects (movable)
+        (in green_marker studio)
+        (in pen studio)
+        (in pencil studio)
+        (in plate_empty kitchen)
+        (in cup_coffee kitchen)
+        (in plate_oranges kitchen)
+        (in plate_apples kitchen)
+        (in orange1 kitchen)
+        (in orange2 kitchen)
+        (in orange3 kitchen)
+        (in apple1 kitchen)
+        (in apple2 kitchen)
+        (in smartphone bedroom)
+        (in red_notebook bedroom)
+        (in green_notebook bedroom)
+        (in glasses toilet)
+        (in yellow_notebook toilet)
+        (in cards living_room)
+        (in pink_notebook dining)
+        
+        
         ;                           pepper init 
         (PepperIn foyer)
         (PepperAt free_space)
@@ -38,6 +162,9 @@
     )
     
     (:goal
-        (and (openDoor d_foyer_living))
+        (and  (PepperIn Foyer) (in cards toilet)
+        ; (not(openDoor d_studio_living)) (not(openDoor d_foyer_living))
+        ; (not (openDoor d_foyer_outdoor))
+        )
     )
 )
