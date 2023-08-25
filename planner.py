@@ -18,10 +18,10 @@ class SolverFF():
 
         # adjust paths in case of sim launching
         if pathsFromSim:
-            domain_file     = os.path.join("./..",domain_file)
-            problem_file    = os.path.join("./..",problem_file)
-            path2ff         = os.path.join("./..",path2ff)
-            path2pddl       = os.path.join("./..",path2pddl)
+            self.domain_file     = os.path.join("./..",self.domain_file)
+            self.problem_file    = os.path.join("./..",self.problem_file)
+            self.path2ff         = os.path.join("./..",self.path2ff)
+            self.path2pddl       = os.path.join("./..",self.path2pddl)
 
     
     def forward(self, domain_file = None, problem_file = None, verbose = False): 
@@ -84,10 +84,11 @@ class SolverFF():
 # output = subprocess.run(["pyperplan","-H ",planner_name," ",domain_file, " ",problem_file], shell=True, capture_output=True, text= True)
 # ./Metric-FF/ff -o ./pddl/domain.pddl -f ./pddl/problem.pddl
 
+# class used to generate the PDDL files
 class ParserPDDL():
     
     def __init__(self):
-        self.path2pddl    = "./pddl"
+        self.path2pddl          = "./pddl"
         self.self.domain_file   = "./domain.pddl"
         self.problem_file       = "./problem.pddl"
 
@@ -99,6 +100,9 @@ class ParserPDDL():
     
     def parse_problem_move_obj(self):
         pass
+
+
+
 
 """
                                                 test section
