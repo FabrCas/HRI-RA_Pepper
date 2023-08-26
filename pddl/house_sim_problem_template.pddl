@@ -83,7 +83,7 @@
         (in d_dining_kitchen kitchen)
         (isPositioned d_dining_kitchen dining west)
         (isPositioned d_dining_kitchen kitchen east)
-        ; (openDoor d_dining_kitchen)
+        (openDoor d_dining_kitchen)
         
         ;                           window definition [left]
         (in wl_foyer foyer)
@@ -104,7 +104,7 @@
         
         (in wl_kitchen kitchen)
         (isPositioned wl_kitchen kitchen south)
-        ; (openWin wl_kitchen)
+        (openWin wl_kitchen)
         
         (in wl_dining dining)
         (isPositioned wl_dining dining east)
@@ -204,6 +204,6 @@
     )
     
     (:goal
-        (and  (not(openWin wr_studio)) (not(openWin wl_studio)) (on green_marker tub) (not(openWin wr_toilet)) (not(openWin wl_toilet)))
+        (and )
     )
 )

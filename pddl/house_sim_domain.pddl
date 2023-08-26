@@ -2,11 +2,13 @@
     (:requirements :strips  :adl)
     (:types
         room            - object
-        room_element    - object
+        direction       - object 
+        room_element    - object            ; superclass
         item            - room_element
         window          - room_element
         door            - room_element
-        direction       - object 
+        furniture       - room_element
+
     )
     
     (:constants
@@ -22,8 +24,9 @@
     (:predicates
         
         ; Define house environment composition
-        (connected ?r1 - room ?r2 - room  ?d - direction)
-        (in ?o - room_element ?r - room)
+        (connected ?r1 - room ?r2 - room  ?d - direction)                   ; used to connect rooms
+        (in ?o - room_element ?r - room)                                    ; for object, window, door in room
+        (on ?i - item  ?f - room_element)                                   ; for object on furtniture or on another item
         (isPositioned ?o - room_element ?r - room ?d - direction)         ;generic predicate for define the cardinal position of windows and doors.
         
         
@@ -34,7 +37,7 @@
         
         ;Pepper information
         (PepperIn  ?r - room)
-        (PepperAt  ?o - room_element)                                     ;generic to indicate pepper near to windowd or door (now can interact)
+        (PepperAt  ?o - room_element)                                     ;generic to indicate pepper near to window/door/furniture (now can interact)
         (PepperHas ?i - item)
         (freeHands)
     )
@@ -49,10 +52,9 @@
     
     (:action move2room
         :parameters (?from ?to - room  ?d - door ?side - direction)
-        :precondition (and (connected ?from ?to ?side) (isPositioned ?d ?from ?side) (PepperIn ?from) (PepperAt ?d) (openDoor ?d))
+        :precondition (and (connected ?from ?to ?side) (isPositioned ?d ?from ?side) (PepperIn ?from) (PepperAt ?d) (openDoor ?d) (in ?d ?from)(in ?d ?to))
         :effect (and (not(PepperIn ?from)) (PepperIn ?to))
     )
-    
     
     ;                               [action with windows and doors]
     (:action open_door
@@ -80,17 +82,16 @@
     )
     
     ;                               [action with house objects]
-    ; (first version for these 2 actions, more complex and accurate info about position required)
     
     (:action grab_object
-        :parameters (?i - item ?r - room)
-        :precondition (and (in ?i ?r) (freeHands) (PepperAt ?i) (PepperIn ?r))
-        :effect (and (not (freeHands)) (not(PepperAt ?i)) (PepperHas ?i) (PepperAt free_space)) 
+        :parameters (?i - item ?r - room ?f - room_element)
+        :precondition (and (in ?i ?r) (in ?f ?r) (on ?i ?f) (freeHands) (PepperAt ?f) (PepperIn ?r))
+        :effect (and (not(freeHands)) (not(on ?i ?f)) (not(in ?i ?r)) (PepperHas ?i)) 
     )
     
     (:action place_object
-        :parameters (?i - item ?r - room)
-        :precondition (and (PepperHas ?i) (PepperIn ?r))
-        :effect (and (not (PepperHas ?i)) (PepperAt ?i) (freeHands) (in ?i ?r))
+        :parameters (?i - item ?r - room ?f - room_element)
+        :precondition (and (in ?f ?r) (PepperHas ?i) (PepperIn ?r) (PepperAt ?f) )
+        :effect (and (not (PepperHas ?i)) (freeHands) (in ?i ?r) (on ?i ?f))
     )
 )
