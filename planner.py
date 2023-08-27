@@ -285,10 +285,110 @@ class ParserPDDL():
         return increment - decrement
     
     #TODO
-    def define_init(self, problem_instance):
+    
+    def _chunk_init(self, init):
+        chunks = []
+        last_idx = 0
+        for idx,line in enumerate(init):
+            res = re.match(r".*;.*doors.*", line)
+            if res is not None:
+                print(res.group(), idx)
+                chunks.append((last_idx,idx))
+                last_idx = idx
+                
+            res = re.match(r".*;.*window.*\[left\].*", line)
+            if res is not None:
+                print(res.group(), idx)
+                chunks.append((last_idx,idx))
+                last_idx = idx
+            res = re.match(r".*;.*window.*\[right\].*", line)
+            if res is not None:
+                print(res.group(), idx)
+                chunks.append((last_idx,idx))
+                last_idx = idx
+            res = re.match(r".*;.*objects.*", line)
+            if res is not None:
+                print(res.group(), idx)
+                chunks.append((last_idx,idx))
+                last_idx = idx
+            res = re.match(r".*;.*furniture.*", line)
+            if res is not None:
+                print(res.group(), idx)
+                chunks.append((last_idx,idx))
+                last_idx = idx
+            res = re.match(r".*;.*pepper.*", line)
+            if res is not None:
+                print(res.group(), idx)
+                chunks.append((last_idx,idx))
+                last_idx = idx
+            
+        chunks.append((last_idx, len(init)))    
+        
+        return chunks
+    
+    def define_init(self, starting_init):
         lines_init = []
-        for init_state in problem_instance:
-            pass
+        
+        chunks = self._chunk_init(starting_init)
+        # print(starting_init)
+        
+        header_init         = starting_init[chunks[0][0]:chunks[0][1]]
+        # print(header_init)
+        init_doors          = starting_init[chunks[1][0]:chunks[1][1]]
+        # print(init_doors)
+        init_window_left    = starting_init[chunks[2][0]:chunks[2][1]]
+        # print(init_window_left)
+        init_window_right   = starting_init[chunks[3][0]:chunks[3][1]]
+        # print(init_window_right)
+        init_items          = starting_init[chunks[4][0]:chunks[4][1]]
+        # print(init_items)
+        init_furniture      = starting_init[chunks[5][0]:chunks[5][1]]
+        # print(init_furniture)
+        init_pepper         = starting_init[chunks[6][0]:chunks[6][1]]
+        # print(init_pepper)
+        
+        #                       initial state for the environment
+        # 1) remove doors
+        to_remove_door = []
+        doors_closed = [self.get_doorName("outdoor","foyer"), self.get_doorName("living","toilet"),
+                       self.get_doorName("living","studio"), self.get_doorName("living","bedroom"), self.get_doorName("kitchen","dining")]
+        for idx,line in enumerate(init_doors):
+            if ("openDoor" in line) and (any(door_name in line for door_name in doors_closed)):
+                to_remove_door.append(idx)
+        to_remove_door.sort(reverse= True)       
+        print(to_remove_door)
+        
+        for idx in to_remove_door:
+            del init_doors[idx]
+        
+        # 2) remove left windows   
+        to_remove_win = []
+        
+        win_closed = ["foyer", "bedroom", "kitchen", "studio"]
+        for idx,line in enumerate(init_window_left):
+            if ("openWin" in line) and (any(win_name in line for win_name in win_closed)):
+                to_remove_win.append(idx)
+        to_remove_win.sort(reverse= True)       
+        print(to_remove_win)
+        
+        for idx in to_remove_win:
+            del init_window_left[idx]
+            
+            
+        # 3) remove right windows      
+        to_remove_win = []
+        
+        win_closed = ["foyer", "bedroom", "kitchen", "studio"]
+        for idx,line in enumerate(init_window_right):
+            if ("openWin" in line) and (any(win_name in line for win_name in win_closed)):
+                to_remove_win.append(idx)
+        to_remove_win.sort(reverse= True)       
+        print(to_remove_win)
+        
+        for idx in to_remove_win:
+            del init_window_right[idx]
+                
+        lines_init = [*header_init, *init_doors, *init_window_left, *init_window_right, *init_items, *init_furniture, *init_pepper] 
         return lines_init
     
     def parse_goal(self, tasks_description = None, verbose = False):
@@ -366,14 +466,14 @@ class ParserPDDL():
         for idx, line in enumerate(lines):
             res = re.match(r".*:init.*", line)
             if res is not None:
-                print(res.group())
+                # print(res.group())
                 idx_init_start = idx
                 counter_parenthesis = 0
                 counter_parenthesis += self.getNumber_parenthesis(line)
                 continue
             
             if counter_parenthesis != -1:
-                print(counter_parenthesis)
+                # print(counter_parenthesis)
                 counter_parenthesis += self.getNumber_parenthesis(line)
                 
             if counter_parenthesis == 0:
@@ -386,18 +486,18 @@ class ParserPDDL():
 
             
         # 2) edit init 
-        n_lines = idx_init_end - idx_init_start
-        template_init = lines[idx_init_start:idx_init_end+1]
-        print(template_init)
+        # n_lines = idx_init_end - idx_init_start
+        init_file = lines[idx_init_start:idx_init_end+1]
+        # print(template_init)
         
         #TODO edit template_init list using self.define_problemInstance(init_instance))
+        lines_init = self.define_init(init_file)
+        
+        # print(lines[:idx_init_start])
+        # print(lines[idx_init_end+1:])
         
         
-        print(lines[:idx_init_start])
-        print(lines[idx_init_end+1:])
-        
-        
-        lines = [*lines[:idx_init_start], *template_init ,*lines[idx_init_end+1:]]
+        lines = [*lines[:idx_init_start], *lines_init ,*lines[idx_init_end+1:]]
 
         
         #                               write
