@@ -47,7 +47,6 @@
         (in d_foyer_outdoor outdoor)
         (isPositioned d_foyer_outdoor foyer south)
         (isPositioned d_foyer_outdoor outdoor north)
-        (openDoor d_foyer_outdoor)
         
         (in d_foyer_living foyer)
         (in d_foyer_living living_room)
@@ -59,19 +58,16 @@
         (in d_toilet_living living_room)
         (isPositioned d_toilet_living toilet south)
         (isPositioned d_toilet_living living_room north)
-        (openDoor d_toilet_living)
         
         (in d_studio_living studio)
         (in d_studio_living living_room)
         (isPositioned d_studio_living studio east)
         (isPositioned d_studio_living living_room west)
-        (openDoor d_studio_living)
         
         (in d_bedroom_living bedroom)
         (in d_bedroom_living living_room)
         (isPositioned d_bedroom_living bedroom east)
         (isPositioned d_bedroom_living living_room west)
-        (openDoor d_bedroom_living)
         
         (in d_living_dining living_room)
         (in d_living_dining dining)
@@ -83,12 +79,10 @@
         (in d_dining_kitchen kitchen)
         (isPositioned d_dining_kitchen dining west)
         (isPositioned d_dining_kitchen kitchen east)
-        (openDoor d_dining_kitchen)
         
         ;                           window definition [left]
         (in wl_foyer foyer)
         (isPositioned wl_foyer foyer east)
-        (openWin wl_foyer)
         
         (in wl_toilet toilet)
         (isPositioned wl_toilet toilet north)
@@ -96,15 +90,12 @@
         
         (in wl_studio studio)
         (isPositioned wl_studio studio north)
-        (openWin wl_studio)
         
         (in wl_bedroom bedroom)
         (isPositioned wl_bedroom bedroom west)
-        (openWin wl_bedroom)
         
         (in wl_kitchen kitchen)
         (isPositioned wl_kitchen kitchen south)
-        (openWin wl_kitchen)
         
         (in wl_dining dining)
         (isPositioned wl_dining dining east)
@@ -113,7 +104,6 @@
         ;                           window definition [right]
         (in wr_foyer foyer)
         (isPositioned wr_foyer foyer east)
-        (openWin wr_foyer)
         
         (in wr_toilet toilet)
         (isPositioned wr_toilet toilet north)
@@ -121,15 +111,12 @@
         
         (in wr_studio studio)
         (isPositioned wr_studio studio north)
-        (openWin wr_studio)
         
         (in wr_bedroom bedroom)
         (isPositioned wr_bedroom bedroom west)
-        (openWin wr_bedroom)
         
         (in wr_kitchen kitchen)
         (isPositioned wr_kitchen kitchen south)
-        (openWin wr_kitchen)
         
         (in wr_dining dining)
         (isPositioned wr_dining dining east)
@@ -149,10 +136,8 @@
         (in orange3 kitchen)
         (in apple1 kitchen)
         (in apple2 kitchen)
-        (in smartphone bedroom)
         (in red_notebook bedroom)
         (in green_notebook bedroom)
-        (in glasses toilet)
         (in yellow_notebook toilet)
         (in cards living_room)
         (in pink_notebook dining)
@@ -189,13 +174,15 @@
         (on orange3 plate_oranges)
         (on apple1 plate_apples)
         (on apple2 plate_apples)
-        (on smartphone bed)
         (on red_notebook cabinet_bedroom_l)
         (on green_notebook cabinet_bedroom_r)
-        (on glasses sink)
         (on yellow_notebook cabinet_toilet)
         (on cards table_living)
-        (on pink_notebook table_dining)
+        (in smartphone bedroom)
+        (on smartphone bed)
+        (in glasses toilet)
+        (on glasses sink)
+
         
         ;                           pepper init 
         (PepperIn foyer)

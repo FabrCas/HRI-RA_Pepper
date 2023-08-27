@@ -38,6 +38,7 @@ class SolverFF():
             print("Error from FF planning software:\n")
             print(output.stderr)
             print(output.stdout)
+            plan = None
             
         return plan
 
@@ -284,7 +285,6 @@ class ParserPDDL():
         # print(f"decrement {decrement}")
         return increment - decrement
     
-    #TODO
     
     def _chunk_init(self, init):
         chunks = []
@@ -292,33 +292,33 @@ class ParserPDDL():
         for idx,line in enumerate(init):
             res = re.match(r".*;.*doors.*", line)
             if res is not None:
-                print(res.group(), idx)
+                # print(res.group(), idx)
                 chunks.append((last_idx,idx))
                 last_idx = idx
                 
             res = re.match(r".*;.*window.*\[left\].*", line)
             if res is not None:
-                print(res.group(), idx)
+                # print(res.group(), idx)
                 chunks.append((last_idx,idx))
                 last_idx = idx
             res = re.match(r".*;.*window.*\[right\].*", line)
             if res is not None:
-                print(res.group(), idx)
+                # print(res.group(), idx)
                 chunks.append((last_idx,idx))
                 last_idx = idx
             res = re.match(r".*;.*objects.*", line)
             if res is not None:
-                print(res.group(), idx)
+                # print(res.group(), idx)
                 chunks.append((last_idx,idx))
                 last_idx = idx
             res = re.match(r".*;.*furniture.*", line)
             if res is not None:
-                print(res.group(), idx)
+                # print(res.group(), idx)
                 chunks.append((last_idx,idx))
                 last_idx = idx
             res = re.match(r".*;.*pepper.*", line)
             if res is not None:
-                print(res.group(), idx)
+                # print(res.group(), idx)
                 chunks.append((last_idx,idx))
                 last_idx = idx
             
@@ -326,11 +326,61 @@ class ParserPDDL():
         
         return chunks
     
-    def define_init(self, starting_init):
+    
+    def remove_objectKnowledge(self, init_items, object: str):
+        query = object.strip().lower()
+        to_remove = []
+        for idx, line in enumerate(init_items):
+            if query in line:
+                # print(line)
+                to_remove.append(idx)
+                
+        if to_remove != []:     
+            to_remove.sort(reverse= True)       
+        
+            for idx in to_remove:
+                del init_items[idx]
+        else:
+            raise ValueError(f"wrong name object selected in function: {self.remove_objectKnowledge.__name__}")
+            
+        
+        return init_items
+        
+    def add_objectKnowledge(self, init_items, info):
+        
+        object = info['object']
+        room = info['room']
+        furniture = info['furniture']
+
+        
+        if room is None and furniture is None:
+            raise ValueError("No new data to save")
+        
+        init_items[-2] = "\n"
+        
+        if not(room is None):   # in predicate
+            p = self.predicates['in']
+            p = p.replace("?what", object)
+            p = p.replace("?room", room)
+            init_items.insert(len(init_items)-2, "        " + p +"\n")
+        if not(furniture is None): #on predicate
+            p = self.predicates['on']
+            p = p.replace("?item", object)
+            p = p.replace("?what", furniture)
+            init_items.insert(len(init_items)-2, "        " +p + "\n")
+        
+        
+           
+        
+        # predicates['in']             = "(in ?what ?room)"
+        # predicates['on']             = "(on ?item ?what)"
+        
+        
+    def define_init(self, starting_init, unknown_list, learned_list):
         lines_init = []
         
+        #                       chunk init 
         chunks = self._chunk_init(starting_init)
-        # print(starting_init)
         
         header_init         = starting_init[chunks[0][0]:chunks[0][1]]
         # print(header_init)
@@ -356,39 +406,46 @@ class ParserPDDL():
             if ("openDoor" in line) and (any(door_name in line for door_name in doors_closed)):
                 to_remove_door.append(idx)
         to_remove_door.sort(reverse= True)       
-        print(to_remove_door)
-        
+        # print(to_remove_door)
         for idx in to_remove_door:
             del init_doors[idx]
         
         # 2) remove left windows   
         to_remove_win = []
-        
         win_closed = ["foyer", "bedroom", "kitchen", "studio"]
         for idx,line in enumerate(init_window_left):
             if ("openWin" in line) and (any(win_name in line for win_name in win_closed)):
                 to_remove_win.append(idx)
         to_remove_win.sort(reverse= True)       
-        print(to_remove_win)
-        
+        # print(to_remove_win)
         for idx in to_remove_win:
             del init_window_left[idx]
             
             
         # 3) remove right windows      
         to_remove_win = []
-        
         win_closed = ["foyer", "bedroom", "kitchen", "studio"]
         for idx,line in enumerate(init_window_right):
             if ("openWin" in line) and (any(win_name in line for win_name in win_closed)):
                 to_remove_win.append(idx)
         to_remove_win.sort(reverse= True)       
-        print(to_remove_win)
-        
+        # print(to_remove_win)
         for idx in to_remove_win:
             del init_window_right[idx]
-                
-        lines_init = [*header_init, *init_doors, *init_window_left, *init_window_right, *init_items, *init_furniture, *init_pepper] 
+        
+        
+        #                         select unknown predicates
+        for unknown in unknown_list:
+            self.remove_objectKnowledge(init_items, unknown)
+            self.remove_objectKnowledge(init_furniture, unknown)
+        
+        for learned in learned_list:
+            self.add_objectKnowledge(init_furniture, learned)
+            
+        # self.add_objectKnowledge(init_furniture, "gameboy","studio","desk_studio")
+        
+        lines_init = [*header_init, *init_doors, *init_window_left, *init_window_right, *init_items, *init_furniture, *init_pepper]
+        
         return lines_init
     
     def parse_goal(self, tasks_description = None, verbose = False):
@@ -447,7 +504,7 @@ class ParserPDDL():
                 
         if self.firstParsing: self.firstParsing = False
         
-    def parse_init(self, init_instance = None):
+    def parse_init(self, init_instance = None, unknown = [], learned = []):
         # problem pddl lines
         lines = []
     
@@ -480,39 +537,26 @@ class ParserPDDL():
                 idx_init_end = idx
                 break
         
-        print("line start init {}".format(idx_init_start))
-        print("line end init  {}".format(idx_init_end))
-        
-
-            
         # 2) edit init 
-        # n_lines = idx_init_end - idx_init_start
         init_file = lines[idx_init_start:idx_init_end+1]
-        # print(template_init)
+        lines_init = self.define_init(init_file, unknown_list = unknown, learned_list = learned)   # learned list of dictionaries with this structure {'object':x, 'room':x, 'furniture':x} 
         
-        #TODO edit template_init list using self.define_problemInstance(init_instance))
-        lines_init = self.define_init(init_file)
-        
-        # print(lines[:idx_init_start])
-        # print(lines[idx_init_end+1:])
-        
-        
-        lines = [*lines[:idx_init_start], *lines_init ,*lines[idx_init_end+1:]]
-
-        
+        # 3) collect together chunks
+        lines = [*lines[:idx_init_start], *lines_init ,*lines[idx_init_end+1:]]    
         #                               write
         with open(os.path.join(self.path2pddl, self.generated_file), 'w') as problem_file:
             for line in lines:
                 problem_file.write(line)
         
         if self.firstParsing: self.firstParsing = False
-        
-    # re-generate pddl problem file starting from template
+    
+    #TODO
+    def update_init(self,plan):
+        pass
+    
+    # re-generate pddl problem file starting from template (look for when you reset the environment? #TODO)
     def reset(self):
         self.firstParsing = True
-
-
-
 
 """
                                                 test section
@@ -535,7 +579,8 @@ if test['parse']:
     # parser.parse_goal(tasks_description= tasks_description1)
     # input("press something")
     # parser.parse_goal(tasks_description= tasks_description2)
-    parser.parse_init(init_instance = None)
+    
+    parser.parse_init(init_instance = None, unknown = ["smartphone", "glasses"], learned = [{'object':'smartphone', 'room':"bedroom", 'furniture':"bed"}, {'object':'glasses', 'room':"toilet", 'furniture':"sink"}])
 
 
 if test['solve']:

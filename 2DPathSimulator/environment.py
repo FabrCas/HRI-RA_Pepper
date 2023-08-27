@@ -154,11 +154,11 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
                   width=studio_w, height=studio_h, env_group= env_group, tile_type='parquet')
     extra_hud_group.add(studio.get_display_name(side='top'))
     win = studio.add_window("north", displacement= studio_w/2, status='close')
-
-    timer1 = threading.Timer(1, lambda: win[0].open())
-    timer2 = threading.Timer(1, lambda: win[1].open())
-    timer1.start()
-    timer2.start()
+    
+    # timer1 = threading.Timer(1, lambda: win[0].open())
+    # timer2 = threading.Timer(1, lambda: win[1].open())
+    # timer1.start()
+    # timer2.start()
 
     # -- toilet
     toilet_w= 360; toilet_h= 200
@@ -174,7 +174,7 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
                         y = wall_up.y + foyer_h/2 + wall_size , width= foyer_w,
                         height= foyer_h, env_group= env_group, tile_type='white')
     extra_hud_group.add(foyer.get_display_name(side='top', color=(0, 0, 0)))
-    foyer.add_window("east", displacement=300, status='open')
+    win = foyer.add_window("east", displacement=300, status='close')
 
     # -- Living Room
     living_room_w = toilet_w; living_room_h = wall_up.height + wall_down.height - toilet_h -4* wall_size - 300
@@ -198,7 +198,7 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
                         y = studio.y + studio_h/2 + wall_size + bedroom_h/2 , width= bedroom_w,
                         height= bedroom_h, env_group= env_group, tile_type='black_marble')
     extra_hud_group.add(bedroom.get_display_name(side='bottom', color=(255, 255, 255)))
-    bedroom.add_window("west", displacement=bedroom_h/2, status='open')
+    win = bedroom.add_window("west", displacement=bedroom_h/2, status='close')
 
     # -- Kitchen
     kitchen_w = studio_w; kitchen_h = wall_up.height + wall_down.height - studio_h - wall_size*4 - bedroom_h
@@ -206,28 +206,28 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
                         y = bedroom.y + bedroom_h/2 + wall_size + kitchen_h/2, width= kitchen_w,
                         height= kitchen_h, env_group= env_group, tile_type='ceramic')
     extra_hud_group.add(kitchen.get_display_name(side='bottom', color=(0, 0, 0)))
-    wind = kitchen.add_window("south", displacement= math.ceil(kitchen_w * 1/4), status='open')
+    win = kitchen.add_window("south", displacement= math.ceil(kitchen_w * 1/4), status='close')
 
-    timer1 = threading.Timer(1, lambda: wind[0].close())
-    timer1.start()
+    # timer1 = threading.Timer(1, lambda: win[0].close())
+    # timer1.start()
 
 
     # 2.2) creates doors (interconnection between rooms)
 
     # main door: foyer -> outside
-    door_f = foyer.add_door(outdoor, status="open", displ=10, is_main=True)
+    door_f = foyer.add_door(outdoor, status="close", displ=10, is_main=True)
 
     # foyer -> living room
     foyer.add_door(living_room, status='open', displ=50)
 
     # toilet -> living room
-    toilet.add_door(living_room,  status='open', displ=-120)
+    toilet.add_door(living_room,  status='close', displ=-120)
 
     # studio -> living room
-    studio.add_door(living_room, status='open', displ=132)
+    studio.add_door(living_room, status='close', displ=132)
 
     # bedroom -> living room
-    bedroom.add_door(living_room, status='open', displ=-25)
+    bedroom.add_door(living_room, status='close', displ=-25)
 
     # living room -> dining
     living_room.add_door(dining, status='open', displ= 0)
