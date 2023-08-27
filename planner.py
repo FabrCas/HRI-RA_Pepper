@@ -17,8 +17,8 @@ class SolverFF():
 
         # adjust paths in case of sim launching
         if pathsFromSim:
-            self.domain_file     = os.path.join("./..",self.domain_file)
-            self.problem_file    = os.path.join("./..",self.problem_file)
+            # self.domain_file     = os.path.join("./..",self.domain_file)
+            # self.problem_file    = os.path.join("./..",self.problem_file)
             self.path2ff         = os.path.join("./..",self.path2ff)
             self.path2pddl       = os.path.join("./..",self.path2pddl)
 
@@ -123,8 +123,6 @@ class SolverFF():
             print("     " + str(arguments))
 
         
-        
-
 # output = subprocess.run(["ls -n"], shell=True, capture_output=True, text= True)
 # output = subprocess.run(["pyperplan","-H ",planner_name," ",domain_file, " ",problem_file], shell=True, capture_output=True, text= True)
 # ./Metric-FF/ff -o ./pddl/domain.pddl -f ./pddl/problem.pddl
@@ -134,40 +132,176 @@ class ParserPDDL():
     
     def __init__(self, pathsFromSim = False):
         self.path2pddl          = "./pddl"
-        self.domain_file  = "house_sim_domain.pddl"
-        self.problem_file = "house_sim_problem_template.pddl"
+        self.domain_file        = "house_sim_domain.pddl"
+        self.problem_file       = "house_sim_problem_template.pddl"
+        self.generated_file     = "parsed_problem.pddl"
+        self.firstParsing = True   # boolean flag used to understand when starting from template or starging from an already generated PDDL
         
         if pathsFromSim:
-            self.domain_file     = os.path.join("./..",self.domain_file)
-            self.problem_file    = os.path.join("./..",self.problem_file)
+            # self.domain_file     = os.path.join("./..",self.domain_file)
+            # self.problem_file    = os.path.join("./..",self.problem_file)
             self.path2pddl       = os.path.join("./..",self.path2pddl)
+
+        self.predicates = self.get_predicates()
+        self.objects = self.get_objects()
+
+        
+    def get_objects(self):
+        """
+                get name declared internally in the PDDL
+        """
+        
+        objects = {}
+        objects['room'] = "foyer living_room dining toilet studio bedroom kitchen outdoor".split(" ")
+        objects['door'] = "d_foyer_outdoor d_foyer_living  d_toilet_living d_studio_living d_bedroom_living d_living_dining d_dining_kitchen".split(" ")
+        objects['window'] = "wl_foyer  wl_toilet wl_studio wl_bedroom wl_dining wl_kitchen wr_foyer  wr_toilet wr_studio wr_bedroom wr_dining wr_kitchen".split(" ")
+        objects['item'] = "green_marker pen pencil plate_empty cup_coffee plate_oranges plate_apples orange1 orange2 orange3 apple1 apple2 smartphone red_notebook green_notebook glasses yellow_notebook cards pink_notebook".split(" ")
+        objects['furniture'] = "desk_studio pool_studio kitchenette table_kitchen bed cabinet_bedroom_l cabinet_bedroom_r tv_bedroom water tub sink cabinet_toilet tv_living sofa table_living armchair_l armchair_r table_dining".split(" ")
+        objects['what'] = [*objects['door'], *objects['window'], *objects['item'], *objects['furniture']]
+        
+        return objects 
+        
+        
+    def get_doorName(self, room1, room2):
+        room1 = room1.strip().lower()
+        room2 = room2.strip().lower()
+        
+        if (room1 in "foyer" or room2 in "foyer") and (room1 in "outdoor" or room2 in "outdoor"):
+            return "d_foyer_outdoor"  
+        elif (room1 in "foyer" or room2 in "foyer") and (room1 in "living room" or room2 in "living room"):     
+            return "d_foyer_living"
+        elif (room1 in "toilet" or room2 in "toilet") and (room1 in "living room" or room2 in "living room"):
+            return "d_toilet_living"
+        elif (room1 in "studio" or room2 in "studio") and (room1 in "living room" or room2 in "living room"):
+            return "d_studio_living"
+        elif (room1 in "bedroom" or room2 in "bedroom") and (room1 in "living room" or room2 in "living room"):
+            return "d_bedroom_living"
+        elif (room1 in "dining" or room2 in "dining") and (room1 in "living room" or room2 in "living room"):
+            return "d_living_dining"
+        elif (room1 in "dining" or room2 in "dining") and (room1 in "kitchen" or room2 in "kitchen"):
+            return "d_dining_kitchen"
+        else:
+            raise ValueError("The rooms chosen have no door!")
+        
+        
+    
+    def get_predicates(self):
+        """
+            what -> for room_element in pddl
+        """
+        predicates = {}
+        # predicates['connected']      = "(connected ?[from_room] ?r2 - room  ?d - direction)"
+        # predicates['isPositioned']   = "(isPositioned ?o - room_element ?r - room ?d - direction)"
+    
+        predicates['in']             = "(in ?what ?room)"
+        predicates['on']             = "(on ?item ?what)"
+        predicates['openDoor']       = "(openDoor ?door)"
+        predicates['openWin']        = "(openWin ?window)"
+        predicates['PepperIn']       = "(PepperIn ?room)"
+        predicates['PepperAt']       = "(PepperAt ?what)"
+        predicates['PepperHas']      = "(PepperHas ?item)"
+        predicates['freeHands']      = "(freeHands)"
+        
+        return predicates
+        
+        
+    def tasks2Predicates(self, tasks_description):
+        """
+            tasks_description is a list of task, each task is a dictionary with the following structure:
+            - type
+            - *args
+            - boolean: free hands
+            5 types of task for task description: motion, open/close, grab/place
+            
+            ff tries always to satisfies the first tasks before the other, so place the reach position and reach room as final tasks (priority problem)
+            
+        """
+        goal = "        (and "
+        freeHands_inserted = False
+        
+        # to handle single task problems
+        if type(tasks_description) is dict:
+            tasks_description = [tasks_description] 
+        
+        for task_description in tasks_description:
+            
+            if task_description['type'] == "reach_position":
+                predicate_task = self.predicates['PepperAt']
+                assert task_description['args'][0] in self.objects['what']
+                predicate_task = predicate_task.replace("?what", task_description['args'][0])
+                
+            elif task_description['type'] == "reach_room":
+                predicate_task = self.predicates['PepperIn']
+                assert task_description['args'][0] in self.objects['room']
+                predicate_task = predicate_task.replace("?room", task_description['args'][0])
+                
+            elif task_description['type'] == "open_door":
+                predicate_task = self.predicates['openDoor']
+                assert task_description['args'][0] in self.objects['door']
+                predicate_task = predicate_task.replace("?door", task_description['args'][0])
+                
+            elif task_description['type'] == "close_door":
+                predicate_task = "(not " + self.predicates['openDoor']+")"
+                assert task_description['args'][0] in self.objects['door']
+                predicate_task = predicate_task.replace("?door", task_description['args'][0])
+                
+            elif task_description['type'] == "open_window":
+                predicate_task = self.predicates['openWin']
+                assert task_description['args'][0] in self.objects['window']
+                predicate_task = predicate_task.replace("?window", task_description['args'][0])
+                
+            elif task_description['type'] == "close_window":
+                predicate_task = "(not " + self.predicates['openWin']+")"
+                assert task_description['args'][0] in self.objects['window']    
+                predicate_task = predicate_task.replace("?window", task_description['args'][0])
+                
+            elif task_description['type'] == "move_object":                     #"(on ?item ?what)"
+                predicate_task = self.predicates['on']
+                assert task_description['args'][0] in self.objects['item']
+                assert task_description['args'][1] in self.objects['what']
+                predicate_task = predicate_task.replace("?item", task_description['args'][0])
+                predicate_task = predicate_task.replace("?what", task_description['args'][1])
+                
+            # insert the freeHands one max
+            if task_description["free hands"] and not(freeHands_inserted):
+                freeHands_inserted = True
+                
+            goal += predicate_task + " "
+            
+        if freeHands_inserted:
+             goal = goal + " " + self.predicates['freeHands']
+             
+        goal +=  ")\n" 
+            
+        return goal
+        
+    
     
     def getNumber_parenthesis(self, line): 
         increment = line.count('(')
         decrement = line.count(')')
-        print(f"increment {increment}")
-        print(f"decrement {decrement}")
+        # print(f"increment {increment}")
+        # print(f"decrement {decrement}")
         return increment - decrement
     
     #TODO
-    def define_goal(self, plan_objectives):
-        goals = "(on smartphone table_kitchen)"
-        goal_line = "        (and " + goals + ")\n"
-        return goal_line
-    
-    #TODO
-    def define_problemInstance(self, init_states):
+    def define_init(self, problem_instance):
         lines_init = []
-        for init_state in init_states:
+        for init_state in problem_instance:
             pass
         return lines_init
     
-    def parse_goal(self, plan_objectives = None):
+    def parse_goal(self, tasks_description = None, verbose = False):
         # problem pddl lines
         lines = []
 
         #                               read 
-        with open(os.path.join(self.path2pddl, self.problem_file), 'r') as problem_file:
+        if self.firstParsing:
+            input_file = self.problem_file
+        else:
+            input_file = self.generated_file
+        
+        with open(os.path.join(self.path2pddl, input_file), 'r') as problem_file:
             lines = [line for line in problem_file]
         
         #                               edit
@@ -177,22 +311,22 @@ class ParserPDDL():
         for idx, line in enumerate(lines):
             res = re.match(r".*:goal.*", line)
             if res is not None:
-                print(res.group())
+                # print(res.group())
                 idx_goal_start = idx
                 counter_parenthesis = 0
                 counter_parenthesis += self.getNumber_parenthesis(line)
                 continue
             
             if counter_parenthesis != -1:
-                print(counter_parenthesis)
+                # print(counter_parenthesis)
                 counter_parenthesis += self.getNumber_parenthesis(line)
                 
             if counter_parenthesis == 0:
                 idx_goal_end = idx
                 break
         
-        print("line start goal {}".format(idx_goal_start))
-        print("line end goal {}".format(idx_goal_end))
+        if verbose: print("line start goal {}".format(idx_goal_start))
+        if verbose: print("line end goal {}".format(idx_goal_end))
         
         # 2) remove goal lines
         lines = [*lines[:idx_goal_start], *lines[idx_goal_end +1:]]
@@ -202,21 +336,27 @@ class ParserPDDL():
         line_goals = idx_goal_start+1
         
         lines.insert(idx_goal_start,    "    (:goal\n")
-        lines.insert(line_goals,        self.define_goal(plan_objectives))
+        lines.insert(line_goals,        self.tasks2Predicates(tasks_description))
         lines.insert(idx_goal_start+2,  "    )\n")
         
         
         #                               write
-        with open(os.path.join(self.path2pddl, "parsed_problem.pddl"), 'w') as problem_file:
+        with open(os.path.join(self.path2pddl, self.generated_file), 'w') as problem_file:
             for line in lines:
                 problem_file.write(line)
+                
+        if self.firstParsing: self.firstParsing = False
         
     def parse_init(self, init_instance = None):
         # problem pddl lines
         lines = []
     
         #                               read 
-        with open(os.path.join(self.path2pddl, self.problem_file), 'r') as problem_file:
+        if self.firstParsing:
+            input_file = self.problem_file
+        else:
+            input_file = self.generated_file
+        with open(os.path.join(self.path2pddl, input_file), 'r') as problem_file:
             lines = [line for line in problem_file]
         
         #                               edit
@@ -260,13 +400,16 @@ class ParserPDDL():
         lines = [*lines[:idx_init_start], *template_init ,*lines[idx_init_end+1:]]
 
         
-        
         #                               write
-        with open(os.path.join(self.path2pddl, "parsed_problem.pddl"), 'w') as problem_file:
+        with open(os.path.join(self.path2pddl, self.generated_file), 'w') as problem_file:
             for line in lines:
                 problem_file.write(line)
         
+        if self.firstParsing: self.firstParsing = False
         
+    # re-generate pddl problem file starting from template
+    def reset(self):
+        self.firstParsing = True
 
 
 
@@ -279,7 +422,19 @@ test = {"parse": 1, "solve": 0}
 
 if test['parse']:
     parser = ParserPDDL()
-    # parser.parse_goal(plan_objectives= None)
+    # t1 = {"type": "reach_position", "args": ['desk_studio'], "free hands": True}
+    # t2 = {"type": "close_door", "args": ["d_toilet_living"], "free hands": True}
+    # t3 = {"type": "open_door", "args": ["d_dining_kitchen"], "free hands": True}
+    # t4 = {"type": "close_window", "args": ["wl_studio"], "free hands": False}
+    # t5 = {"type": "open_window", "args": ["wr_studio"], "free hands": True}
+    # t6 = {"type": "move_object", "args": ["smartphone", "sofa"], "free hands": False}
+    # t7 = {"type": "reach_room", "args": ["foyer"], "free hands": False}
+    
+    # tasks_description1 = [t2, t3, t4]
+    # tasks_description2 = [t5, t6, t7]
+    # parser.parse_goal(tasks_description= tasks_description1)
+    # input("press something")
+    # parser.parse_goal(tasks_description= tasks_description2)
     parser.parse_init(init_instance = None)
 
 
