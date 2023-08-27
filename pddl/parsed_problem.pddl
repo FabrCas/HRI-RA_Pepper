@@ -136,8 +136,10 @@
         (in orange3 kitchen)
         (in apple1 kitchen)
         (in apple2 kitchen)
+        (in smartphone bedroom)
         (in red_notebook bedroom)
         (in green_notebook bedroom)
+        (in glasses toilet)
         (in yellow_notebook toilet)
         (in cards living_room)
         (in pink_notebook dining)
@@ -174,15 +176,13 @@
         (on orange3 plate_oranges)
         (on apple1 plate_apples)
         (on apple2 plate_apples)
+        (on smartphone bed)
         (on red_notebook cabinet_bedroom_l)
         (on green_notebook cabinet_bedroom_r)
+        (on glasses sink)
         (on yellow_notebook cabinet_toilet)
         (on cards table_living)
-        (in smartphone bedroom)
-        (on smartphone bed)
-        (in glasses toilet)
-        (on glasses sink)
-
+        (on pink_notebook table_dining)
         
         ;                           pepper init 
         (PepperIn foyer)
@@ -191,6 +191,6 @@
     )
     
     (:goal
-        (and )
+        (and (PepperAt desk_studio) (not (openWin wl_studio)) (openWin wr_studio)  (freeHands))
     )
 )

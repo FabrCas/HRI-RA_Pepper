@@ -29,7 +29,6 @@ def update_win_size():
     Y_WIN = 35
 
 def initialization():
-    
     # change default folder position for the path, from .EAI2  to ./EAI2/2DPathSimulator
 
     if os_selected == 'linux' and not ('2DPathSimulator' in os.getcwd()):

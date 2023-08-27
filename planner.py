@@ -205,7 +205,28 @@ class ParserPDDL():
         
         return predicates
         
-        
+    # TODO
+    def planStep2Predicates(self, plan_step):
+        action = plan_step['action'].lower().strip()
+        args = plan_step['arguments']
+        predicates = []
+        # if action == "move2":
+            
+        # elif action == "move2room":
+            
+        # elif action == "open_door":
+            
+        # elif action == "close_door":
+            
+        # elif action == "open_win":
+            
+        # elif action == "close_win":
+            
+        # elif action == "grab_object":
+            
+        # elif action == "place_object":
+        return predicates
+          
     def tasks2Predicates(self, tasks_description):
         """
             tasks_description is a list of task, each task is a dictionary with the following structure:
@@ -504,7 +525,7 @@ class ParserPDDL():
                 
         if self.firstParsing: self.firstParsing = False
         
-    def parse_init(self, init_instance = None, unknown = [], learned = []):
+    def parse_init(self, unknown = [], learned = [], previous_plan = None):    #previous_plan used to update the init by actions
         # problem pddl lines
         lines = []
     
@@ -541,6 +562,10 @@ class ParserPDDL():
         init_file = lines[idx_init_start:idx_init_end+1]
         lines_init = self.define_init(init_file, unknown_list = unknown, learned_list = learned)   # learned list of dictionaries with this structure {'object':x, 'room':x, 'furniture':x} 
         
+        # 3) update by previous plan if exists
+        if previous_plan is not None:
+            self.update_init(lines_init, previous_plan)
+        
         # 3) collect together chunks
         lines = [*lines[:idx_init_start], *lines_init ,*lines[idx_init_end+1:]]    
         #                               write
@@ -551,8 +576,14 @@ class ParserPDDL():
         if self.firstParsing: self.firstParsing = False
     
     #TODO
-    def update_init(self,plan):
+    def update_init(self,lines_init, plan):
         pass
+        for step in plan:
+            predicates = []  # self.planStep2Predicates(plan)
+            for predicate in predicates:
+                lines_init.insert(len(lines_init)-2, "        " + predicate + "\n")
+            
+    
     
     # re-generate pddl problem file starting from template (look for when you reset the environment? #TODO)
     def reset(self):
@@ -562,30 +593,37 @@ class ParserPDDL():
                                                 test section
 """
 
-test = {"parse": 1, "solve": 0}
+test = {"parse": 1, "solve": 1}
 
 if test['parse']:
     parser = ParserPDDL()
-    # t1 = {"type": "reach_position", "args": ['desk_studio'], "free hands": True}
+    
+    #                                   test goal parser
+    t1 = {"type": "reach_position", "args": ['desk_studio'], "free hands": True}
     # t2 = {"type": "close_door", "args": ["d_toilet_living"], "free hands": True}
     # t3 = {"type": "open_door", "args": ["d_dining_kitchen"], "free hands": True}
-    # t4 = {"type": "close_window", "args": ["wl_studio"], "free hands": False}
-    # t5 = {"type": "open_window", "args": ["wr_studio"], "free hands": True}
+    t4 = {"type": "close_window", "args": ["wl_studio"], "free hands": False}
+    t5 = {"type": "open_window", "args": ["wr_studio"], "free hands": True}
     # t6 = {"type": "move_object", "args": ["smartphone", "sofa"], "free hands": False}
     # t7 = {"type": "reach_room", "args": ["foyer"], "free hands": False}
     
     # tasks_description1 = [t2, t3, t4]
     # tasks_description2 = [t5, t6, t7]
+    task_description = [t1, t4, t5]
+    parser.parse_goal(tasks_description= task_description)
     # parser.parse_goal(tasks_description= tasks_description1)
     # input("press something")
     # parser.parse_goal(tasks_description= tasks_description2)
     
-    parser.parse_init(init_instance = None, unknown = ["smartphone", "glasses"], learned = [{'object':'smartphone', 'room':"bedroom", 'furniture':"bed"}, {'object':'glasses', 'room':"toilet", 'furniture':"sink"}])
+    #                                   test init parser
+    # parser.parse_init(, unknown = ["smartphone", "glasses"], learned = [{'object':'smartphone', 'room':"bedroom", 'furniture':"bed"}, {'object':'glasses', 'room':"toilet", 'furniture':"sink"}])
+    parser.parse_init()
 
 
 if test['solve']:
     solver = SolverFF()
-    plan = solver.forward(domain_file="house_sim_domain.pddl", problem_file="parsed_problem.pddl", verbose = False)
+    plan= solver.forward(domain_file="house_sim_domain.pddl", problem_file="parsed_problem.pddl", verbose = False)
+    print(plan)
     solver.print_plan(plan)
 
 
