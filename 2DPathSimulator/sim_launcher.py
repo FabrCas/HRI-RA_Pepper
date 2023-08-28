@@ -98,7 +98,12 @@ def rendering():
     # create display objects for the simulation
     env_group, extra_HUD_group, pepper = create_environment(screen, text_boxes[1])
 
-    pepper.y  += 250
+
+    # edit starting position for pepper, from the center of the foyer
+    pepper.y  -= 250
+    
+    # pepper.y -= 200
+    # pepper.x += -50
 
     # custom event raiser every x milliseconds for testing
     test_time_interval   = 2500  # [ms]
