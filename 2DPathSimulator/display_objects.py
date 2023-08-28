@@ -68,12 +68,36 @@ assets_furniture = {
     "tv_on"             : {"path": "static/assets/tv_on.png",            "is_movable": False,   "w": 500,   "h": 250}
 }
 
+
+# function used to retrieve all the display object for planning
 rooms = []
+windows = []
+doors = []
+furniture = []
+
 def get_rooms():
     """
     :return: list containing all the rooms created
     """
     return rooms
+
+def get_windows():
+    """
+    :return: list containing all the rooms created
+    """
+    return windows
+
+def get_doors():
+    """
+    :return: list containing all the rooms created
+    """
+    return doors
+
+def get_furniture():
+    """
+    :return: list containing all the rooms created
+    """
+    return furniture
 
 """
     Position attributes specification:
@@ -922,7 +946,10 @@ class Door(HouseElement):  # used to connect two rooms or a room and the outdoor
         # load sound effects
         self.sound_open = pg.mixer.Sound("static/sounds/open_door.mp3")
         self.sound_close = pg.mixer.Sound("static/sounds/close_door.mp3")
-
+        
+        
+        global doors
+        doors.append(self)
 
 
     def _transformation_image(self, image):
@@ -1157,6 +1184,9 @@ class Window(HouseElement):
         # load sound effects
         self.sound_open = pg.mixer.Sound("static/sounds/window_open.mp3")
         self.sound_close = pg.mixer.Sound("static/sounds/window_close.mp3")
+        
+        global windows
+        windows.append(self)
 
     def _transformation_image(self, image):
         # flip if right window, upscale/downscale, rotate
@@ -1405,6 +1435,9 @@ class Furniture(HouseElement):
         self.is_on = []
         self.has_on = []
         self._compute_bottom_furniture()
+        
+        global furniture
+        furniture.append(self)
 
 
     def _transformation_image(self, image):
@@ -1454,6 +1487,7 @@ class Pepper(HouseElement):
         super().__init__('Pepper', screen, group, room.x + displ_x, room.y + displ_y, width = 20, height= 20)
         self.rel_angle = 0
         self.actual_room = room
+        self.grabbed_object = None
         self.color = (255, 255, 255)
         self.p_letter = Text("P", self.screen, self.x, self.y, color=(0, 0, 0), size_font= 21)
         self.output_box = output_box
@@ -1508,6 +1542,18 @@ class Pepper(HouseElement):
         self.output_box.add_message(f"Pepper APF profile: {self.profile}")
 
     # change position methods
+    def set_Xpos(self, x = None):
+        if x is not None:
+            self.x = x
+            old_logo_center = self.logo.rect.center
+            self.logo.rect.center = (x, old_logo_center[1])
+            
+    def set_Ypos(self, y = None):
+        if y is not None:
+            self.y = y
+            old_logo_center = self.logo.rect.center
+            self.logo.rect.center = (old_logo_center[0], y)
+        
     def set_random_position(self):
         margin_from_wall = 20
         rand_increment = self.socket.random_position(self.actual_room.width, self.actual_room.height, margin_from_wall)
@@ -1765,6 +1811,29 @@ class Pepper(HouseElement):
         # set to false the changed position (if in motion will be set to True again from move function)
         if self.changed_position: self.changed_position = False # restore default False value
 
+    # grab/place method
+    
+    def grab(self, object: Furniture):
+        if not(object.is_movable):
+            print("Pepper cannot hold this object!")
+        else:
+            self.grabbed_object = object
+            self.group.remove(object)
+            print("Pepper has grabbed {}".format(object.name))
+            
+    def place(self, x_pos, y_pos):
+        if self.grabbed_object is None:
+            print("Pepper has not grabbed an object")
+        else:
+            self.grabbed_object.rect.center = (x_pos, y_pos)
+            print("Pepper is placing {}".format(self.grabbed_object.name))
+            self.group.add(self.grabbed_object)
+            self.group.remove(self)
+            self.group.remove(self.p_letter)
+
+            self.group.add(self)
+            self.group.add(self.p_letter)
+        
     # graphic methods
     def set_color(self, color):
         self.color = color
@@ -1772,6 +1841,7 @@ class Pepper(HouseElement):
     def get_logo(self, width=60, height=60):
         logo = StaticImage("static/assets/pepper.png", self.screen, self.x - width / 2, self.y - height / 2, width,
                            height)
+        logo.rect.center = (self.x ,self.y)
         self.logo = logo
         return self.logo
 

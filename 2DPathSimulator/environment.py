@@ -4,7 +4,8 @@ import math
 from random import randint
 import threading
 from display_objects import StaticImage, Rect, Text, InputTextBox, Button,\
-                            OutputTextBox, Room, Pepper, get_rooms
+                            OutputTextBox, Room, Pepper
+# from display_objects import get_rooms, get_windows, get_doors, get_furniture
 import os
 
 def create_UI(screen: Surface, verbose = True):
@@ -14,7 +15,6 @@ def create_UI(screen: Surface, verbose = True):
     print(os.getcwd())
     if not "2DPathSimulator" in os.getcwd():
         os.chdir("./2DPathSimulator")
-    
     
 
     if verbose: print("\n         [sketching the UI panel]          ")
@@ -492,7 +492,16 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
     pepper = Pepper(screen, env_group, foyer, pepper_displ_x, pepper_displ_y, output_box)
     extra_hud_group.add(pepper.get_logo())
 
+    # print(get_rooms())
+    # print(get_doors())
+    # print(get_windows())
+    # print(get_furniture())
+    
+    
     return env_group, extra_hud_group, pepper
+
+
+
 
 # ----------------------------------- test functions -------------------------------------
 def test_messages(system_box, screen):

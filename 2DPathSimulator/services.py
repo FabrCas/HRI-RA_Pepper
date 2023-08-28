@@ -16,6 +16,7 @@ class InputInterpreter(object):
         self.changed_reset          = False
         self.changed_debug          = False
         self.changed_test_clearance = False
+        self.changed_test_grab      = False
         self.changed_test_motion    = False
         self.changed_show_obstacles = False
         self.changed_show_clearance = False
@@ -51,6 +52,9 @@ class InputInterpreter(object):
         if "test_m" in message.strip().lower():   # test motion
             print("Started the motion test")
             self.changed_test_motion = True
+        if "test_g" in message.strip().lower():   # test motion
+            print("Started the grab test on smartphone")
+            self.changed_test_grab = True
         if "clearance" in message.strip().lower():   # clearance
             print("Changing the show of clearance...")
             self.changed_show_clearance = True
@@ -76,6 +80,7 @@ class InputInterpreter(object):
             'obs'       :'toggle obstacle mode',
             'test_c'    :'start the clearance test',
             'test_m'    :'start the motion test',
+            'test_g'    :'start the grab test',
             'clerance'  :'show neearest point',
             'target'    :'show target of the motion',
             'direction' :"show motion's direction",
@@ -149,6 +154,21 @@ class InputInterpreter(object):
             self.boxes[1].add_message(f"Test clearance: {test_clearance}")
 
         return test_clearance
+    
+    def toggle_test_grab(self, test_grab):
+        if self.changed_test_grab:
+
+            # change value
+            if test_grab:test_grab = False;
+            else: test_grab = True
+
+            # restore default value for input interpreter
+            self.changed_test_grab = False
+
+            # output message
+            self.boxes[1].add_message(f"Test grab: {test_grab}")
+
+        return test_grab
 
     def toggle_clearance(self, show_clearance):
         if self.changed_show_clearance:
@@ -592,6 +612,7 @@ class HouseSimulatorSocket(object):
                 self.command_list.append(command)
                 
                 # do something with the command
+
 
 """
                                                 test section

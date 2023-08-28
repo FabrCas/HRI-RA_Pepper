@@ -11,7 +11,7 @@ class SolverFF():
         
         # paths from ./EAI2
         self.domain_file  = "house_sim_domain.pddl"
-        self.problem_file = "house_sim_problem.pddl"
+        self.problem_file = "parsed_problem.pddl"
         self.path2ff      = "./Metric-FF"
         self.path2pddl    = "./pddl"
 
@@ -158,7 +158,7 @@ class ParserPDDL():
         objects['window'] = "wl_foyer  wl_toilet wl_studio wl_bedroom wl_dining wl_kitchen wr_foyer  wr_toilet wr_studio wr_bedroom wr_dining wr_kitchen".split(" ")
         objects['item'] = "green_marker pen pencil plate_empty cup_coffee plate_oranges plate_apples orange1 orange2 orange3 apple1 apple2 smartphone red_notebook green_notebook glasses yellow_notebook cards pink_notebook".split(" ")
         objects['furniture'] = "desk_studio pool_studio kitchenette table_kitchen bed cabinet_bedroom_l cabinet_bedroom_r tv_bedroom water tub sink cabinet_toilet tv_living sofa table_living armchair_l armchair_r table_dining".split(" ")
-        objects['what'] = [*objects['door'], *objects['window'], *objects['item'], *objects['furniture']]
+        objects['what'] = [*objects['door'], *objects['window'], *objects['item'], *objects['furniture'], "free_space"]
         
         return objects 
         
@@ -204,37 +204,94 @@ class ParserPDDL():
         predicates['freeHands']      = "(freeHands)"
         
         return predicates
-        
-    # TODO
+    
     def planStep2Predicates(self, plan_step):
         action = plan_step['action'].lower().strip()
         args = plan_step['arguments']
-        predicates = []
-        # if action == "move2":
+        p_add = []; p_remove = []
+        if action == "move2":
+            #     (:action move2
+            #       :parameters (?r - room ?from ?to -room_element)
+            #       :precondition (and (PepperIn ?r) (PepperAt ?from) (in ?from ?r) (in ?to ?r))
+            #       :effect (and (PepperAt ?to) (not(PepperAt ?from)))
+            #       )
+            p_add.append(f"(PepperAt {args[2].strip().lower()})")
+            p_remove.append(f"(PepperAt {args[1].strip().lower()})")
             
-        # elif action == "move2room":
+        elif action == "move2room":
+            # (:action move2room
+            #     :parameters (?from ?to - room  ?d - door ?side - direction)
+            #     :precondition (and (connected ?from ?to ?side) (isPositioned ?d ?from ?side) (PepperIn ?from) (PepperAt ?d) (openDoor ?d) (in ?d ?from)(in ?d ?to))
+            #     :effect (and (not(PepperIn ?from)) (PepperIn ?to))
+            # )
+            p_add.append(f"(PepperIn {args[1].strip().lower()})")
+            p_remove.append(f"(PepperIn {args[0].strip().lower()})")
+        elif action == "open_door":
+            # (:action open_door
+            #     :parameters (?e - door ?r -room)
+            #     :precondition (and (not(openDoor ?e)) (in ?e ?r) (freeHands) (PepperIn ?r) (PepperAt ?e))
+            #     :effect (and (openDoor ?e))
+            # )
+            p_add.append(f"(openDoor {args[0].strip().lower()})")
+        elif action == "close_door":
+            # (:action close_door
+            #     :parameters (?e - door ?r -room)
+            #     :precondition (and (openDoor ?e) (in ?e ?r) (freeHands) (PepperIn ?r) (PepperAt ?e))
+            #     :effect (and (not (openDoor ?e)))
+            # )
+            p_remove.append(f"(openDoor {args[0].strip().lower()})")
+        elif action == "open_win":
+            # (:action open_win
+            #     :parameters (?e - window ?r -room)
+            #     :precondition (and (not(openWin ?e)) (in ?e ?r) (freeHands) (PepperIn ?r) (PepperAt ?e))
+            #     :effect (and (openWin ?e))
+            # )
+            p_add.append(f"(openWin {args[0].strip().lower()})")
+        elif action == "close_win":
+            # (:action close_win
+            #     :parameters (?e - window ?r -room)
+            #     :precondition (and (openWin ?e) (in ?e ?r) (freeHands) (PepperIn ?r) (PepperAt ?e))
+            #     :effect (and (not (openWin ?e)))
+            # )
+            p_remove.append(f"(openWin {args[0].strip().lower()})")
+        elif action == "grab_object":
+            # (:action grab_object
+            #     :parameters (?i - item ?r - room ?f - room_element)
+            #     :precondition (and (in ?i ?r) (in ?f ?r) (on ?i ?f) (freeHands) (PepperAt ?f) (PepperIn ?r))
+            #     :effect (and (not(freeHands)) (not(on ?i ?f)) (not(in ?i ?r)) (PepperHas ?i)) 
+            # )
+            p_add.append(f"(PepperHas {args[0].strip().lower()})")
+            p_remove.append(f"(freeHands)")
+            p_remove.append(f"(on {args[0].strip().lower()} {args[2].strip().lower()})")
+            p_remove.append(f"(in {args[0].strip().lower()} {args[1].strip().lower()})")
+        elif action == "place_object":
+            # (:action place_object
+            #     :parameters (?i - item ?r - room ?f - room_element)
+            #     :precondition (and (in ?f ?r) (PepperHas ?i) (PepperIn ?r) (PepperAt ?f) )
+            #     :effect (and (not (PepperHas ?i)) (freeHands) (in ?i ?r) (on ?i ?f))
+            # )
+            p_add.append(f"(freeHands)\n")
+            p_add.append(f"(on {args[0].strip().lower()} {args[2].strip().lower()})")
+            p_add.append(f"(in {args[0].strip().lower()} {args[1].strip().lower()})")
+            p_remove.append(f"(PepperHas {args[0].strip().lower()})")
             
-        # elif action == "open_door":
-            
-        # elif action == "close_door":
-            
-        # elif action == "open_win":
-            
-        # elif action == "close_win":
-            
-        # elif action == "grab_object":
-            
-        # elif action == "place_object":
-        return predicates
+        return p_add, p_remove
           
     def tasks2Predicates(self, tasks_description):
         """
             tasks_description is a list of task, each task is a dictionary with the following structure:
-            - type
+            - type: reach_position, reach_room, open_door, close_door, open_window, close_window, move_object
             - *args
-            - boolean: free hands
-            5 types of task for task description: motion, open/close, grab/place
+            -   reach_position: "?what"
+            -   reach_room: "?room"
+            -   open_door: ?door"
+            -   close_door: ?door"
+            -   open_window: "?window"
+            -   close_window: "?window"
+            -   move_object: "?item", "?what"
+            -   boolean: free hands
             
+            5 types of task for task description: motion, open/close, grab/place
             ff tries always to satisfies the first tasks before the other, so place the reach position and reach room as final tasks (priority problem)
             
         """
@@ -249,38 +306,60 @@ class ParserPDDL():
             
             if task_description['type'] == "reach_position":
                 predicate_task = self.predicates['PepperAt']
-                assert task_description['args'][0] in self.objects['what']
+                try:
+                    assert task_description['args'][0] in self.objects['what']
+                except:
+                    raise ValueError("self.tasks2Predicates: problem in parsing the following task: reach_position")
                 predicate_task = predicate_task.replace("?what", task_description['args'][0])
                 
             elif task_description['type'] == "reach_room":
                 predicate_task = self.predicates['PepperIn']
-                assert task_description['args'][0] in self.objects['room']
+                try:
+                    assert task_description['args'][0] in self.objects['room']
+                except:
+                    raise ValueError("self.tasks2Predicates: problem in parsing the following task: reach_room")
                 predicate_task = predicate_task.replace("?room", task_description['args'][0])
                 
             elif task_description['type'] == "open_door":
                 predicate_task = self.predicates['openDoor']
-                assert task_description['args'][0] in self.objects['door']
+                try:
+                    assert task_description['args'][0] in self.objects['door']
+                except:
+                    raise ValueError("self.tasks2Predicates: problem in parsing the following task: open_door")
                 predicate_task = predicate_task.replace("?door", task_description['args'][0])
                 
             elif task_description['type'] == "close_door":
                 predicate_task = "(not " + self.predicates['openDoor']+")"
-                assert task_description['args'][0] in self.objects['door']
+                try:
+                    assert task_description['args'][0] in self.objects['door']
+                except:
+                    raise ValueError("self.tasks2Predicates: problem in parsing the following task: reach_room")
                 predicate_task = predicate_task.replace("?door", task_description['args'][0])
                 
             elif task_description['type'] == "open_window":
                 predicate_task = self.predicates['openWin']
-                assert task_description['args'][0] in self.objects['window']
+                try:
+                    assert task_description['args'][0] in self.objects['window']
+                except:
+                    raise ValueError("self.tasks2Predicates: problem in parsing the following task: open_window")
                 predicate_task = predicate_task.replace("?window", task_description['args'][0])
                 
             elif task_description['type'] == "close_window":
                 predicate_task = "(not " + self.predicates['openWin']+")"
-                assert task_description['args'][0] in self.objects['window']    
+                try:
+                    assert task_description['args'][0] in self.objects['window']    
+                except:
+                    raise ValueError("self.tasks2Predicates: roblem in parsing the following task: close_window")
                 predicate_task = predicate_task.replace("?window", task_description['args'][0])
                 
             elif task_description['type'] == "move_object":                     #"(on ?item ?what)"
                 predicate_task = self.predicates['on']
-                assert task_description['args'][0] in self.objects['item']
-                assert task_description['args'][1] in self.objects['what']
+                try:
+                    assert task_description['args'][0] in self.objects['item']
+                    assert task_description['args'][1] in self.objects['what']
+                except:
+                    raise ValueError("self.tasks2Predicates: problem in parsing the following task: move_object")
+                
                 predicate_task = predicate_task.replace("?item", task_description['args'][0])
                 predicate_task = predicate_task.replace("?what", task_description['args'][1])
                 
@@ -297,13 +376,9 @@ class ParserPDDL():
             
         return goal
         
-    
-    
     def getNumber_parenthesis(self, line): 
         increment = line.count('(')
         decrement = line.count(')')
-        # print(f"increment {increment}")
-        # print(f"decrement {decrement}")
         return increment - decrement
     
     
@@ -379,24 +454,17 @@ class ParserPDDL():
         
         init_items[-2] = "\n"
         
-        if not(room is None):   # in predicate
+        if not(room is None):   # in predicate    predicates['in'] = "(in ?what ?room)"
             p = self.predicates['in']
             p = p.replace("?what", object)
             p = p.replace("?room", room)
             init_items.insert(len(init_items)-2, "        " + p +"\n")
-        if not(furniture is None): #on predicate
+        if not(furniture is None): #on predicate  predicates['on'] = "(on ?item ?what)"
             p = self.predicates['on']
             p = p.replace("?item", object)
             p = p.replace("?what", furniture)
             init_items.insert(len(init_items)-2, "        " +p + "\n")
-        
-        
-           
-        
-        # predicates['in']             = "(in ?what ?room)"
-        # predicates['on']             = "(on ?item ?what)"
-        
-        
+          
     def define_init(self, starting_init, unknown_list, learned_list):
         lines_init = []
         
@@ -470,6 +538,25 @@ class ParserPDDL():
         return lines_init
     
     def parse_goal(self, tasks_description = None, verbose = False):
+        """
+            tasks_description is a list of task, each task is a dict with the following structure:
+            - "type":str -> reach_position, reach_room, open_door, close_door, open_window, close_window, move_object
+            - "args": list[str]
+            -   if reach_position: "?what"
+            -   if reach_room: "?room"
+            -   if open_door: ?door"
+            -   if close_door: ?door"
+            -   if open_window: "?window"
+            -   if close_window: "?window"
+            -   if move_object: "?item", "?what"
+            - "free hands":boolean: free hands
+            
+            5 types of task for task description: motion, open/close, grab/place
+            ff tries always to satisfies the first tasks before the other, so place the reach position and reach room as final tasks (priority problem)
+            
+        """
+        
+        
         # problem pddl lines
         lines = []
 
@@ -526,6 +613,14 @@ class ParserPDDL():
         if self.firstParsing: self.firstParsing = False
         
     def parse_init(self, unknown = [], learned = [], previous_plan = None):    #previous_plan used to update the init by actions
+        """
+            This function takes is used to parse the init section of problem file in PDDL:
+            - unknonwn: list[dict] -> dict like {'object':(str), 'room':(str), 'furniture':(str)} 
+            - learned: list[dict] -> dict like {'object':(str), 'room':(str), 'furniture':(str)} 
+            - previous_plan: list[dict] -> dict keys-values: "action":(str), "arguments":list[str]
+        """
+        
+        
         # problem pddl lines
         lines = []
     
@@ -566,7 +661,7 @@ class ParserPDDL():
         if previous_plan is not None:
             self.update_init(lines_init, previous_plan)
         
-        # 3) collect together chunks
+        # 4) collect together chunks
         lines = [*lines[:idx_init_start], *lines_init ,*lines[idx_init_end+1:]]    
         #                               write
         with open(os.path.join(self.path2pddl, self.generated_file), 'w') as problem_file:
@@ -575,16 +670,33 @@ class ParserPDDL():
         
         if self.firstParsing: self.firstParsing = False
     
-    #TODO
     def update_init(self,lines_init, plan):
-        pass
-        for step in plan:
-            predicates = []  # self.planStep2Predicates(plan)
-            for predicate in predicates:
+        for i_step, step in enumerate(plan):
+            p2insert, p2remove = self.planStep2Predicates(step)
+            
+            # remove predicates 
+            if p2remove != []:
+                to_remove_p = []
+                for idx,line in enumerate(lines_init):
+                    if (any(p in line for p in p2remove)):
+                        to_remove_p.append(idx)
+                
+                if to_remove_p == []:
+                    # print(i_step, step)
+                    # print(p2remove)
+                    raise ValueError("Error in the elimination of predicates")
+                    
+                to_remove_p.sort(reverse= True)       
+                # print(to_remove_p)
+                for idx in to_remove_p:
+                    del lines_init[idx]
+                
+            
+            # insert predicates
+            # print(p2insert)
+            for predicate in p2insert:
                 lines_init.insert(len(lines_init)-2, "        " + predicate + "\n")
             
-    
-    
     # re-generate pddl problem file starting from template (look for when you reset the environment? #TODO)
     def reset(self):
         self.firstParsing = True
@@ -593,12 +705,14 @@ class ParserPDDL():
                                                 test section
 """
 
-test = {"parse": 1, "solve": 1}
+test = {"parse": 0, "solve": 0, "update&parse":0, "solveUpdated":0, "how use":1}
+parser = ParserPDDL()
+solver = SolverFF()
+
+
 
 if test['parse']:
-    parser = ParserPDDL()
-    
-    #                                   test goal parser
+    # 1)                                   test goal parser
     t1 = {"type": "reach_position", "args": ['desk_studio'], "free hands": True}
     # t2 = {"type": "close_door", "args": ["d_toilet_living"], "free hands": True}
     # t3 = {"type": "open_door", "args": ["d_dining_kitchen"], "free hands": True}
@@ -615,15 +729,63 @@ if test['parse']:
     # input("press something")
     # parser.parse_goal(tasks_description= tasks_description2)
     
-    #                                   test init parser
+    # 2)                                   test init parser
     # parser.parse_init(, unknown = ["smartphone", "glasses"], learned = [{'object':'smartphone', 'room':"bedroom", 'furniture':"bed"}, {'object':'glasses', 'room':"toilet", 'furniture':"sink"}])
-    parser.parse_init()
+    parser.parse_init(previous_plan = None)
 
-
+plan = None
 if test['solve']:
-    solver = SolverFF()
     plan= solver.forward(domain_file="house_sim_domain.pddl", problem_file="parsed_problem.pddl", verbose = False)
-    print(plan)
+    # print(plan)
     solver.print_plan(plan)
+    
+if test["update&parse"]:
+    # for step in plan:
+    #     a,r = parser.planStep2Predicates(plan_step= step)
+    #     print("step\n",step)
+    #     print("to add\n", a)
+    #     print("to remove\n",r)
+    
+    parser.parse_init
+    t = {"type": "reach_position", "args": ['water'], "free hands": True}
+    task_description = [t]
+    parser.parse_goal(tasks_description= task_description)
+    parser.parse_init(previous_plan= plan)
 
+if test["solveUpdated"]:
+    plan= solver.forward(domain_file="house_sim_domain.pddl", problem_file="parsed_problem.pddl", verbose = False)
+    solver.print_plan(plan)
+    
+if test['how use']:
+    # simualtion of 2 tasks defined from the task_description vector
+    
+    # 1) task definition
+    t1 = {"type": "move_object", "args": ['glasses', "table_living"], "free hands": True}
+    t2 = {"type": "reach_position", "args": ['free_space'], "free hands": True}
+    t3 = {"type": "reach_room", "args": ['studio'], "free hands": True}
+    
+    t4 = {"type": "move_object", "args": ['glasses', "table_kitchen"], "free hands": True}
+    t5 = {"type": "reach_position", "args": ['sofa'], "free hands": True}
+    
+    task_description  = [t1,t2,t3]
+    task_description2 = [t4,t5]
+    
+    #2) parse for first set of tasks
+    parser.parse_goal(tasks_description= task_description)
+    parser.parse_init(previous_plan = None)
+    
+    #3) exe first set of tasks
+    plan = solver.forward()
+    solver.print_plan(plan)
+    
+    #4) parse for second set of tasks, now we have to update using the previus plan (only the previous is needed and not older ones)
+    parser.parse_goal(tasks_description= task_description2)
+    parser.parse_init(previous_plan = plan)
+    
+    #5) exe second set of tasks
+    print("\n\n")
+    plan = solver.forward()
+    solver.print_plan(plan)
+    
+    #6) and so on...
 

@@ -4,11 +4,12 @@ import os
 import gc
 import sys
 import math
+import threading
 
 # custom components
 from environment import create_UI, create_environment
 from services import InputInterpreter, HouseSimulatorSocket
-
+from display_objects import get_furniture
 
 # Definition of constants as default values
 WIDTH_WIN = 1920; HEIGHT_WIN = 1080
@@ -75,7 +76,6 @@ def debug_render(env_group, debug, show_obstacles):
             if type(el).__name__ == "Room":
                 if el.visible_boundaries: el.hide_boundaries()
 
-
 def rendering():
     
     # execution flags at beginning
@@ -89,6 +89,7 @@ def rendering():
     extra_HUD           = False
     test_clearance      = False
     test_motion         = False
+    test_grab           = False
 
 
     # initialize the pygame engine, get main display object and clock for the rendering
@@ -100,7 +101,8 @@ def rendering():
 
 
     # edit starting position for pepper, from the center of the foyer
-    pepper.y  -= 250
+    # pepper.y  -= 250
+    pepper.set_Ypos(pepper.y - 200)
     
     # pepper.y -= 200
     # pepper.x += -50
@@ -237,6 +239,7 @@ def rendering():
         show_obstacles  = input_interpreter.toggle_show_obstacles(show_obstacles)
         test_clearance  = input_interpreter.toggle_test_clearance(test_clearance)
         test_motion     = input_interpreter.toggle_test_motion(test_motion)
+        test_grab       = input_interpreter.toggle_test_grab(test_grab)
         show_clearance  = input_interpreter.toggle_clearance(show_clearance)
         show_target     = input_interpreter.toggle_target(show_target)
         show_direction  = input_interpreter.toggle_direction(show_direction)
@@ -248,11 +251,26 @@ def rendering():
         pepper.show_direction   = show_direction
         pepper.show_forces      = show_forces
 
+        if test_grab:
+            furniture = get_furniture()
+            smartphone = None
+            for elem in furniture:
+                if elem.name.lower().strip() == "smartphone":
+                    smartphone = elem
+            timer1 = threading.Timer(2, lambda: pepper.grab(smartphone))
+            timer2 = threading.Timer(6, lambda: pepper.place(pepper.x, pepper.y))
+            timer1.start()
+            timer2.start()
+            test_grab = False
+            
+        
+        
         if test_motion:
-            pepper.move2Door("west")
-            # pepper.move2Win("east", "right")
+            # pepper.move2Door("west")
+            pepper.move2Win("east", "right")
             # pepper.move2pos(pg.math.Vector2(pepper.x +40, pepper.y +180))
             test_motion = False
+            
 
 
         # handle reset
@@ -265,7 +283,7 @@ def rendering():
             # create groups from beginning
             ui_group, text_boxes = create_UI(screen)
             env_group, extra_HUD_group, pepper = create_environment(screen, text_boxes[1])
-            pepper.y += 250
+            pepper.set_Ypos(pepper.y - 200)
             # output message
             text_boxes[1].add_message("The Environment has been reset")
 
