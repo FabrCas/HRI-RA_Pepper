@@ -1,6 +1,8 @@
 import pygame as pg
 import math
 import time
+import copy
+import threading
 from random import randint
 from services import PepperMotion
 
@@ -1494,6 +1496,7 @@ class Pepper(HouseElement):
         self.grabbed_object = None
         self.color = (255, 255, 255)
         self.p_letter = Text("P", self.screen, self.x, self.y, color=(0, 0, 0), size_font= 21)
+        self.p_original_letter = Text("P", self.screen, self.x, self.y, color=(0, 0, 0), size_font= 19)  #size_font
         self.output_box = output_box
 
         # homing data
@@ -1517,15 +1520,18 @@ class Pepper(HouseElement):
         self.show_forces    = False
 
         # flags motion
-        self.changed_position   = False             # to update clearance and logo
-        self.in_motion          = False             # to handle start and end of a motion, is used in the rendering to call pepper.move()
-        self.use_apf            = True
+        self.changed_position       = False             # to update clearance and logo
+        self.changed_orientation    = False
+        self.in_motion              = False             # to handle start and end of a motion, is used in the rendering to call pepper.move()
+        self.use_apf                = True
 
         # motion variables
         self.m2pixels = lambda x: x * 100       # Each 100 pixels represent 1 meter
-        self.orientation = 270
+        self.orientation = 90
+        self.orientation_increment = 0
         self.clearance = None
         self.target = None
+        self.target_orientation = None
         self.target_name  = None
         self.range = None
         self.bearing = None
@@ -1611,10 +1617,33 @@ class Pepper(HouseElement):
     def compute_clearance(self):
         self.clearance, _ = self.socket.compute_clearance()
 
-    def move2pos(self, target: pg.math.Vector2, motion_time_interval = 100):
+    def rotate2target(self):
+        from_pos = pg.math.Vector2(self.x, self.y)
+        # print("rotate 2 target", self.target,(self.x, self.y))
+        
+        self.changed_orientation =  True
+        # Calculate the vector between the two points
+        vector =  self.target - from_pos 
+        
+        # Calculate the angle of rotation in radians
+        angle_rad = math.atan2(vector.y, vector.x)
 
+        # Convert the angle to degrees
+        angle_deg = int(math.degrees(angle_rad))
+        
+        self.target_orientation = angle_deg
+        
+        if self.target_orientation<0:
+            self.target_orientation = self.target_orientation + 360
+            
+        # print(self.target_orientation)
+        # print(self.orientation)
+
+    def move2pos(self, target: pg.math.Vector2, motion_time_interval = 100):
         self.target = target
-        self.target_name = f"Position: x = {target.x}, y = {target.y}"
+        self.target_name = f"Position: x = {int(target.x)}, y = {int(target.y)}"
+
+        self.rotate2target()
 
         if not self.use_apf : # linear motion
             # compute direction and the normalized direction vector
@@ -1642,19 +1671,25 @@ class Pepper(HouseElement):
         print(f'started the motion: {time.strftime("%H:%M:%S")}')
         print(f'target: {self.target}')
 
-    def move2Door(self, side, distance_wall = 25, motion_time_interval= 100):
+    def move2Door(self, name, distance_wall = 30, motion_time_interval= 100):
 
         # set the time interval
         self.motion_time_interval = motion_time_interval
-        self.target_name = f"{side} door"
+        self.target_name = f" door {name}"
 
-        try:
-            door = self.actual_room.doors[side]
-        except Exception as e:
-            print(e)
-            print(f"No door in the direction selected {side}")
+        
+        
+        door = None
+        doors = get_doors()
+        for elem in doors:
+            if elem.name == name:
+                door = elem
+                
+        if door is None:
+            print(f"No door of the name {name} has been found")
             return
 
+        side = door.side
         # if door.status == 'open':
         # self.target = pg.math.Vector2(door.rect_open.center)
         # else:
@@ -1681,11 +1716,12 @@ class Pepper(HouseElement):
 
         # set flags on
         if not(self.in_motion): self.in_motion = True
-
+        self.rotate2target()
+        
         print(f'started the motion: {time.strftime("%H:%M:%S")}')
         print(f'target: {self.target}')
 
-    def move2Win(self, side, window_part, distance_wall = 25, motion_time_interval=100):
+    def move2Win(self, name, distance_wall = 30, motion_time_interval=100):
         """
         :param side: cardinal coordinates for the window target
         :param window_part: "whole","left" or "right" to select the correct target
@@ -1695,50 +1731,64 @@ class Pepper(HouseElement):
 
         # set the time interval
         self.motion_time_interval = motion_time_interval
-        self.target_name = f"{side} window"
+        self.target_name = f" window {name}"
 
-        try:
-            window = self.actual_room.windows[side]
-        except Exception as e:
-            print(e)
-            print(f"No window in the direction selected {side}")
+        window = None
+        windows = get_windows()
+        for elem in windows:
+            if elem.name == name:
+                window = elem
+                
+        if window is None:
+            print(f"No door of the name {name} has been found")
             return
 
-
-        if window_part == 'left':
-            # if window[0].status == 'open':
-            rect_c = window[0].rect_open.center
-            # else:
-            #     rect_c = window[0].rect.center
-            if side == "north" or side == "south":
-                self.target = pg.math.Vector2(rect_c[0], rect_c[1] +distance_wall)
-            elif side == "south":
-                self.target = pg.math.Vector2(rect_c[0], rect_c[1] - distance_wall)
-            elif side == "east":
-                self.target = pg.math.Vector2(rect_c[0] - distance_wall, rect_c[1])
-            elif side == "west":
-                self.target = pg.math.Vector2(rect_c[0] + distance_wall, rect_c[1])
+        side = window.side
+        
+        rect_c = window.rect_open.center
+        
+        if side == "north" or side == "south":
+            self.target = pg.math.Vector2(rect_c[0], rect_c[1] +distance_wall)
+        elif side == "south":
+            self.target = pg.math.Vector2(rect_c[0], rect_c[1] - distance_wall)
+        elif side == "east":
+            self.target = pg.math.Vector2(rect_c[0] - distance_wall, rect_c[1])
+        elif side == "west":
+            self.target = pg.math.Vector2(rect_c[0] + distance_wall, rect_c[1])
 
 
-        elif window_part == 'right':
-            # if window[0].status == 'open':
-            rect_c = window[1].rect_open.center
-            # else:
-            #     rect_c = window[0].rect.center
-            if side == "north" or side == "south":
-                self.target = pg.math.Vector2(rect_c[0], rect_c[1] +distance_wall)
-            elif side == "south":
-                self.target = pg.math.Vector2(rect_c[0], rect_c[1] - distance_wall)
-            elif side == "east":
-                self.target = pg.math.Vector2(rect_c[0] - distance_wall, rect_c[1])
-            elif side == "west":
-                self.target = pg.math.Vector2(rect_c[0] + distance_wall, rect_c[1])
+        # --------- old version that include positioning to left win, right win or in the middle of them
 
-        elif window_part == "whole":
-            if side == "north" or side == "south":
-                self.target = pg.math.Vector2((window[0].rect_open.center[0] + window[1].rect_open.center[0])/2, (window[0].rect_open.center[1]) - distance_wall)
-            elif side == "east" or side == "west":
-                self.target = pg.math.Vector2((window[0].rect_open.center[0]) - distance_wall,(window[0].rect_open.center[1] + window[1].rect_open.center[1])/2)
+        # if window_part == 'left':
+        #     rect_c = window[0].rect_open.center
+
+        #     if side == "north" or side == "south":
+        #         self.target = pg.math.Vector2(rect_c[0], rect_c[1] +distance_wall)
+        #     elif side == "south":
+        #         self.target = pg.math.Vector2(rect_c[0], rect_c[1] - distance_wall)
+        #     elif side == "east":
+        #         self.target = pg.math.Vector2(rect_c[0] - distance_wall, rect_c[1])
+        #     elif side == "west":
+        #         self.target = pg.math.Vector2(rect_c[0] + distance_wall, rect_c[1])
+
+
+        # elif window_part == 'right':
+        #     rect_c = window[1].rect_open.center
+
+        #     if side == "north" or side == "south":
+        #         self.target = pg.math.Vector2(rect_c[0], rect_c[1] +distance_wall)
+        #     elif side == "south":
+        #         self.target = pg.math.Vector2(rect_c[0], rect_c[1] - distance_wall)
+        #     elif side == "east":
+        #         self.target = pg.math.Vector2(rect_c[0] - distance_wall, rect_c[1])
+        #     elif side == "west":
+        #         self.target = pg.math.Vector2(rect_c[0] + distance_wall, rect_c[1])
+
+        # elif window_part == "whole":
+        #     if side == "north" or side == "south":
+        #         self.target = pg.math.Vector2((window[0].rect_open.center[0] + window[1].rect_open.center[0])/2, (window[0].rect_open.center[1]) - distance_wall)
+        #     elif side == "east" or side == "west":
+        #         self.target = pg.math.Vector2((window[0].rect_open.center[0]) - distance_wall,(window[0].rect_open.center[1] + window[1].rect_open.center[1])/2)
 
         # apf method
 
@@ -1752,17 +1802,24 @@ class Pepper(HouseElement):
 
         # set flags on
         if not(self.in_motion): self.in_motion = True
-
+        self.rotate2target()
+        
         print(f'started the motion: {time.strftime("%H:%M:%S")}')
         print(f'target: {self.target}')
 
     def reset_motion_variables(self):
         self.in_motion = False
         self.target = None
+        self.target_orientation = None
+        self.orientation_increment = 0
         self.target_name = None
         self.clearance = None
         self.direction = None
         self.direction_norm = None
+
+    def toggle_inMotion(self):
+        if self.in_motion: self.in_motion = False
+        else: self.in_motion = True
 
     def move(self, verbose = False):
         # do motion
@@ -1807,6 +1864,45 @@ class Pepper(HouseElement):
             self.logo.rect.x = self.x - width_logo/2
             self.logo.rect.y = self.y - height_logo/2
 
+        if self.changed_orientation:
+            try:
+                orientation = self.orientation % 360
+                target = self.target_orientation % 360
+
+                    # Calculate the absolute difference between the angles
+                diff = target-orientation
+                
+                if diff >= 0: sign = 1
+                else: sign = -1
+
+                # Choose the smaller orientation gap
+                if abs(diff) > 360 - abs(diff):
+                    sign = sign*-1
+
+                orientation_gap = min(abs(diff), 360 - abs(diff))
+                orientation_gap = orientation_gap * sign
+                
+                # diff = self.orientation - self.target_orientation
+            except:
+                self.changed_orientation = False
+                return
+            
+            if orientation_gap == 0:
+                # print("orientation reached")
+                self.changed_orientation = False
+                
+            if orientation_gap > 0:
+                # print(f"rotating ccw {self.orientation}")
+                self.orientation_increment =  1
+                self.orientation += 1
+            else:
+                # print(f"rotating cw {self.orientation}")
+                self.orientation_increment = 1
+                self.orientation -= 1
+                
+            self.orientation = self.orientation % 360
+             
+            
         # compute new clarance if pepper is moving
         if self.show_clearance:
             if (self.clearance is None) or self.changed_position:
@@ -1815,16 +1911,28 @@ class Pepper(HouseElement):
         # set to false the changed position (if in motion will be set to True again from move function)
         if self.changed_position: self.changed_position = False # restore default False value
 
-    # grab/place method
-    
-    def grab(self, object: Furniture):
-        if not(object.is_movable):
+                                                                # grab/place method
+                                                                
+    def grab(self, name_object: str):
+        
+        furniture = get_furniture()
+        item = None
+        for elem in furniture:
+            if elem.name.lower().strip() == name_object:
+                item = elem
+        
+        
+        if not(item.is_movable):
             print("Pepper cannot hold this object!")
         else:
-            self.grabbed_object = object
-            self.group.remove(object)
-            print("Pepper has grabbed {}".format(object.name))
+            self.grabbed_object = item
+            self.group.remove(item)
+            print("Pepper has grabbed {}".format(item.name))
             
+        self.in_motion = True
+        timer = threading.Timer(1, lambda: self.toggle_inMotion())
+        timer.start()
+           
     def place(self, x_pos, y_pos):
         if self.grabbed_object is None:
             print("Pepper has not grabbed an object")
@@ -1837,9 +1945,13 @@ class Pepper(HouseElement):
 
             self.group.add(self)
             self.group.add(self.p_letter)
-  
-    # grab/place method
-  
+
+        self.in_motion = True
+        timer = threading.Timer(1, lambda: self.toggle_inMotion())
+        timer.start()
+
+                                                                # open/close method
+                                                                
     def openDoor(self, door_name):   # door name of the type "d_$room1_$room2"
         found = False
         doors = get_doors()
@@ -1850,7 +1962,6 @@ class Pepper(HouseElement):
         if not found:
             print(f"{door_name} is not present in the room where pepper is placed ({self.actual_room.name})")    
         
-    
     def closeDoor(self, door_name):
         found = False
         doors = get_doors()
@@ -1870,8 +1981,7 @@ class Pepper(HouseElement):
                     found = True
         if not found:
             print(f"{win_name} is not present in the room where pepper is placed ({self.actual_room.name})")    
-        
-    
+          
     def closeWin(self, win_name):
         found = False
         windows = get_windows()
@@ -1881,9 +1991,6 @@ class Pepper(HouseElement):
                 found = True
         if not found:
             print(f"{win_name} is not present in the room where pepper is placed ({self.actual_room.name})") 
-        
-        
-        
         
     # graphic methods
     def set_color(self, color):
@@ -1895,14 +2002,14 @@ class Pepper(HouseElement):
         logo.rect.center = (self.x ,self.y)
         self.logo = logo
         return self.logo
-
+    
     def draw(self, direction_normalized = True):
 
         # draw a circle to track the position of pepper
         pg.draw.circle(self.screen, color=(0, 0, 0), center=(self.x, self.y), radius=13)  # thick circle
         pg.draw.circle(self.screen, color=self.color, center=(self.x, self.y), radius=10)
         self.p_letter.center_to(self.x, self.y)
-
+        
         if (self.show_clearance and not(self.clearance is None)):
             pg.draw.circle(self.screen, color=(255, 0, 0), center=(self.clearance.x, self.clearance.y), radius=5)
 

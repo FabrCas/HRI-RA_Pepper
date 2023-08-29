@@ -485,7 +485,7 @@ class PepperMotion(object):
             # angle_entrance = pg.math.Vector2(1,0).angle_to(f_a)
             angle_entrance = f_a.angle_to(pg.math.Vector2(1, 0))
 
-            print("angle entrance {}".format(angle_entrance))
+            # print("angle entrance {}".format(angle_entrance))
 
             # estimate the vortex force verse
             if angle_entrance >= 0 and angle_entrance <= 90:

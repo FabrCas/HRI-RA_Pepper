@@ -9,7 +9,7 @@ import threading
 # custom components
 from environment import create_UI, create_environment
 from services import InputInterpreter, HouseSimulatorSocket
-from display_objects import get_furniture
+# from display_objects import get_furniture
 
 # Definition of constants as default values
 WIDTH_WIN = 1920; HEIGHT_WIN = 1080
@@ -88,7 +88,7 @@ def rendering():
     show_forces         = True   # show forces from APF method
     extra_HUD           = False
     test_clearance      = False
-    test_motion         = False
+    test_motion         = True # False 
     test_grab           = False
     test_oc             = False
 
@@ -254,12 +254,7 @@ def rendering():
         pepper.show_forces      = show_forces
 
         if test_grab:
-            furniture = get_furniture()
-            smartphone = None
-            for elem in furniture:
-                if elem.name.lower().strip() == "smartphone":
-                    smartphone = elem
-            timer1 = threading.Timer(2, lambda: pepper.grab(smartphone))
+            timer1 = threading.Timer(2, lambda: pepper.grab("smartphone"))
             timer2 = threading.Timer(6, lambda: pepper.place(pepper.x, pepper.y))
             timer1.start()
             timer2.start()
@@ -270,7 +265,7 @@ def rendering():
             doors  = pepper.actual_room.doors
             # windows = pepper.actual_room.windows
             print(doors)
-            # print(windows)
+
             
             door_name = "d_foyer_outdoor"
             win_namel = "wl_foyer"
@@ -291,22 +286,55 @@ def rendering():
             timer4.start()
             timer5.start()
             timer6.start()
-
-            
-            
-            
             test_oc = False
             
-            
-        
         if test_motion:
+            type_test = "mix"  # types: "free", "door" "win", "mix"
             # pepper.move2Door("west")
-            pepper.move2Win("east", "right")
+            # pepper.move2Win("east", "right")
             # pepper.move2pos(pg.math.Vector2(pepper.x +40, pepper.y +180))
+            
+            if type_test == "free":
+                pos = pg.math.Vector2(pepper.x + 50, pepper.y -100)
+                pepper.move2pos(pos)
+            
+            if type_test == "door":
+                name_door = "d_foyer_living"
+                pepper.move2Door(name_door)
+            
+            if type_test == "win":
+                name_win = "wr_foyer"
+                pepper.move2Win(name_win)
+            
+            if type_test == "mix":
+                tasks = ["door", "win", "free"]
+
+                
+                def mix_task():
+                    while True:
+                        if not(pepper.in_motion):
+                            if tasks == []: break
+                            
+                            if tasks[0] == "free":
+                                pos = pg.math.Vector2(pepper.x - 50, pepper.y + 100)
+                                pepper.move2pos(pos)
+                                tasks.pop(0)
+                            elif tasks[0] == "door":
+                                name_door = "d_foyer_living"
+                                pepper.move2Door(name_door)
+                                tasks.pop(0)
+                            elif tasks[0] == "win":
+                                name_win = "wl_foyer"
+                                pepper.move2Win(name_win)
+                                tasks.pop(0)
+                                
+                listener_thread = threading.Thread(target = mix_task)
+                listener_thread.daemon = False
+                listener_thread.start()
+                        
+
             test_motion = False
             
-
-
         # handle reset
         if input_interpreter.changed_reset:   # the reset is better to be handled directly in the main loop
 
