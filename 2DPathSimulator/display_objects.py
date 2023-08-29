@@ -639,10 +639,9 @@ class Room(HouseElement):
 
         # list of elements
         self.bounds     = {}    # k: (str) side             v: list of tuple with x and y vector values for each segment
-        self.windows    = {}    # k: (str) side             v: tuple for left window and right window
-        self.doors      = {}    # k: (str) side             v: door display object
-        self.furniture  = {}    # k: tuple: ((str) name_furniture, (str) type_furniture)
-                                # v: furniture display object
+        self.windows    = {}    # k: (str) name             v: TUPLE for left window and right window
+        self.doors      = {}    # k: (str) name             v: door display object
+        self.furniture  = {}    # k: (str) name             v: furniture display object
 
         # add in the list of element for rendering
         self.group.add(self)
@@ -722,9 +721,10 @@ class Room(HouseElement):
         self.visible_boundaries = False
 
     # def add_door(self, room: HouseElement):   #
-    def add_door(self, other_room: HouseElement, status='close', displ = 0, is_main = False):
+    def add_door(self, name:str, other_room: HouseElement, status='close', displ = 0, is_main = False):
         """
         function that insert doors in the room. The door connects two rooms (edge graph like)
+        :name -> string used for the name of the door, of the type d_$name
         :param other_room -> the adjacent room which is connected through the door
         :param status -> open or close
         :param is_main -> boolean variable to change asset for the frontal door
@@ -811,15 +811,18 @@ class Room(HouseElement):
             raise ValueError(f"No valid position for the adjacent room")
 
 
-        door = Door(self.name + "_" + side + "_" + str(displacement) + "_door", self.screen,
-                    x_door, y_door, angle_door, displacement, door_width, side, status, self,
+        # door = Door(self.name + "_" + side + "_" + str(displacement) + "_door", self.screen,
+        #             x_door, y_door, angle_door, displacement, door_width, side, status, self,
+        #             other_room, self.group, is_main)
+        
+        door = Door(name, self.screen,x_door, y_door, angle_door, displacement, door_width, side, status, self,
                     other_room, self.group, is_main)
 
         # add door object to the environment group
         self.group.add(door)
 
         # add door in the list of doors for the rooms
-        self.doors[side] = door
+        self.doors[name] = door
 
         # i do the same for the adjacent room, using the opposite cardinal direction
         if side == 'north':
@@ -845,8 +848,9 @@ class Room(HouseElement):
 
         return door
 
-    def add_window(self, side: str, displacement: int, status='close'):
+    def add_window(self, name:str, side: str, displacement: int, status='close'):
         """
+        :name -> string used for the name of left and right window, left: wl_ + name, right: wr_ + name
         :param side -> north, west, south, east
         :param status -> open or close
         :param displacement -> pixel distance from the reference corner, used to place the window
@@ -872,10 +876,10 @@ class Room(HouseElement):
 
         # left window with convention of being oriented downward (grip on the down side)
 
-        window_l = Window(self.name + "_" + "left" + "_" + side + "_" + str(displacement) + "_window",
+        window_l = Window("wl_" + name,
                         self.screen, x_win, y_win, angle_win, displacement, side, True, status, self, self.group)
 
-        window_r = Window(self.name + "_" + "right" + "_" + side + "_" + str(displacement) + "_window",
+        window_r = Window("wr_" + name,
                         self.screen, x_win, y_win, angle_win, displacement, side, False, status, self, self.group)
 
         # add window left and right in the group
@@ -883,16 +887,16 @@ class Room(HouseElement):
         self.group.add(window_r)
 
         # add both windows as a tuple in the list of windows for the Room
-        self.windows[side] = (window_l,window_r)
+        self.windows[name] = (window_l,window_r)
 
         return window_l, window_r
 
-    def add_furniture(self, name, type_forniture, x, y, width, height, rotation, flip_x=False, flip_y=False):
+    def add_furniture(self, name:str, type_forniture, x, y, width, height, rotation, flip_x=False, flip_y=False):
 
         house_component = Furniture(name, self.screen, self.group, type_forniture, x, y,\
                                     width, height, rotation, self, flip_x, flip_y)
 
-        self.furniture[(name, type_forniture)] = house_component
+        self.furniture[name] = house_component
         self.group.add(house_component)
 
     def draw(self, width_line = 5):
@@ -1833,6 +1837,53 @@ class Pepper(HouseElement):
 
             self.group.add(self)
             self.group.add(self.p_letter)
+  
+    # grab/place method
+  
+    def openDoor(self, door_name):   # door name of the type "d_$room1_$room2"
+        found = False
+        doors = get_doors()
+        for door in doors:
+            if door.name == door_name:
+                door.open()
+                found = True
+        if not found:
+            print(f"{door_name} is not present in the room where pepper is placed ({self.actual_room.name})")    
+        
+    
+    def closeDoor(self, door_name):
+        found = False
+        doors = get_doors()
+        for door in doors:
+            if door.name == door_name:
+                door.close()
+                found = True
+        if not found:
+            print(f"{door_name} is not present in the room where pepper is placed ({self.actual_room.name})")      
+        
+    def openWin(self, win_name):    # window name of the type "wl_$room" or "wr_$room", respectively for left and right windows
+        found = False
+        windows = get_windows()
+        for window in windows:
+                if window.name == win_name:
+                    window.open()
+                    found = True
+        if not found:
+            print(f"{win_name} is not present in the room where pepper is placed ({self.actual_room.name})")    
+        
+    
+    def closeWin(self, win_name):
+        found = False
+        windows = get_windows()
+        for window in windows:
+            if window.name == win_name:
+                window.close()
+                found = True
+        if not found:
+            print(f"{win_name} is not present in the room where pepper is placed ({self.actual_room.name})") 
+        
+        
+        
         
     # graphic methods
     def set_color(self, color):

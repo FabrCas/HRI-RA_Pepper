@@ -18,6 +18,7 @@ class InputInterpreter(object):
         self.changed_test_clearance = False
         self.changed_test_grab      = False
         self.changed_test_motion    = False
+        self.changed_test_open_close    = False
         self.changed_show_obstacles = False
         self.changed_show_clearance = False
         self.changed_show_direction = False
@@ -55,6 +56,9 @@ class InputInterpreter(object):
         if "test_g" in message.strip().lower():   # test motion
             print("Started the grab test on smartphone")
             self.changed_test_grab = True
+        if "test_o" in message.strip().lower():   # test motion
+            print("Started the open/close test on door and windows")
+            self.changed_test_open_close = True
         if "clearance" in message.strip().lower():   # clearance
             print("Changing the show of clearance...")
             self.changed_show_clearance = True
@@ -81,6 +85,7 @@ class InputInterpreter(object):
             'test_c'    :'start the clearance test',
             'test_m'    :'start the motion test',
             'test_g'    :'start the grab test',
+            'test_o'    :'start the open/close test',
             'clerance'  :'show neearest point',
             'target'    :'show target of the motion',
             'direction' :"show motion's direction",
@@ -169,6 +174,21 @@ class InputInterpreter(object):
             self.boxes[1].add_message(f"Test grab: {test_grab}")
 
         return test_grab
+    
+    def toggle_test_open_close(self, test_oc):
+        if self.changed_test_open_close:
+
+            # change value
+            if test_oc:test_oc = False;
+            else: test_oc = True
+
+            # restore default value for input interpreter
+            self.changed_test_open_close = False
+
+            # output message
+            self.boxes[1].add_message(f"Test open/close: {test_oc}")
+
+        return test_oc
 
     def toggle_clearance(self, show_clearance):
         if self.changed_show_clearance:

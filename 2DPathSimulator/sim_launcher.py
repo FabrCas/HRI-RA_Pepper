@@ -90,6 +90,7 @@ def rendering():
     test_clearance      = False
     test_motion         = False
     test_grab           = False
+    test_oc             = False
 
 
     # initialize the pygame engine, get main display object and clock for the rendering
@@ -240,6 +241,7 @@ def rendering():
         test_clearance  = input_interpreter.toggle_test_clearance(test_clearance)
         test_motion     = input_interpreter.toggle_test_motion(test_motion)
         test_grab       = input_interpreter.toggle_test_grab(test_grab)
+        test_oc         = input_interpreter.toggle_test_open_close(test_oc)
         show_clearance  = input_interpreter.toggle_clearance(show_clearance)
         show_target     = input_interpreter.toggle_target(show_target)
         show_direction  = input_interpreter.toggle_direction(show_direction)
@@ -263,7 +265,39 @@ def rendering():
             timer2.start()
             test_grab = False
             
-        
+        if test_oc:
+            # take doors and windows in the room where pepper is located
+            doors  = pepper.actual_room.doors
+            # windows = pepper.actual_room.windows
+            print(doors)
+            # print(windows)
+            
+            door_name = "d_foyer_outdoor"
+            win_namel = "wl_foyer"
+            win_namer = "wr_foyer"
+            
+            # define timers
+            timer1 = threading.Timer(1, lambda: pepper.openDoor(door_name))
+            timer2 = threading.Timer(4, lambda: pepper.closeDoor(door_name))
+            timer3 = threading.Timer(0.5, lambda: pepper.openWin(win_namel))
+            timer4 = threading.Timer(1, lambda: pepper.openWin(win_namer))
+            timer5 = threading.Timer(1.5, lambda: pepper.closeWin(win_namel))
+            timer6 = threading.Timer(2, lambda: pepper.closeWin(win_namer))
+            
+            # start timers 
+            timer1.start()
+            timer2.start()
+            timer3.start()
+            timer4.start()
+            timer5.start()
+            timer6.start()
+
+            
+            
+            
+            test_oc = False
+            
+            
         
         if test_motion:
             # pepper.move2Door("west")

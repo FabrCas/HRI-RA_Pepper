@@ -127,7 +127,7 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
                    height= outdoor_h, color= (150,150,150))
     env_group.add(outdoor_edge)
 
-    outdoor = Room(name='Outdoor', screen= screen, x = outdoor_x,\
+    outdoor = Room(name='outdoor', screen= screen, x = outdoor_x,\
                    y=outdoor_y, width=outdoor_w, height= outdoor_h,\
                    env_group=env_group, tile_type='grey')  # rooms are defined using the top center coordinates
 
@@ -150,10 +150,10 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
 
     # -- studio
     studio_w = 350; studio_h = 350
-    studio = Room(name='Studio', screen= screen, x=margin + (studio_w/2), y= margin + (studio_h/2),\
+    studio = Room(name='studio', screen= screen, x=margin + (studio_w/2), y= margin + (studio_h/2),\
                   width=studio_w, height=studio_h, env_group= env_group, tile_type='parquet')
     extra_hud_group.add(studio.get_display_name(side='top'))
-    win = studio.add_window("north", displacement= studio_w/2, status='close')
+    win = studio.add_window("studio","north", displacement= studio_w/2, status='close')
     
     # timer1 = threading.Timer(1, lambda: win[0].open())
     # timer2 = threading.Timer(1, lambda: win[1].open())
@@ -162,51 +162,51 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
 
     # -- toilet
     toilet_w= 360; toilet_h= 200
-    toilet = Room(name="Toilet", screen= screen, x= margin + studio_w + wall_size+ toilet_w/2,\
+    toilet = Room(name="toilet", screen= screen, x= margin + studio_w + wall_size+ toilet_w/2,\
                         y= margin + toilet_h/2, width= toilet_w, height=toilet_h,\
                         env_group= env_group, tile_type='rhombus')
     extra_hud_group.add(toilet.get_display_name(side='top', color=(0,0,0)))
-    toilet.add_window("north", displacement= toilet_w/2, status= 'open')
+    toilet.add_window("toilet","north", displacement= toilet_w/2, status= 'open')
 
     # -- Foyer
     foyer_w = wall_up.width - wall_size*4 - studio_w - toilet_w; foyer_h= wall_up.height -2* wall_size
-    foyer = Room(name="Foyer", screen= screen, x= toilet.x + toilet_w/2 + wall_size + foyer_w/2,\
+    foyer = Room(name="foyer", screen= screen, x= toilet.x + toilet_w/2 + wall_size + foyer_w/2,\
                         y = wall_up.y + foyer_h/2 + wall_size , width= foyer_w,
                         height= foyer_h, env_group= env_group, tile_type='white')
     extra_hud_group.add(foyer.get_display_name(side='top', color=(0, 0, 0)))
-    win = foyer.add_window("east", displacement=300, status='close')
+    win = foyer.add_window("foyer","east", displacement=300, status='close')
 
     # -- Living Room
     living_room_w = toilet_w; living_room_h = wall_up.height + wall_down.height - toilet_h -4* wall_size - 300
-    living_room = Room(name="Living Room", screen= screen, x= toilet.x,\
+    living_room = Room(name="living_room", screen= screen, x= toilet.x,\
                         y = toilet.y + toilet_h/2 + wall_size + living_room_h/2 , width= living_room_w,
                         height= living_room_h, env_group= env_group, tile_type='parquet_strips')
     extra_hud_group.add(living_room.get_display_name(side='bottom', color=(255, 255, 255)))
 
     # -- Dining
     dining_w = toilet_w; dining_h = 300
-    dining = Room(name="Dining", screen= screen, x= toilet.x,\
+    dining = Room(name="dining", screen= screen, x= toilet.x,\
                         y = living_room.y + living_room_h/2 + wall_size + dining_h/2 , width= dining_w,
                         height= dining_h, env_group= env_group, tile_type='marble')
     extra_hud_group.add(dining.get_display_name(side='top', color=(0, 0, 0)))
-    dining.add_window("east", displacement=dining_h/2, status='open')
+    dining.add_window("dining","east", displacement=dining_h/2, status='open')
 
 
     # -- Bedroom
     bedroom_w = studio_w; bedroom_h = 300
-    bedroom = Room(name="Bedroom", screen= screen, x= studio.x,\
+    bedroom = Room(name="bedroom", screen= screen, x= studio.x,\
                         y = studio.y + studio_h/2 + wall_size + bedroom_h/2 , width= bedroom_w,
                         height= bedroom_h, env_group= env_group, tile_type='black_marble')
     extra_hud_group.add(bedroom.get_display_name(side='bottom', color=(255, 255, 255)))
-    win = bedroom.add_window("west", displacement=bedroom_h/2, status='close')
+    win = bedroom.add_window("bedroom","west", displacement=bedroom_h/2, status='close')
 
     # -- Kitchen
     kitchen_w = studio_w; kitchen_h = wall_up.height + wall_down.height - studio_h - wall_size*4 - bedroom_h
-    kitchen = Room(name="Kitchen", screen= screen, x= studio.x,\
+    kitchen = Room(name="kitchen", screen= screen, x= studio.x,\
                         y = bedroom.y + bedroom_h/2 + wall_size + kitchen_h/2, width= kitchen_w,
                         height= kitchen_h, env_group= env_group, tile_type='ceramic')
     extra_hud_group.add(kitchen.get_display_name(side='bottom', color=(0, 0, 0)))
-    win = kitchen.add_window("south", displacement= math.ceil(kitchen_w * 1/4), status='close')
+    win = kitchen.add_window("kitchen","south", displacement= math.ceil(kitchen_w * 1/4), status='close')
 
     # timer1 = threading.Timer(1, lambda: win[0].close())
     # timer1.start()
@@ -215,25 +215,25 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
     # 2.2) creates doors (interconnection between rooms)
 
     # main door: foyer -> outside
-    door_f = foyer.add_door(outdoor, status="close", displ=10, is_main=True)
+    door_f = foyer.add_door("d_foyer_outdoor",outdoor, status="close", displ=10, is_main=True)
 
     # foyer -> living room
-    foyer.add_door(living_room, status='open', displ=50)
+    foyer.add_door("d_foyer_living",living_room, status='open', displ=50)
 
     # toilet -> living room
-    toilet.add_door(living_room,  status='close', displ=-120)
+    toilet.add_door("d_toilet_living",living_room,  status='close', displ=-120)
 
     # studio -> living room
-    studio.add_door(living_room, status='close', displ=132)
+    studio.add_door("d_studio_living",living_room, status='close', displ=132)
 
     # bedroom -> living room
-    bedroom.add_door(living_room, status='close', displ=-25)
+    bedroom.add_door("d_bedroom_living",living_room, status='close', displ=-25)
 
     # living room -> dining
-    living_room.add_door(dining, status='open', displ= 0)
+    living_room.add_door("d_living_dining",dining, status='open', displ= 0)
 
     # dining -> kitchen
-    door_d = dining.add_door(kitchen, status='close')
+    door_d = dining.add_door("d_dining_kitchen",kitchen, status='close')
 
     # timer1 = threading.Timer(1, lambda: door_f.close())
     # timer2 = threading.Timer(1, lambda: door_d.open())
@@ -244,7 +244,7 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
 
     #  -- studio
     desk_studio_w = math.ceil(studio_w /3) + 50 ; desk_studio_h = math.ceil(studio_h /4)
-    studio.add_furniture("studio desk", "studio_table",x=math.ceil(studio.x - studio.width/2 + desk_studio_w/2),\
+    studio.add_furniture("desk_studio", "studio_table",x=math.ceil(studio.x - studio.width/2 + desk_studio_w/2),\
                          y=math.ceil(studio.y + studio.height/2 - desk_studio_h/2 - 20), width=desk_studio_w,\
                          height=desk_studio_h, rotation= 180)
 
@@ -254,7 +254,7 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
                          height=chair_studio_h, rotation= 180)
 
     pool_studio_w = 150; pool_studio_h = 150
-    studio.add_furniture("studio pool", "pool",x=math.ceil(studio.x - studio.width/2 + pool_studio_w/2 * 3/5) + 50,\
+    studio.add_furniture("pool_studio", "pool",x=math.ceil(studio.x - studio.width/2 + pool_studio_w/2 * 3/5) + 50,\
                          y=studio.y -40, width=pool_studio_w,\
                          height=pool_studio_h, rotation= 0)
 
@@ -270,12 +270,12 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
 
     # -- kitchen
     kitchen_furniture_w = kitchen_h; kitchen_furniture_h = math.ceil(kitchen_w/3)
-    kitchen.add_furniture("kitchen furniture", "kitchen",x= kitchen.x - math.ceil(kitchen_w/2) + math.ceil(kitchen_furniture_h/2),\
+    kitchen.add_furniture("kitchenette", "kitchen",x= kitchen.x - math.ceil(kitchen_w/2) + math.ceil(kitchen_furniture_h/2),\
                          y= kitchen.y, width=kitchen_furniture_w,\
                          height= kitchen_furniture_h, rotation= -90)
 
     kitchen_big_table_w = 120; kitchen_big_table_h = 120
-    kitchen.add_furniture("kitchen big table", "big_table",x= kitchen.x + 50,\
+    kitchen.add_furniture("table_kitchen", "big_table",x= kitchen.x + 50,\
                          y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_big_table_h/2 * 3/5), width=kitchen_big_table_w,\
                          height= kitchen_big_table_h, rotation=0)
 
@@ -294,16 +294,16 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
                          height= bed_h, rotation= 0)
 
     bedroom_tv_w = 100; bedroom_tv_h = 100;
-    bedroom.add_furniture("bedroom tv", "tv_off", x= bedroom.x,\
+    bedroom.add_furniture("tv_bedroom", "tv_off", x= bedroom.x,\
                          y=math.ceil(bedroom.y + bedroom_h/2 - bedroom_tv_h/2 * 2/5),\
                          width=bedroom_tv_w, height=bedroom_tv_h, rotation=180)
 
     bedroom_cabinet_w = 80; bedroom_cabinet_h = 80
-    bedroom.add_furniture("bedroom cabinet dx", "cabinet", x=math.ceil(bedroom.x + bedroom_w/2 - bedroom_cabinet_w/2),\
+    bedroom.add_furniture("cabinet_bedroom_l", "cabinet", x=math.ceil(bedroom.x + bedroom_w/2 - bedroom_cabinet_w/2),\
                          y= math.ceil(bedroom.y + bedroom_h/2 - (bedroom_cabinet_h/2 * 3/5)),\
                          width=bedroom_cabinet_w, height= bedroom_cabinet_h, rotation=180)
 
-    bedroom.add_furniture("bedroom cabinet sx", "cabinet", x=math.ceil(bedroom.x - bedroom_w/2 + bedroom_cabinet_w/2),\
+    bedroom.add_furniture("cabinet_bedroom_r", "cabinet", x=math.ceil(bedroom.x - bedroom_w/2 + bedroom_cabinet_w/2),\
                          y= math.ceil(bedroom.y + bedroom_h/2 - (bedroom_cabinet_h/2 * 3/5)),\
                          width=bedroom_cabinet_w, height= bedroom_cabinet_h, rotation=180, flip_x =True)
 
@@ -326,7 +326,7 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
                          width=toilet_sink_w, height= toilet_sink_h, rotation=180)
 
     toilet_cabinet_w = 80; toilet_cabinet_h = 80
-    toilet.add_furniture("toilet cabinet", "cabinet", x=toilet.x + math.ceil(toilet_w/2) - math.ceil(toilet_cabinet_h/2 * 3/5) ,\
+    toilet.add_furniture("cabinet_toilet", "cabinet", x=toilet.x + math.ceil(toilet_w/2) - math.ceil(toilet_cabinet_h/2 * 3/5) ,\
                          y= toilet.y - math.ceil(toilet_cabinet_w/2) -20,\
                          width=toilet_cabinet_w, height= toilet_cabinet_h, rotation=-90)
 
@@ -342,25 +342,25 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
 
     # -- living room
     living_room_tv_w = 100; living_room_tv_h = 100
-    living_room.add_furniture("living room tv", "tv_on", x= living_room.x,\
+    living_room.add_furniture("tv_living", "tv_on", x= living_room.x,\
                          y= math.ceil(living_room.y - living_room_h/2 + living_room_tv_h/2 * 2/5),\
                          width=living_room_tv_w, height= living_room_tv_h, rotation=0)
 
     living_room_sofa_w = 130; living_room_sofa_h = 130
-    living_room.add_furniture("living room sofa", "sofa", x= living_room.x,\
+    living_room.add_furniture("sofa", "sofa", x= living_room.x,\
                          y= living_room.y + 10,\
                          width=living_room_sofa_w, height= living_room_sofa_h, rotation=180)
 
     small_table_sofa_w = 70; small_table_sofa_h = 70
-    living_room.add_furniture("living room small table", "small_table", x= living_room.x,\
+    living_room.add_furniture("table_living", "small_table", x= living_room.x,\
                          y=  math.ceil(living_room.y - (living_room_sofa_h/2 * 1/2) - (small_table_sofa_h/2 * 1/2)),\
                          width=small_table_sofa_w, height= small_table_sofa_h, rotation=180)
 
     armchair_w = 100; armchair_h = 100
-    living_room.add_furniture("living room armchair sx", "armchair", x= math.ceil(living_room.x - living_room_sofa_w/2 - armchair_w/2* 1/2) ,\
+    living_room.add_furniture("armchair_l", "armchair", x= math.ceil(living_room.x - living_room_sofa_w/2 - armchair_w/2* 1/2) ,\
                          y=  math.ceil(living_room.y - (living_room_sofa_h/2 * 1/2) - (small_table_sofa_h/2 * 1/2)),\
                          width=armchair_w, height= armchair_h, rotation=90)
-    living_room.add_furniture("living room armchair dx", "armchair", x= math.ceil(living_room.x + living_room_sofa_w/2 + armchair_w/2* 1/2) ,\
+    living_room.add_furniture("armchair_r", "armchair", x= math.ceil(living_room.x + living_room_sofa_w/2 + armchair_w/2* 1/2) ,\
                          y=  math.ceil(living_room.y - (living_room_sofa_h/2 * 1/2) - (small_table_sofa_h/2 * 1/2)),\
                          width=armchair_w, height= armchair_h, rotation= -90)
 
@@ -390,7 +390,7 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
                          height= kitchen_chair_h, rotation=180)
 
     dining_table_w = 140; dining_table_h = 140;
-    dining.add_furniture("dining table", "big_table", x= dining.x,\
+    dining.add_furniture("table_dining", "big_table", x= dining.x,\
                          y= dining.y,\
                          width=dining_table_w, height= dining_table_h, rotation=0)
 
@@ -398,7 +398,7 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
 
     # -- studio
     pens_w  = 25; pens_h = 25
-    studio.add_furniture("green marker", "green_marker",x=math.ceil(studio.x - studio.width/2 + desk_studio_w/2)- 75,\
+    studio.add_furniture("green_marker", "green_marker",x=math.ceil(studio.x - studio.width/2 + desk_studio_w/2)- 75,\
                          y=math.ceil(studio.y + studio.height/2 - desk_studio_h/2 - 20)-30, width=pens_w,\
                          height=pens_h, rotation= 180)
 
@@ -412,39 +412,39 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
 
     # -- kitchen
     plate_w = 25; plate_h = 25
-    kitchen.add_furniture("plate empty", "plate", x= kitchen.x - math.ceil(kitchen_w/2) + math.ceil(kitchen_furniture_h/2) + 20,\
+    kitchen.add_furniture("plate_empty", "plate", x= kitchen.x - math.ceil(kitchen_w/2) + math.ceil(kitchen_furniture_h/2) + 20,\
                          y= kitchen.y + 25, width= plate_w,\
                          height= plate_h, rotation=0)
     cup_w = 15; cup_h=15
-    kitchen.add_furniture("cup coffee", "coffee", x= kitchen.x - math.ceil(kitchen_w/2) + math.ceil(kitchen_furniture_h/2) + 20,\
+    kitchen.add_furniture("cup_coffee", "coffee", x= kitchen.x - math.ceil(kitchen_w/2) + math.ceil(kitchen_furniture_h/2) + 20,\
                          y= kitchen.y + 50, width= cup_w,\
                          height= cup_h, rotation=0)
 
-    kitchen.add_furniture("plate oranges", "plate",x= kitchen.x + 75,\
+    kitchen.add_furniture("plate_oranges", "plate",x= kitchen.x + 75,\
                          y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_big_table_h/2 * 3/5) + 20, width=plate_w,\
                          height= plate_h, rotation=0)
 
-    kitchen.add_furniture("plate apples", "plate",x= kitchen.x + 25,\
+    kitchen.add_furniture("plate_apples", "plate",x= kitchen.x + 25,\
                          y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_big_table_h/2 * 3/5) + 20, width=plate_w,\
                          height= plate_h, rotation=0)
 
     orange_w = 10; orange_h = 10
 
-    kitchen.add_furniture("orange", "orange",x= kitchen.x + 80,\
+    kitchen.add_furniture("orange1", "orange",x= kitchen.x + 80,\
                          y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_big_table_h/2 * 3/5) + 25, width=orange_w,\
                          height= orange_h, rotation=0)
-    kitchen.add_furniture("orange", "orange",x= kitchen.x + 70,\
+    kitchen.add_furniture("orange2", "orange",x= kitchen.x + 70,\
                          y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_big_table_h/2 * 3/5) + 25, width=orange_w,\
                          height= orange_h, rotation=0)
-    kitchen.add_furniture("orange", "orange",x= kitchen.x + 75,\
+    kitchen.add_furniture("orange3", "orange",x= kitchen.x + 75,\
                          y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_big_table_h/2 * 3/5) + 15, width=orange_w,\
                          height= orange_h, rotation=0)
 
     apple_w = 10; apple_h = 10
-    kitchen.add_furniture("apple", "apple",x= kitchen.x + 30,\
+    kitchen.add_furniture("apple1", "apple",x= kitchen.x + 30,\
                          y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_big_table_h/2 * 3/5) + 25, width=apple_w,\
                          height= apple_h, rotation=0)
-    kitchen.add_furniture("apple", "apple",x= kitchen.x + 20,\
+    kitchen.add_furniture("apple2", "apple",x= kitchen.x + 20,\
                          y= math.ceil(kitchen.y - kitchen_h/2 + kitchen_big_table_h/2 * 3/5) + 25, width=apple_w,\
                          height= apple_h, rotation=0)
 
@@ -456,11 +456,11 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
                          height= smartphone_h, rotation= 0)
 
     notebook_w = 25; notebook_h = 25
-    bedroom.add_furniture("red notebook", "notebook_red", x= math.ceil(bedroom.x - bedroom_w/2 + bedroom_cabinet_w/2) + 20,\
+    bedroom.add_furniture("red_notebook", "notebook_red", x= math.ceil(bedroom.x - bedroom_w/2 + bedroom_cabinet_w/2) + 20,\
                          y= math.ceil(bedroom.y + bedroom_h/2 - (bedroom_cabinet_h/2 * 3/5)) + 5,\
                          width=notebook_w, height= notebook_h, rotation=180)
 
-    bedroom.add_furniture("green notebook", "notebook_green", x= math.ceil(bedroom.x + bedroom_w/2 - bedroom_cabinet_w/2) + 20,\
+    bedroom.add_furniture("green_notebook", "notebook_green", x= math.ceil(bedroom.x + bedroom_w/2 - bedroom_cabinet_w/2) + 20,\
                          y= math.ceil(bedroom.y + bedroom_h/2 - (bedroom_cabinet_h/2 * 3/5)) + 5,\
                          width=notebook_w, height= notebook_h, rotation=180)
 
@@ -470,7 +470,7 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
                          y= toilet.y + math.ceil(toilet_h/2 - toilet_sink_h/2 * 3/5 + 15),\
                          width=glasses_w, height= glasses_h, rotation=180)
 
-    toilet.add_furniture("yellow notebook", "notebook_yellow", x=toilet.x + math.ceil(toilet_w/2) - math.ceil(toilet_cabinet_h/2 * 3/5) +5,\
+    toilet.add_furniture("yellow_notebook", "notebook_yellow", x=toilet.x + math.ceil(toilet_w/2) - math.ceil(toilet_cabinet_h/2 * 3/5) +5,\
                          y= toilet.y - math.ceil(toilet_cabinet_w/2) + 2,\
                          width=notebook_w, height= notebook_h, rotation=-90)
 
@@ -482,7 +482,7 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
                          width=cards_sofa_w, height= cards_sofa_h, rotation=180)
 
     # -- dining
-    dining.add_furniture("pink notebook", "notebook_pink", x= dining.x + 55,\
+    dining.add_furniture("pink_notebook", "notebook_pink", x= dining.x + 55,\
                          y= dining.y - 30,\
                          width=notebook_w, height= notebook_h, rotation=0)
 
