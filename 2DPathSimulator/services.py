@@ -4,6 +4,7 @@ import math
 import os
 import threading
 import time
+from planner import ParserPDDL, SolverFF
 
 class InputInterpreter(object):
     def __init__(self, simulation_objects):
@@ -569,6 +570,13 @@ class HouseSimulatorSocket(object):
         self.listener_thread.daemon = True
         self.listener_thread.start()
         
+        
+        # planner
+        self.previous_plan = False
+        self.parser = ParserPDDL(pathsFromSim= True)
+        self.solver = SolverFF(pathsFromSim=True)
+        
+        
     # function to exe the commands as a queue of instructions
     def exe_commmands(self):
         while len(self.command_list) != 0:
@@ -632,7 +640,7 @@ class HouseSimulatorSocket(object):
                 self.command_list.append(command)
                 
                 # do something with the command
-
+    
 
 """
                                                 test section

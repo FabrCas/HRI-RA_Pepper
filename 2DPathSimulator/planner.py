@@ -705,87 +705,88 @@ class ParserPDDL():
                                                 test section
 """
 
-test = {"parse": 0, "solve": 0, "update&parse":0, "solveUpdated":0, "how use":1}
-parser = ParserPDDL()
-solver = SolverFF()
+if __name__ == "__main__":
+    test = {"parse": 0, "solve": 0, "update&parse":0, "solveUpdated":0, "how use":1}
+    parser = ParserPDDL()
+    solver = SolverFF()
 
 
 
-if test['parse']:
-    # 1)                                   test goal parser
-    t1 = {"type": "reach_position", "args": ['desk_studio'], "free hands": True}
-    # t2 = {"type": "close_door", "args": ["d_toilet_living"], "free hands": True}
-    # t3 = {"type": "open_door", "args": ["d_dining_kitchen"], "free hands": True}
-    t4 = {"type": "close_window", "args": ["wl_studio"], "free hands": False}
-    t5 = {"type": "open_window", "args": ["wr_studio"], "free hands": True}
-    # t6 = {"type": "move_object", "args": ["smartphone", "sofa"], "free hands": False}
-    # t7 = {"type": "reach_room", "args": ["foyer"], "free hands": False}
-    
-    # tasks_description1 = [t2, t3, t4]
-    # tasks_description2 = [t5, t6, t7]
-    task_description = [t1, t4, t5]
-    parser.parse_goal(tasks_description= task_description)
-    # parser.parse_goal(tasks_description= tasks_description1)
-    # input("press something")
-    # parser.parse_goal(tasks_description= tasks_description2)
-    
-    # 2)                                   test init parser
-    # parser.parse_init(, unknown = ["smartphone", "glasses"], learned = [{'object':'smartphone', 'room':"bedroom", 'furniture':"bed"}, {'object':'glasses', 'room':"toilet", 'furniture':"sink"}])
-    parser.parse_init(previous_plan = None)
+    if test['parse']:
+        # 1)                                   test goal parser
+        t1 = {"type": "reach_position", "args": ['desk_studio'], "free hands": True}
+        # t2 = {"type": "close_door", "args": ["d_toilet_living"], "free hands": True}
+        # t3 = {"type": "open_door", "args": ["d_dining_kitchen"], "free hands": True}
+        t4 = {"type": "close_window", "args": ["wl_studio"], "free hands": False}
+        t5 = {"type": "open_window", "args": ["wr_studio"], "free hands": True}
+        # t6 = {"type": "move_object", "args": ["smartphone", "sofa"], "free hands": False}
+        # t7 = {"type": "reach_room", "args": ["foyer"], "free hands": False}
+        
+        # tasks_description1 = [t2, t3, t4]
+        # tasks_description2 = [t5, t6, t7]
+        task_description = [t1, t4, t5]
+        parser.parse_goal(tasks_description= task_description)
+        # parser.parse_goal(tasks_description= tasks_description1)
+        # input("press something")
+        # parser.parse_goal(tasks_description= tasks_description2)
+        
+        # 2)                                   test init parser
+        # parser.parse_init(, unknown = ["smartphone", "glasses"], learned = [{'object':'smartphone', 'room':"bedroom", 'furniture':"bed"}, {'object':'glasses', 'room':"toilet", 'furniture':"sink"}])
+        parser.parse_init(previous_plan = None)
 
-plan = None
-if test['solve']:
-    plan= solver.forward(domain_file="house_sim_domain.pddl", problem_file="parsed_problem.pddl", verbose = False)
-    # print(plan)
-    solver.print_plan(plan)
-    
-if test["update&parse"]:
-    # for step in plan:
-    #     a,r = parser.planStep2Predicates(plan_step= step)
-    #     print("step\n",step)
-    #     print("to add\n", a)
-    #     print("to remove\n",r)
-    
-    parser.parse_init
-    t = {"type": "reach_position", "args": ['water'], "free hands": True}
-    task_description = [t]
-    parser.parse_goal(tasks_description= task_description)
-    parser.parse_init(previous_plan= plan)
+    plan = None
+    if test['solve']:
+        plan= solver.forward(domain_file="house_sim_domain.pddl", problem_file="parsed_problem.pddl", verbose = False)
+        # print(plan)
+        solver.print_plan(plan)
+        
+    if test["update&parse"]:
+        # for step in plan:
+        #     a,r = parser.planStep2Predicates(plan_step= step)
+        #     print("step\n",step)
+        #     print("to add\n", a)
+        #     print("to remove\n",r)
+        
+        parser.parse_init
+        t = {"type": "reach_position", "args": ['water'], "free hands": True}
+        task_description = [t]
+        parser.parse_goal(tasks_description= task_description)
+        parser.parse_init(previous_plan= plan)
 
-if test["solveUpdated"]:
-    plan= solver.forward(domain_file="house_sim_domain.pddl", problem_file="parsed_problem.pddl", verbose = False)
-    solver.print_plan(plan)
-    
-if test['how use']:
-    # simualtion of 2 tasks defined from the task_description vector
-    
-    # 1) task definition
-    t1 = {"type": "move_object", "args": ['glasses', "table_living"], "free hands": True}
-    t2 = {"type": "reach_position", "args": ['free_space'], "free hands": True}
-    t3 = {"type": "reach_room", "args": ['studio'], "free hands": True}
-    
-    t4 = {"type": "move_object", "args": ['glasses', "table_kitchen"], "free hands": True}
-    t5 = {"type": "reach_position", "args": ['sofa'], "free hands": True}
-    
-    task_description  = [t1,t2,t3]
-    task_description2 = [t4,t5]
-    
-    #2) parse for first set of tasks
-    parser.parse_goal(tasks_description= task_description)
-    parser.parse_init(previous_plan = None)
-    
-    #3) exe first set of tasks
-    plan = solver.forward()
-    solver.print_plan(plan)
-    
-    #4) parse for second set of tasks, now we have to update using the previus plan (only the previous is needed and not older ones)
-    parser.parse_goal(tasks_description= task_description2)
-    parser.parse_init(previous_plan = plan)
-    
-    #5) exe second set of tasks
-    print("\n\n")
-    plan = solver.forward()
-    solver.print_plan(plan)
-    
-    #6) and so on...
+    if test["solveUpdated"]:
+        plan= solver.forward(domain_file="house_sim_domain.pddl", problem_file="parsed_problem.pddl", verbose = False)
+        solver.print_plan(plan)
+        
+    if test['how use']:
+        # simualtion of 2 tasks defined from the task_description vector
+        
+        # 1) task definition
+        t1 = {"type": "move_object", "args": ['glasses', "table_living"], "free hands": True}
+        t2 = {"type": "reach_position", "args": ['free_space'], "free hands": True}
+        t3 = {"type": "reach_room", "args": ['studio'], "free hands": True}
+        
+        t4 = {"type": "move_object", "args": ['glasses', "table_kitchen"], "free hands": True}
+        t5 = {"type": "reach_position", "args": ['sofa'], "free hands": True}
+        
+        task_description  = [t1,t2,t3]
+        task_description2 = [t4,t5]
+        
+        #2) parse for first set of tasks
+        parser.parse_goal(tasks_description= task_description)
+        parser.parse_init(previous_plan = None)
+        
+        #3) exe first set of tasks
+        plan = solver.forward()
+        solver.print_plan(plan)
+        
+        #4) parse for second set of tasks, now we have to update using the previus plan (only the previous is needed and not older ones)
+        parser.parse_goal(tasks_description= task_description2)
+        parser.parse_init(previous_plan = plan)
+        
+        #5) exe second set of tasks
+        print("\n\n")
+        plan = solver.forward()
+        solver.print_plan(plan)
+        
+        #6) and so on...
 

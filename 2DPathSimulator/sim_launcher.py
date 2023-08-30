@@ -81,7 +81,7 @@ def rendering():
     # execution flags at beginning
     # reset               = False
     debug               = False
-    show_obstacles      = True
+    show_obstacles      = False
     show_clearance      = True
     show_target         = True
     show_direction      = True
@@ -228,7 +228,7 @@ def rendering():
 
             # motion custom event
             if  event.type == pg.USEREVENT + 1:
-                if pepper.in_motion: pepper.move()
+                if pepper.in_motion and not(pepper.direction is None): pepper.move()
 
 
         # update flags based on input
@@ -252,7 +252,7 @@ def rendering():
 
         if test_grab:
             timer1 = threading.Timer(2, lambda: pepper.grab("smartphone"))
-            timer2 = threading.Timer(6, lambda: pepper.place(pepper.x, pepper.y))
+            timer2 = threading.Timer(6, lambda: pepper.place("desk_studio"))
             timer1.start()
             timer2.start()
             test_grab = False
@@ -286,35 +286,36 @@ def rendering():
             test_oc = False
             
         if test_motion:
-            type_test = "mix"  # types: "free", "door" "win", "mix"
-            # pepper.move2Door("west")
-            # pepper.move2Win("east", "right")
-            # pepper.move2pos(pg.math.Vector2(pepper.x +40, pepper.y +180))
+            type_test = "mix2"  # types: "free", "door" "win", "furniture", "free_space", "mix", "mix2"
             
             if type_test == "free":
                 pos = pg.math.Vector2(pepper.x + 50, pepper.y -100)
                 pepper.move2pos(pos)
             
-            if type_test == "door":
+            elif type_test == "door":
                 name_door = "d_foyer_living"
                 pepper.move2Door(name_door)
             
-            if type_test == "win":
+            elif type_test == "win":
                 name_win = "wr_foyer"
                 pepper.move2Win(name_win)
             
+            elif type_test == "free_space":
+                pepper.move2FreeSpace("foyer")
+                
+            elif type_test == "furniture":
+                pepper.move2Furniture("sofa")
+                
             if type_test == "mix":
                 tasks = ["door", "win", "free"]
 
-                
                 def mix_task():
                     while True:
                         if not(pepper.in_motion):
                             if tasks == []: break
                             
                             if tasks[0] == "free":
-                                pos = pg.math.Vector2(pepper.x - 50, pepper.y + 100)
-                                pepper.move2pos(pos)
+                                pepper.move2FreeSpace("foyer")
                                 tasks.pop(0)
                             elif tasks[0] == "door":
                                 name_door = "d_foyer_living"
@@ -328,6 +329,33 @@ def rendering():
                 listener_thread = threading.Thread(target = mix_task)
                 listener_thread.daemon = False
                 listener_thread.start()
+
+            if type_test == "mix2":
+                tasks = ["door", "room", "furniture", "free_space"]
+
+                def mix_task():
+                    while True:
+                        if not(pepper.in_motion):
+                            if tasks == []: break
+                            
+                            if tasks[0] == "room":
+                                pepper.move2Room(room_name="living_room", direction="west")
+                                tasks.pop(0)
+                            elif tasks[0] == "door":
+                                name_door = "d_foyer_living"
+                                pepper.move2Door(name_door)
+                                tasks.pop(0)
+                            elif tasks[0] == "furniture":
+                                pepper.move2Furniture(target_name="sofa")
+                                tasks.pop(0)
+                            elif tasks[0] == "free_space":
+                                pepper.move2FreeSpace()
+                                tasks.pop(0)
+                                
+                listener_thread = threading.Thread(target = mix_task)
+                listener_thread.daemon = False
+                listener_thread.start()
+            
                         
 
             test_motion = False

@@ -1584,6 +1584,7 @@ class Pepper(HouseElement):
         self.m2pixels = lambda x: x * 100       # Each 100 pixels represent 1 meter
         self.orientation = 90
         self.orientation_increment = 0
+        self.toRoom = None
         self.clearance = None
         self.target = None
         self.target_orientation = None
@@ -1697,6 +1698,131 @@ class Pepper(HouseElement):
     def move2pos(self, target: pg.math.Vector2, motion_time_interval = 100):
         self.target = target
         self.target_name = f"Position: x = {int(target.x)}, y = {int(target.y)}"
+
+        self.rotate2target()
+
+        if not self.use_apf : # linear motion
+            # compute direction and the normalized direction vector
+            direction: pg.math.Vector2 = target - pg.math.Vector2(self.x, self.y)
+            self.direction = direction
+            try:
+                self.direction_norm = pg.math.Vector2.normalize(self.direction)
+            except:
+                self.direction_norm = pg.math.Vector2(0,0)
+        else:
+            # compute the total force using APF methods
+            f_t = self.socket.apf(self.target,self.P_SPEED, profile=self.profile)
+
+            print(f_t)
+            # we use this force as a generalized velocity
+            self.direction = f_t
+            try:
+                self.direction_norm = pg.math.Vector2.normalize(self.direction)
+            except:
+                self.direction_norm = pg.math.Vector2(0,0)
+
+        # set flags on
+        if not(self.in_motion): self.in_motion = True
+
+        print(f'started the motion: {time.strftime("%H:%M:%S")}')
+        print(f'target: {self.target}')
+
+    
+    # it's important to update the current room for pepper, otherwise the APF doesn't work properly
+    def move2Room(self, room_name: str, direction: str, motion_time_interval = 100):
+        
+        displacement = 60
+        # compute the target based on the direction
+        if "west" in direction.strip().lower():
+            target = pg.math.Vector2(self.x - displacement, self.y)
+        elif "east" in direction.strip().lower():
+            target = pg.math.Vector2(self.x + displacement, self.y)
+        elif "south" in direction.strip().lower():
+            target = pg.math.Vector2(self.x, self.y + displacement)
+        elif "north" in direction.strip().lower():
+            target = pg.math.Vector2(self.x, self.y - displacement)
+            
+
+        self.target = target
+        self.target_name = f"room {room_name}"
+
+        self.rotate2target()
+
+        if not self.use_apf : # linear motion
+            # compute direction and the normalized direction vector
+            direction: pg.math.Vector2 = target - pg.math.Vector2(self.x, self.y)
+            self.direction = direction
+            try:
+                self.direction_norm = pg.math.Vector2.normalize(self.direction)
+            except:
+                self.direction_norm = pg.math.Vector2(0,0)
+        else:
+            # compute the total force using APF methods
+            f_t = self.socket.apf(self.target,self.P_SPEED, profile=self.profile)
+
+            print(f_t)
+            # we use this force as a generalized velocity
+            self.direction = f_t
+            try:
+                self.direction_norm = pg.math.Vector2.normalize(self.direction)
+            except:
+                self.direction_norm = pg.math.Vector2(0,0)
+
+        # set flags on
+        if not(self.in_motion): self.in_motion = True
+
+
+        r = get_rooms()
+        elem = None
+        for e in r:
+            if e.name == room_name:
+                elem = e
+        self.toRoom = elem
+        
+        print(f'started the motion: {time.strftime("%H:%M:%S")}')
+        print(f'target: {self.target}')
+    
+    def move2Furniture(self, target_name: str, motion_time_interval = 100):
+        
+        target = reach_positions[target_name]
+        self.target = target
+        self.target_name = f" furniture {target_name}"
+
+        self.rotate2target()
+
+        if not self.use_apf : # linear motion
+            # compute direction and the normalized direction vector
+            direction: pg.math.Vector2 = target - pg.math.Vector2(self.x, self.y)
+            self.direction = direction
+            try:
+                self.direction_norm = pg.math.Vector2.normalize(self.direction)
+            except:
+                self.direction_norm = pg.math.Vector2(0,0)
+        else:
+            # compute the total force using APF methods
+            f_t = self.socket.apf(self.target,self.P_SPEED, profile=self.profile)
+
+            print(f_t)
+            # we use this force as a generalized velocity
+            self.direction = f_t
+            try:
+                self.direction_norm = pg.math.Vector2.normalize(self.direction)
+            except:
+                self.direction_norm = pg.math.Vector2(0,0)
+
+        # set flags on
+        if not(self.in_motion): self.in_motion = True
+
+        print(f'started the motion: {time.strftime("%H:%M:%S")}')
+        print(f'target: {self.target}')
+
+    def move2FreeSpace(self, room_name = None, motion_time_interval = 100):
+        
+        if room_name is None: room_name = self.actual_room.name
+        
+        target = free_space_positions[room_name]
+        self.target = target
+        self.target_name = f" free space {room_name}"
 
         self.rotate2target()
 
@@ -1877,6 +2003,10 @@ class Pepper(HouseElement):
         else: self.in_motion = True
 
     def move(self, verbose = False):
+        
+        if self.direction is None:
+            return
+        
         # do motion
         if self.use_apf:
             self.x += self.direction.x  # in this case direction contains the generalized velocity
@@ -1966,6 +2096,9 @@ class Pepper(HouseElement):
         # set to false the changed position (if in motion will be set to True again from move function)
         if self.changed_position: self.changed_position = False # restore default False value
 
+        if not(self.toRoom is None) and not(self.in_motion):
+            self.actual_room = self.toRoom
+            self.toRoom = None
                                                                 # grab/place method
                                                                 
     def grab(self, name_object: str):
@@ -1983,17 +2116,24 @@ class Pepper(HouseElement):
             self.grabbed_object = item
             self.group.remove(item)
             print("Pepper has grabbed {}".format(item.name))
+            self.output_box.add_message(f"Pepper has grabbed {self.grabbed_object.name}")
             
         self.in_motion = True
         timer = threading.Timer(1, lambda: self.toggle_inMotion())
         timer.start()
            
-    def place(self, x_pos, y_pos):
+    def place(self, name_place:str):
         if self.grabbed_object is None:
             print("Pepper has not grabbed an object")
         else:
-            self.grabbed_object.rect.center = (x_pos, y_pos)
+            # take and switch position in the list
+            target = place_positions[name_place].pop(0)
+            print(target)
+            place_positions[name_place][-1] = target
+            
+            self.grabbed_object.rect.center = (target.x, target.y)
             print("Pepper is placing {}".format(self.grabbed_object.name))
+            self.output_box.add_message(f"Pepper has placed {self.grabbed_object.name}")
             self.group.add(self.grabbed_object)
             self.group.remove(self)
             self.group.remove(self.p_letter)
