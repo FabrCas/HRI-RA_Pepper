@@ -112,6 +112,18 @@ place_positions = {
     "table_dining":         [pg.math.Vector2(635, 780), pg.math.Vector2(635, 805), pg.math.Vector2(615, 780)]
 }
 
+# dictionary to define free_space position in the room
+free_space_positions = {
+    "foyer" :       pg.math.Vector2(875,122),
+    "living_room":  pg.math.Vector2(745, 562),
+    "dining":       pg.math.Vector2(740, 930),
+    "toilet":       pg.math.Vector2(690, 80),
+    "studio":       pg.math.Vector2(375, 135),
+    "bedroom":      pg.math.Vector2(75, 440),
+    "kitchen":      pg.math.Vector2(195, 932),
+    "outdoor":      pg.math.Vector2(935, 635) 
+}
+
 
 
 # function used to retrieve all the display object for planning
@@ -2066,6 +2078,20 @@ class Pepper(HouseElement):
         
         # pg.draw.circle(self.screen, color=(0, 255, 0), center=(x,y), radius=5)
         # print(x,y)
+        # r = get_rooms()
+        # elem = None
+        # for e in r:
+        #     if e.name == "outdoor":
+        #         elem = e
+    
+        # x = elem.x + 50
+        # y = elem.y - 170
+        
+        # pg.draw.circle(self.screen, color=(0, 255, 0), center=(x,y), radius=5)
+        # print(x,y)
+        
+        
+
         
         if (self.show_clearance and not(self.clearance is None)):
             pg.draw.circle(self.screen, color=(255, 0, 0), center=(self.clearance.x, self.clearance.y), radius=5)
