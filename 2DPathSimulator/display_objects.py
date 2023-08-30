@@ -1603,6 +1603,10 @@ class Pepper(HouseElement):
         self.POS_TOLERANCE = 1
         self.P_SPEED = self.m2pixels(self.SPEED)  # 2 [pixel/second]
 
+        # plan execution thread
+        self.listener_thread = None
+        self.plan = None
+        
         # instantiation messages
         self.output_box.add_message(f"Pepper is in the {self.actual_room.name}")
         self.output_box.add_message(f"Pepper APF profile: {self.profile}")
@@ -1727,7 +1731,6 @@ class Pepper(HouseElement):
         print(f'started the motion: {time.strftime("%H:%M:%S")}')
         print(f'target: {self.target}')
 
-    
     # it's important to update the current room for pepper, otherwise the APF doesn't work properly
     def move2Room(self, room_name: str, direction: str, motion_time_interval = 100):
         
@@ -2099,8 +2102,8 @@ class Pepper(HouseElement):
         if not(self.toRoom is None) and not(self.in_motion):
             self.actual_room = self.toRoom
             self.toRoom = None
-                                                                # grab/place method
-                                                                
+            
+    # grab/place method                                                             
     def grab(self, name_object: str):
         
         furniture = get_furniture()
@@ -2186,7 +2189,85 @@ class Pepper(HouseElement):
                 found = True
         if not found:
             print(f"{win_name} is not present in the room where pepper is placed ({self.actual_room.name})") 
+
+    
+    
+    # plan execution
+    
+    def provide_plan(self, plan):
+        self.listener_thread = threading.Thread(target = self.exe_plan)
+        self.listener_thread.daemon = True
+        self.listener_thread.start()
+        self.plan = plan
         
+    def  getType_elem(self, item):
+        """
+            simple function that returns the type of house element object to understand which kind of motion to accomplish
+        """
+        d = get_doors()
+        for elem in d:
+            if item in elem.name.strip().lower():
+                return "door"
+        
+        w = get_windows()
+        for elem in w:
+            if item in elem.name.strip().lower():
+                return "window"
+                
+        f = get_furniture()
+        for elem in f:
+            if item in elem.name.strip().lower():
+                return "furniture"
+            
+        return None
+
+        
+    def exe_plan(self):
+        
+        for step in self.plan:
+            if not(self.in_motion):
+                
+                if step['action'].strip().lower() == "move2":
+                    room_name   =  step['arguments'][0].strip().lower()
+                    # from_elem   =  step['arguments'][1].strip().lower()
+                    to_elem     =  step['arguments'][2].strip().lower()
+                    if "free_space" in to_elem:
+                        self.move2FreeSpace()
+                    else:
+                        type_elem = self.getType_elem(to_elem)
+                        
+                        if type_elem == "door":
+                            self.move2Door(name = to_elem)
+                        elif type_elem == "window":
+                            self.move2Win(name = to_elem)
+                        elif type_elem == "furniture":
+                            self.move2Furniture(target_name= to_elem)
+                    
+                    
+                elif step['action'].strip().lower() == "move2room":
+                    direction  = step['arguments'][3].strip().lower()
+                    room_name = step['arguments'][1].strip().lower()
+                    self.move2Room(room_name=room_name, direction=direction)
+                    
+                elif step['action'].strip().lower() == "open_door":
+                    self.openDoor(step['arguments'][0].strip().lower())
+                    
+                elif step['action'].strip().lower() == "close_door":
+                    self.closeDoor(step['arguments'][0].strip().lower())
+                    
+                elif step['action'].strip().lower() == "open_win":
+                    self.openWin(step['arguments'][0].strip().lower())
+                    
+                elif step['action'].strip().lower() == "close_win":
+                    self.closeWin(step['arguments'][0].strip().lower())
+                    
+                elif step['action'].strip().lower() == "grab_object":
+                    self.grab(step['arguments'][0].strip().lower())
+                    
+                elif step['action'].strip().lower() == "place_object":
+                    self.place(step['arguments'][2].strip().lower())
+                          
+    
     # graphic methods
     def set_color(self, color):
         self.color = color
