@@ -70,6 +70,51 @@ assets_furniture = {
     "tv_on"             : {"path": "static/assets/tv_on.png",            "is_movable": False,   "w": 500,   "h": 250}
 }
 
+# dictionary that describes positions (Vec2) where pepper should be placed when want to reach them
+reach_positions = {
+    "desk_studio":          pg.math.Vector2(),
+    "pool_studio":          pg.math.Vector2(),
+    "kitchenette":          pg.math.Vector2(),
+    "table_kitchen":        pg.math.Vector2(),
+    "bed":                  pg.math.Vector2(),
+    "cabinet_bedroom_l":    pg.math.Vector2(),
+    "cabinet_bedroom_r":    pg.math.Vector2(),
+    "tv_bedroom":           pg.math.Vector2(),
+    "water":                pg.math.Vector2(),
+    "tub":                  pg.math.Vector2(),
+    "sink":                 pg.math.Vector2(),
+    "cabinet_toilet":       pg.math.Vector2(),
+    "tv_living":            pg.math.Vector2(),
+    "sofa":                 pg.math.Vector2(),
+    "table_living":         pg.math.Vector2(),
+    "armchair_l":           pg.math.Vector2(),
+    "armchair_r":           pg.math.Vector2(),
+    "table_dining":         pg.math.Vector2()
+}
+
+# dictionary that describes positions (Vec2)  where pepper use to place grasped object
+place_positions = {
+    "desk_studio":          [pg.math.Vector2()],
+    "pool_studio":          [pg.math.Vector2()],
+    "kitchenette":          [pg.math.Vector2()],
+    "table_kitchen":        [pg.math.Vector2()],
+    "bed":                  [pg.math.Vector2()],
+    "cabinet_bedroom_l":    [pg.math.Vector2()],
+    "cabinet_bedroom_r":    [pg.math.Vector2()],
+    "tv_bedroom":           [pg.math.Vector2()],
+    "water":                [pg.math.Vector2()],
+    "tub":                  [pg.math.Vector2()],
+    "sink":                 [pg.math.Vector2()],
+    "cabinet_toilet":       [pg.math.Vector2()],
+    "tv_living":            [pg.math.Vector2()],
+    "sofa":                 [pg.math.Vector2()],
+    "table_living":         [pg.math.Vector2()],
+    "armchair_l":           [pg.math.Vector2()],
+    "armchair_r":           [pg.math.Vector2()],
+    "table_dining":         [pg.math.Vector2()]
+}
+
+
 
 # function used to retrieve all the display object for planning
 rooms = []
@@ -2009,6 +2054,61 @@ class Pepper(HouseElement):
         pg.draw.circle(self.screen, color=(0, 0, 0), center=(self.x, self.y), radius=13)  # thick circle
         pg.draw.circle(self.screen, color=self.color, center=(self.x, self.y), radius=10)
         self.p_letter.center_to(self.x, self.y)
+        
+        
+        # tmp code to find positions for reach_positions place_positions
+        f = get_furniture()
+        elem = None
+        for e in f:
+            if e.name == "table_dining":
+                elem = e
+    
+        x = elem.x + 25
+        y = elem.y - 25
+        
+        pg.draw.circle(self.screen, color=(0, 255, 0), center=(x,y), radius=5)
+        print(x,y)
+        
+        reach_positions = {
+            "desk_studio":          pg.math.Vector2(104, 276),   # x=134
+            "pool_studio":          pg.math.Vector2(215,185),
+            "kitchenette":          pg.math.Vector2(179, 837),
+            "table_kitchen":        pg.math.Vector2(275, 816),
+            "bed":                  pg.math.Vector2(305, 485),
+            "cabinet_bedroom_l":    pg.math.Vector2(360, 636),
+            "cabinet_bedroom_r":    pg.math.Vector2(90, 636),
+            "tv_bedroom":           pg.math.Vector2(225, 650),
+            "water":                pg.math.Vector2(490, 80),
+            "tub":                  pg.math.Vector2(490, 190),
+            "sink":                 pg.math.Vector2(650, 229),
+            "cabinet_toilet":       pg.math.Vector2(696, 90),
+            "tv_living":            pg.math.Vector2(590, 325),
+            "sofa":                 pg.math.Vector2(680, 462),
+            "table_living":         pg.math.Vector2(590, 363),
+            "armchair_l":           pg.math.Vector2(500, 453),  #to otheside add to y -100
+            "armchair_r":           pg.math.Vector2(680, 452),  #to otheside add to y -100
+            "table_dining":         pg.math.Vector2(635, 745)
+        }
+        
+        place_positions = {
+            "desk_studio":          [pg.math.Vector2(134,306), pg.math.Vector2(154,306), pg.math.Vector2(174,306), pg.math.Vector2(194,306)],
+            "pool_studio":          [pg.math.Vector2(160, 185)],
+            "kitchenette":          [pg.math.Vector2(129,867), pg.math.Vector2(129,892), pg.math.Vector2(119, 788)],
+            "table_kitchen":        [pg.math.Vector2(275, 776), pg.math.Vector2(275, 756)],
+            "bed":                  [pg.math.Vector2(265, 515), pg.math.Vector2(265, 535),  pg.math.Vector2(235, 485)],
+            "cabinet_bedroom_l":    [pg.math.Vector2(360, 696),pg.math.Vector2(345, 696),pg.math.Vector2(375, 696)],
+            "cabinet_bedroom_r":    [pg.math.Vector2(90, 696),pg.math.Vector2(75, 696),pg.math.Vector2(105, 696)],
+            "water":                [pg.math.Vector2(440, 85)],
+            "tub":                  [pg.math.Vector2(465,190)],
+            "sink":                 [pg.math.Vector2(615, 244)],
+            "cabinet_toilet":       [pg.math.Vector2(751, 90),pg.math.Vector2(751, 70),pg.math.Vector2(751, 110)],
+            "sofa":                 [pg.math.Vector2(630, 447)],
+            "table_living":         [pg.math.Vector2(590, 403), pg.math.Vector2(570, 403), pg.math.Vector2(610, 403)],
+            "armchair_l":           [pg.math.Vector2(500, 403)],
+            "armchair_r":           [pg.math.Vector2(680, 407)],
+            "table_dining":         [pg.math.Vector2(635, 780), pg.math.Vector2(635, 805), pg.math.Vector2(615, 780)]
+        }
+        
         
         if (self.show_clearance and not(self.clearance is None)):
             pg.draw.circle(self.screen, color=(255, 0, 0), center=(self.clearance.x, self.clearance.y), radius=5)

@@ -81,14 +81,14 @@ def rendering():
     # execution flags at beginning
     # reset               = False
     debug               = False
-    show_obstacles      = False
+    show_obstacles      = True
     show_clearance      = True
     show_target         = True
     show_direction      = True
     show_forces         = True   # show forces from APF method
     extra_HUD           = False
     test_clearance      = False
-    test_motion         = True # False 
+    test_motion         = False # False 
     test_grab           = False
     test_oc             = False
 
@@ -104,9 +104,6 @@ def rendering():
     # edit starting position for pepper, from the center of the foyer
     # pepper.y  -= 250
     pepper.set_Ypos(pepper.y - 200)
-    
-    # pepper.y -= 200
-    # pepper.x += -50
 
     # custom event raiser every x milliseconds for testing
     test_time_interval   = 2500  # [ms]
