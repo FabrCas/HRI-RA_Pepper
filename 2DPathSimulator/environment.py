@@ -230,7 +230,7 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
     bedroom.add_door("d_bedroom_living",living_room, status='close', displ=-25)
 
     # living room -> dining
-    living_room.add_door("d_living_dining",dining, status='open', displ= 0)
+    living_room.add_door("d_living_dining",dining, status='open', displ= -50)
 
     # dining -> kitchen
     door_d = dining.add_door("d_dining_kitchen",kitchen, status='close')
@@ -348,7 +348,7 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
 
     living_room_sofa_w = 130; living_room_sofa_h = 130
     living_room.add_furniture("sofa", "sofa", x= living_room.x,\
-                         y= living_room.y + 10,\
+                         y= living_room.y + 10 + 25,\
                          width=living_room_sofa_w, height= living_room_sofa_h, rotation=180)
 
     small_table_sofa_w = 70; small_table_sofa_h = 70
@@ -483,7 +483,7 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
 
     # -- dining
     dining.add_furniture("pink_notebook", "notebook_pink", x= dining.x + 55,\
-                         y= dining.y - 30,\
+                         y= dining.y - 25,\
                          width=notebook_w, height= notebook_h, rotation=0)
 
     # 4) Create pepper placeholder

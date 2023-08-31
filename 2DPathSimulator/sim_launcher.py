@@ -88,9 +88,10 @@ def rendering():
     show_forces         = True   # show forces from APF method
     extra_HUD           = False
     test_clearance      = False
-    test_motion         = False # False 
+    test_motion         = False
     test_grab           = False
     test_oc             = False
+    test_p              = True
 
 
     # initialize the pygame engine, get main display object and clock for the rendering
@@ -239,6 +240,7 @@ def rendering():
         test_motion     = input_interpreter.toggle_test_motion(test_motion)
         test_grab       = input_interpreter.toggle_test_grab(test_grab)
         test_oc         = input_interpreter.toggle_test_open_close(test_oc)
+        test_p          = input_interpreter.toggle_test_plan(test_p)
         show_clearance  = input_interpreter.toggle_clearance(show_clearance)
         show_target     = input_interpreter.toggle_target(show_target)
         show_direction  = input_interpreter.toggle_direction(show_direction)
@@ -359,6 +361,14 @@ def rendering():
                         
 
             test_motion = False
+
+        if test_p:
+            print("test plan on")
+            plan = sim_socket.test_plan()
+            print(plan)
+            pepper.provide_plan(plan)
+            
+            test_p = False
             
         # handle reset
         if input_interpreter.changed_reset:   # the reset is better to be handled directly in the main loop

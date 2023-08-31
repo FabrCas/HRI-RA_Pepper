@@ -381,7 +381,6 @@ class ParserPDDL():
         decrement = line.count(')')
         return increment - decrement
     
-    
     def _chunk_init(self, init):
         chunks = []
         last_idx = 0
@@ -421,7 +420,6 @@ class ParserPDDL():
         chunks.append((last_idx, len(init)))    
         
         return chunks
-    
     
     def remove_objectKnowledge(self, init_items, object: str):
         query = object.strip().lower()
@@ -772,7 +770,7 @@ if __name__ == "__main__":
         task_description2 = [t4,t5]
         
         #2) parse for first set of tasks
-        parser.parse_goal(tasks_description= task_description)
+        parser.parse_goal(tasks_description= task_description2)
         parser.parse_init(previous_plan = None)
         
         #3) exe first set of tasks
@@ -780,13 +778,13 @@ if __name__ == "__main__":
         solver.print_plan(plan)
         
         #4) parse for second set of tasks, now we have to update using the previus plan (only the previous is needed and not older ones)
-        parser.parse_goal(tasks_description= task_description2)
-        parser.parse_init(previous_plan = plan)
+        # parser.parse_goal(tasks_description= task_description2)
+        # parser.parse_init(previous_plan = plan)
         
         #5) exe second set of tasks
-        print("\n\n")
-        plan = solver.forward()
-        solver.print_plan(plan)
+        # print("\n\n")
+        # plan = solver.forward()
+        # solver.print_plan(plan)
         
         #6) and so on...
 

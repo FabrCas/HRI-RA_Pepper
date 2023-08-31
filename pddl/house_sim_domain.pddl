@@ -90,7 +90,7 @@
     )
     
     (:action place_object
-        :parameters (?i - item ?r - room ?f - room_element)
+        :parameters (?i - item ?r - room ?f - furniture)
         :precondition (and (in ?f ?r) (PepperHas ?i) (PepperIn ?r) (PepperAt ?f) )
         :effect (and (not (PepperHas ?i)) (freeHands) (in ?i ?r) (on ?i ?f))
     )

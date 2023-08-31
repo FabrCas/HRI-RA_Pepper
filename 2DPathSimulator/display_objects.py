@@ -85,7 +85,7 @@ reach_positions = {
     "sink":                 pg.math.Vector2(650, 229),
     "cabinet_toilet":       pg.math.Vector2(696, 90),
     "tv_living":            pg.math.Vector2(590, 325),
-    "sofa":                 pg.math.Vector2(680, 462),
+    "sofa":                 pg.math.Vector2(680, 487),
     "table_living":         pg.math.Vector2(590, 363),
     "armchair_l":           pg.math.Vector2(500, 453),  #to otheside add to y -100
     "armchair_r":           pg.math.Vector2(680, 452),  #to otheside add to y -100
@@ -105,7 +105,7 @@ place_positions = {
     "tub":                  [pg.math.Vector2(465,190)],
     "sink":                 [pg.math.Vector2(615, 244)],
     "cabinet_toilet":       [pg.math.Vector2(751, 90),pg.math.Vector2(751, 70),pg.math.Vector2(751, 110)],
-    "sofa":                 [pg.math.Vector2(630, 447)],
+    "sofa":                 [pg.math.Vector2(630, 472)],
     "table_living":         [pg.math.Vector2(590, 403), pg.math.Vector2(570, 403), pg.math.Vector2(610, 403)],
     "armchair_l":           [pg.math.Vector2(500, 403)],
     "armchair_r":           [pg.math.Vector2(680, 407)],
@@ -1734,7 +1734,8 @@ class Pepper(HouseElement):
     # it's important to update the current room for pepper, otherwise the APF doesn't work properly
     def move2Room(self, room_name: str, direction: str, motion_time_interval = 100):
         
-        displacement = 60
+        #displacement = 60
+        displacement = 40
         # compute the target based on the direction
         if "west" in direction.strip().lower():
             target = pg.math.Vector2(self.x - displacement, self.y)
@@ -1862,7 +1863,6 @@ class Pepper(HouseElement):
         self.target_name = f" door {name}"
 
         
-        
         door = None
         doors = get_doors()
         for elem in doors:
@@ -1873,20 +1873,33 @@ class Pepper(HouseElement):
             print(f"No door of the name {name} has been found")
             return
 
-        side = door.side
+        side = door.side.lower()
+        
+        # compute the sign multiplier for the distance
+        # sign_x = 1
+        # sign_y = 1
+        # if self.actual_room.x < door.x:
+        #     sign_x *= -1
+        # if self.actual_room.y > door.y:
+        #     sign_y *= -1
+        
         # if door.status == 'open':
         # self.target = pg.math.Vector2(door.rect_open.center)
         # else:
         #     self.target = pg.math.Vector2(door.rect.center)
 
-        if side == "north":
-            self.target = pg.math.Vector2(door.rect_open.center[0], door.rect_open.center[1] + distance_wall)
-        elif side == "south":
-            self.target = pg.math.Vector2(door.rect_open.center[0], door.rect_open.center[1] - distance_wall)
-        elif side == "east":
+        # if side == "north":
+        if self.actual_room.x < door.x and (side == "east" or side == "west"):
             self.target = pg.math.Vector2(door.rect_open.center[0] - distance_wall, door.rect_open.center[1])
-        elif side == "west":
+        # elif side == "south":
+        elif self.actual_room.x > door.x and (side == "east" or side == "west"):
             self.target = pg.math.Vector2(door.rect_open.center[0] + distance_wall, door.rect_open.center[1])
+        # elif side == "east":
+        elif self.actual_room.y < door.y and (side == "north" or side == "south"):
+            self.target = pg.math.Vector2(door.rect_open.center[0], door.rect_open.center[1] - distance_wall)
+        # elif side == "west":
+        elif self.actual_room.y > door.y and (side == "north" or side == "south"):
+            self.target = pg.math.Vector2(door.rect_open.center[0], door.rect_open.center[1] + distance_wall)
 
         # apf method
         # compute the total force using APF methods
@@ -2018,7 +2031,9 @@ class Pepper(HouseElement):
             self.x += self.P_SPEED * self.direction_norm.x  # x0 + vx [p/s] * 1 [s]
             self.y += self.P_SPEED * self.direction_norm.y  # y0 + vy [p/s] * 1 [s]
 
-        self.socket.last_position = pg.math.Vector2(self.x, self.y)
+        self.socket.last_positions.append(pg.math.Vector2(self.x, self.y))
+        if len(self.socket.last_positions) > 10:
+            self.socket.last_positions.pop(0)
 
         if verbose: print(f"New position {(self.get_position())}")
         distance = (self.get_position() - self.target).length()
@@ -2132,6 +2147,9 @@ class Pepper(HouseElement):
             # take and switch position in the list
             target = place_positions[name_place].pop(0)
             print(target)
+            if place_positions[name_place] == []:
+                place_positions[name_place] = [target]
+                
             place_positions[name_place][-1] = target
             
             self.grabbed_object.rect.center = (target.x, target.y)
@@ -2160,6 +2178,10 @@ class Pepper(HouseElement):
         if not found:
             print(f"{door_name} is not present in the room where pepper is placed ({self.actual_room.name})")    
         
+        self.in_motion = True
+        timer = threading.Timer(1, lambda: self.toggle_inMotion())
+        timer.start()
+        
     def closeDoor(self, door_name):
         found = False
         doors = get_doors()
@@ -2170,6 +2192,10 @@ class Pepper(HouseElement):
         if not found:
             print(f"{door_name} is not present in the room where pepper is placed ({self.actual_room.name})")      
         
+        self.in_motion = True
+        timer = threading.Timer(1, lambda: self.toggle_inMotion())
+        timer.start()
+        
     def openWin(self, win_name):    # window name of the type "wl_$room" or "wr_$room", respectively for left and right windows
         found = False
         windows = get_windows()
@@ -2179,7 +2205,11 @@ class Pepper(HouseElement):
                     found = True
         if not found:
             print(f"{win_name} is not present in the room where pepper is placed ({self.actual_room.name})")    
-          
+        
+        self.in_motion = True
+        timer = threading.Timer(1, lambda: self.toggle_inMotion())
+        timer.start()
+         
     def closeWin(self, win_name):
         found = False
         windows = get_windows()
@@ -2190,17 +2220,23 @@ class Pepper(HouseElement):
         if not found:
             print(f"{win_name} is not present in the room where pepper is placed ({self.actual_room.name})") 
 
+        self.in_motion = True
+        timer = threading.Timer(1, lambda: self.toggle_inMotion())
+        timer.start()
     
     
     # plan execution
     
     def provide_plan(self, plan):
-        self.listener_thread = threading.Thread(target = self.exe_plan)
-        self.listener_thread.daemon = True
-        self.listener_thread.start()
-        self.plan = plan
+        if self.plan is None:
+            self.plan = plan
+            self.listener_thread = threading.Thread(target = self.exe_plan)
+            self.listener_thread.daemon = True
+            self.listener_thread.start()
+        else:
+            self.output_box.add_message(f"Pepper is busy cannot execute the task")
         
-    def  getType_elem(self, item):
+    def  _getType_elem(self, item):
         """
             simple function that returns the type of house element object to understand which kind of motion to accomplish
         """
@@ -2224,9 +2260,9 @@ class Pepper(HouseElement):
         
     def exe_plan(self):
         
-        for step in self.plan:
+        while not (self.plan == []):
             if not(self.in_motion):
-                
+                step = self.plan.pop(0)
                 if step['action'].strip().lower() == "move2":
                     room_name   =  step['arguments'][0].strip().lower()
                     # from_elem   =  step['arguments'][1].strip().lower()
@@ -2234,7 +2270,7 @@ class Pepper(HouseElement):
                     if "free_space" in to_elem:
                         self.move2FreeSpace()
                     else:
-                        type_elem = self.getType_elem(to_elem)
+                        type_elem = self._getType_elem(to_elem)
                         
                         if type_elem == "door":
                             self.move2Door(name = to_elem)
@@ -2266,8 +2302,14 @@ class Pepper(HouseElement):
                     
                 elif step['action'].strip().lower() == "place_object":
                     self.place(step['arguments'][2].strip().lower())
-                          
-    
+                
+                else:
+                    raise ValueError("action requested is not described by the PDDL domain file")
+        
+        
+        self.output_box.add_message(f"Pepper has completed the task assigned")            
+        self.plan = None
+                     
     # graphic methods
     def set_color(self, color):
         self.color = color

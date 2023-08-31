@@ -14,17 +14,18 @@ class InputInterpreter(object):
         self.env = simulation_objects['environment']
         self.pepper = simulation_objects['pepper']
         
-        self.changed_reset          = False
-        self.changed_debug          = False
-        self.changed_test_clearance = False
-        self.changed_test_grab      = False
-        self.changed_test_motion    = False
+        self.changed_reset              = False
+        self.changed_debug              = False
+        self.changed_test_clearance     = False
+        self.changed_test_grab          = False
+        self.changed_test_motion        = False
         self.changed_test_open_close    = False
-        self.changed_show_obstacles = False
-        self.changed_show_clearance = False
-        self.changed_show_direction = False
-        self.changed_show_forces    = False
-        self.changed_show_target    = False
+        self.changed_test_plan          = False
+        self.changed_show_obstacles     = False
+        self.changed_show_clearance     = False
+        self.changed_show_direction     = False
+        self.changed_show_forces        = False
+        self.changed_show_target        = False
         self.auto_run()
         
 
@@ -54,12 +55,15 @@ class InputInterpreter(object):
         if "test_m" in message.strip().lower():   # test motion
             print("Started the motion test")
             self.changed_test_motion = True
-        if "test_g" in message.strip().lower():   # test motion
+        if "test_g" in message.strip().lower():   # test grab/place
             print("Started the grab test on smartphone")
             self.changed_test_grab = True
-        if "test_o" in message.strip().lower():   # test motion
+        if "test_o" in message.strip().lower():   # test open/close
             print("Started the open/close test on door and windows")
             self.changed_test_open_close = True
+        if "test_p" in message.strip().lower():   # test planning
+            print("Started the planning test")
+            self.changed_test_plan = True
         if "clearance" in message.strip().lower():   # clearance
             print("Changing the show of clearance...")
             self.changed_show_clearance = True
@@ -87,6 +91,7 @@ class InputInterpreter(object):
             'test_m'    :'start the motion test',
             'test_g'    :'start the grab test',
             'test_o'    :'start the open/close test',
+            'test_p'    :'start planning test',
             'clerance'  :'show neearest point',
             'target'    :'show target of the motion',
             'direction' :"show motion's direction",
@@ -190,6 +195,21 @@ class InputInterpreter(object):
             self.boxes[1].add_message(f"Test open/close: {test_oc}")
 
         return test_oc
+    
+    def toggle_test_plan(self, test_p):
+        if self.changed_test_plan:
+
+            # change value
+            if test_p:test_p = False;
+            else: test_p = True
+
+            # restore default value for input interpreter
+            self.changed_test_plan = False
+
+            # output message
+            self.boxes[1].add_message(f"Test plan: {test_p}")
+
+        return test_p
 
     def toggle_clearance(self, show_clearance):
         if self.changed_show_clearance:
@@ -275,12 +295,16 @@ class PepperMotion(object):
         # APF variables
         self.apf_not_switched = True    # to show message when change profile in mixed configuration
         self.last_apf = {}              # to print force vectors
-        self.last_position = None       # to activate vortex heuristic
+        self.last_positions = [pg.math.Vector2(self.pepper.x, self.pepper.y)]       # to activate vortex heuristic
+        self.verse = 0
+        self.saved_vortex = None
 
     def reset_motion_variables(self):
         self.apf_not_switched = True
         self.last_apf = {}
-        self.last_positions = None      # last 2 positions
+        self.last_positions = [pg.math.Vector2(self.pepper.x, self.pepper.y)]       # last 2 positions
+        self.verse = 0
+        self.saved_vortex = None
 
     def in_rect(self, rect: pg.Rect, pos: pg.math.Vector2):
         """
@@ -467,69 +491,150 @@ class PepperMotion(object):
         # -------------------------- compute the repulsive force
         gamma = 2
         range_influence = 20 # 50
-        k_r = 600  # 500
+        k_r = 700 # 600  # 500
         clearance_point, clearance = self.compute_clearance()
 
         if clearance > range_influence:
             f_r = pg.math.Vector2(0, 0)
         else:
-            repulsive_gain = (k_r/(clearance**2)) * ((1/clearance) - (1/range_influence))**(gamma-1)
+            # try:
+            try:
+                repulsive_gain = (k_r/(clearance**2)) * ((1/clearance) - (1/range_influence))**(gamma-1)
+            except:
+                repulsive_gain = 5
+            
+            if repulsive_gain > 5:
+                repulsive_gain = 5
+                
+                
             clearance_gradient = (self.pepper.get_position() - clearance_point)
             f_r = repulsive_gain * clearance_gradient
 
         # -------------------------- compute the vortex field heuristic force
 
+        # parameter for the selection of force vortex direction
+        epsilon = 0.1
+        
         if f_r.length() == 0:               # if there is no repulsive force neither vortex filed force is present
             f_v = pg.math.Vector2(0, 0)
-        else:
-            # compute the angle between attractive and repulsive force
-            # angle_entrance = pg.math.Vector2(1,0).angle_to(f_a)
-            angle_entrance = f_a.angle_to(pg.math.Vector2(1, 0))
+            self.saved_vortex = None
+        else:   
+            if self.saved_vortex is None:         
+                f_v1 = f_r.rotate(-90)
+                f_v2 = f_r.rotate(90)
+                
+                e1 = self.euclidean_distance(f_a, f_v1)
+                e2 = self.euclidean_distance(f_a, f_v2)
+                # print(f_v1, e1)
+                # print(f_v2, e2)
+                
+                delta = e1 -e2
+                # print(delta)
+                if delta > epsilon:
+                    f_v = f_v2
+                elif delta < -epsilon:
+                    f_v = f_v1
+                else:    # delta in the interval - epsiolon + episolon (stalemate case)
+                    print("bad case")
+                    # heuristic, it's better to move toward the center of the rooom
+                    
+                    room_center = pg.math.Vector2(self.pepper.actual_room.x, self.pepper.actual_room.y)
+                    to_center = room_center - pg.math.Vector2(self.pepper.x, self.pepper.y)
+                    
+                    d1 = self.euclidean_distance(to_center, f_v1)
+                    d2 = self.euclidean_distance(to_center, f_v2)
+                    
+                    if d1 > d2:
+                        f_v = f_v2
+                    else:
+                        f_v = f_v1
+                        
+                    # if f_v.length() < 0.5:
+                    norms = []
+                    for pos in self.last_positions:
+                        norms.append(self.euclidean_distance(pg.math.Vector2(self.pepper.x, self.pepper.y), pos))
+                    
 
-            # print("angle entrance {}".format(angle_entrance))
+                    # if all(norm < 1.5 for norm in norms) and len(norms)>8:
+                    avg_norms = sum(norms) / len(norms)
+                    print(avg_norms)
+                    if avg_norms < 6 and len(norms)>8:
+                        self.saved_vortex= pg.math.Vector2.normalize(f_v)
+                        self.saved_vortex *= speed
+                        
+                    # self.saved_vortex = f_v
+            else:
+                print("using saved one")
+                print(self.saved_vortex)
+                f_v = self.saved_vortex 
 
-            # estimate the vortex force verse
-            if angle_entrance >= 0 and angle_entrance <= 90:
-                verse = 1
-            elif angle_entrance > 90 and angle_entrance <= 180:
-                verse = -1
-            elif angle_entrance < 0 and angle_entrance >= -90:
-                verse = -1
-            elif angle_entrance < -90 and angle_entrance > -180:
-                verse = 1
 
-            # elif angle_entrance > 180 and angle_entrance <= 270:
-            #     verse = -1
-            # elif angle_entrance > 270 and angle_entrance <= 360:
-            #     verse = 1
-
-            f_v = f_r.rotate(90 * verse)
-
-            # reduce the vortex field force when angle between f_r and f_v reduces
-            # BE CAREFUL IT CHANGES TO DIRECTION IF IS NEGATIVE! SHOULD BE CONTROLLED THE ANGLE FIRST (not done)
-            # angle_va = f_v.angle_to(f_a)
-            # if angle_va < 0: angle_va += 360    # only CCW angle
-            # f_v *= math.sin(math.radians(angle_va))
 
         # -------------------------- estimate the total resulting force
 
         # standard form without heuristics
+        # f_t = f_a + f_r + f_v
+        
+        # Amp_v   = f_v.length()/(f_a + f_r + f_v).length()
+        # Amp_r   = f_r.length()/(f_a + f_r + f_v).length()
+        # Amp_a   = f_a.length()/(f_a + f_r + f_v).length()
+        
+        
+        # # clamp vortex force 
+        # if f_v.length() > speed:
+        #     f_v = pg.math.Vector2.normalize(f_v)
+        #     f_v = speed * Amp_v *  f_v
+            
+        # if f_a.length() > speed:
+        #     f_a = pg.math.Vector2.normalize(f_a)
+        #     f_a = speed * Amp_a *  f_a
+            
+        # if f_r.length() > speed:
+        #     f_r = pg.math.Vector2.normalize(f_r)
+        #     f_r = speed * Amp_r *  f_r
+        
+        
         f_t = f_a + f_r + f_v
 
+        # f_v = None
 
-        detach_vortex = 0.9
-        if f_r.length() >= detach_vortex * f_a.length():
-            f_a  = pg.math.Vector2(0,0)
-            f_r = pg.math.Vector2(0,0)
-            f_t = f_v
-
-        # print(f"||f_a|| -> {f_a.length()}, ||f_r|| -> {f_r.length()},\n||f_v|| -> {f_v.length()}, ||f_t|| -> {f_t.length()}")
+        # detach_vortex = 0.9
+        # if f_r.length() >= detach_vortex * f_a.length():
+        #     f_a  = pg.math.Vector2(0,0)
+        #     f_r = pg.math.Vector2(0,0)
+            
+        #     if f_v.length() > speed:
+        #         f_v = pg.math.Vector2.normalize(f_v)
+        #         f_v = speed  * f_v
+                
+        #     f_t = f_v
+        
+        # save verse
+        # if f_v.length() > 0.5:
+        #     self.verse = verse
 
         # avoid saturation (by paraboloidal profile) clipping to cruise standard speed
         if f_t.length() > speed:
             f_t = pg.math.Vector2.normalize(f_t)
             f_t = speed * f_t
+            
+        # print(f_t.length())
+        
+        # if stealmate invert sense for the heuristic
+        # if f_t.length() < 0.4 and self.verse != 0:
+            # print("aoaaaaaa")
+            # self.verse *= -1
+        
+        # else:
+        #     norms = []
+        #     for pos in self.last_positions:
+        #         norms.append(self.euclidean_distance(pg.math.Vector2(self.pepper.x, self.pepper.y), pos))
 
+        #     print(norms)
+        #     if all(norm < 1.5 for norm in norms) and len(norms)>8:
+        #         print("cambioooooo")
+        #         self.verse *= -1
+                
         # save info forces
         self.last_apf['f_a'] = f_a
         self.last_apf['f_r'] = f_r
@@ -610,8 +715,7 @@ class HouseSimulatorSocket(object):
         if not os.path.exists(path):
             os.mkfifo(path, self.mode)
             
-
-        
+     
     def send_command(self, command):
         with open(self.pipe_path_HS2P, "w") as pipe:
             # while True:
@@ -641,7 +745,39 @@ class HouseSimulatorSocket(object):
                 
                 # do something with the command
     
-
+    def test_plan(self):
+        
+        # 1) task definition
+        t1 = {"type": "move_object", "args": ['glasses', "table_living"], "free hands": True}
+        t2 = {"type": "reach_position", "args": ['free_space'], "free hands": True}
+        t3 = {"type": "reach_room", "args": ['studio'], "free hands": True}
+        
+        t4 = {"type": "move_object", "args": ['cards', "table_kitchen"], "free hands": True}
+        t5 = {"type": "reach_position", "args": ['sofa'], "free hands": True}
+        
+        task_description0 = [t3, t2]
+        task_description  = [t1,t2,t3]
+        task_description2 = [t4,t5]
+        
+        #2) parse for first set of tasks
+        self.parser.parse_goal(tasks_description= task_description0)
+        self.parser.parse_init(previous_plan = None)
+        
+        #3) exe first set of tasks
+        plan = self.solver.forward()
+        self.solver.print_plan(plan)
+        
+        #4) parse for second set of tasks, now we have to update using the previus plan (only the previous is needed and not older ones)
+        # parser.parse_goal(tasks_description= task_description2)
+        # parser.parse_init(previous_plan = plan)
+        
+        #5) exe second set of tasks
+        print("\n\n")
+        # plan = solver.forward()
+        # solver.print_plan(plan)
+        
+        return plan
+        
 """
                                                 test section
 """
