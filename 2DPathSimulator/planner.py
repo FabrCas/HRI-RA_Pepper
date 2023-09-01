@@ -118,10 +118,13 @@ class SolverFF():
         """
     
     def print_plan(self, plan):
-        for i, step_plan in enumerate(plan):
-            print("{:<2}) action = {:<15}".format(i, step_plan['action']))
-            arguments = self.argAction_semantic(step_plan)
-            print("     " + str(arguments))
+        if not(plan is None):
+            for i, step_plan in enumerate(plan):
+                print("{:<2}) action = {:<15}".format(i, step_plan['action']))
+                arguments = self.argAction_semantic(step_plan)
+                print("     " + str(arguments))
+        else:
+            print("Impossible or already satisfied plan")
 
         
 # output = subprocess.run(["ls -n"], shell=True, capture_output=True, text= True)
@@ -669,9 +672,11 @@ class ParserPDDL():
         if self.firstParsing: self.firstParsing = False
     
     def update_init(self,lines_init, plan):
+    
         for i_step, step in enumerate(plan):
             p2insert, p2remove = self.planStep2Predicates(step)
-            
+            print("insert", p2insert)
+            print("remove", p2remove)
             # remove predicates 
             if p2remove != []:
                 to_remove_p = []
@@ -679,7 +684,8 @@ class ParserPDDL():
                     if (any(p in line for p in p2remove)):
                         to_remove_p.append(idx)
                 
-                if to_remove_p == []:
+                # if to_remove_p == [] and len(p2remove)>0:
+                if len(to_remove_p) != len(p2remove):
                     # print(i_step, step)
                     # print(p2remove)
                     raise ValueError("Error in the elimination of predicates")
@@ -766,16 +772,24 @@ if __name__ == "__main__":
         t4 = {"type": "move_object", "args": ['glasses', "table_kitchen"], "free hands": True}
         t5 = {"type": "reach_position", "args": ['sofa'], "free hands": True}
         
+        task_description0 = [t3, t2]
         task_description  = [t1,t2,t3]
         task_description2 = [t4,t5]
         
         #2) parse for first set of tasks
-        parser.parse_goal(tasks_description= task_description2)
+        parser.parse_goal(tasks_description= task_description0)
         parser.parse_init(previous_plan = None)
         
         #3) exe first set of tasks
         plan = solver.forward()
         solver.print_plan(plan)
+        
+        parser.parse_goal(tasks_description= task_description0)
+        parser.parse_init(previous_plan = plan)
+        plan = solver.forward()
+        print(plan)
+        # solver.print_plan(plan)
+        
         
         #4) parse for second set of tasks, now we have to update using the previus plan (only the previous is needed and not older ones)
         # parser.parse_goal(tasks_description= task_description2)

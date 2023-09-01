@@ -185,7 +185,8 @@
         (on pink_notebook table_dining)
         
         ;                           pepper init 
-        (PepperIn foyer)
+        (openDoor d_studio_living)
+        (PepperIn studio)
         (PepperAt free_space)
         (freeHands)
     )

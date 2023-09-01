@@ -4,6 +4,7 @@ import math
 import os
 import threading
 import time
+from copy import deepcopy
 from planner import ParserPDDL, SolverFF
 
 class InputInterpreter(object):
@@ -529,15 +530,14 @@ class PepperMotion(object):
                 # print(f_v2, e2)
                 
                 delta = e1 -e2
-                # print(delta)
+                # # print(delta)
                 if delta > epsilon:
                     f_v = f_v2
                 elif delta < -epsilon:
                     f_v = f_v1
                 else:    # delta in the interval - epsiolon + episolon (stalemate case)
-                    print("bad case")
+                    # print("bad case")
                     # heuristic, it's better to move toward the center of the rooom
-                    
                     room_center = pg.math.Vector2(self.pepper.actual_room.x, self.pepper.actual_room.y)
                     to_center = room_center - pg.math.Vector2(self.pepper.x, self.pepper.y)
                     
@@ -557,8 +557,8 @@ class PepperMotion(object):
 
                     # if all(norm < 1.5 for norm in norms) and len(norms)>8:
                     avg_norms = sum(norms) / len(norms)
-                    print(avg_norms)
-                    if avg_norms < 6 and len(norms)>8:
+                    # print(avg_norms)
+                    if avg_norms < 6 and len(norms)>6:
                         self.saved_vortex= pg.math.Vector2.normalize(f_v)
                         self.saved_vortex *= speed
                         
@@ -598,20 +598,19 @@ class PepperMotion(object):
 
         # f_v = None
 
-        # detach_vortex = 0.9
+        # detach_vortex = 1.2
         # if f_r.length() >= detach_vortex * f_a.length():
-        #     f_a  = pg.math.Vector2(0,0)
-        #     f_r = pg.math.Vector2(0,0)
-            
+        #     if self.saved_vortex == None:
+        #         f_v = f_v.rotate(180)
+        #         self.saved_vortex = f_v
+
+                
         #     if f_v.length() > speed:
         #         f_v = pg.math.Vector2.normalize(f_v)
         #         f_v = speed  * f_v
                 
         #     f_t = f_v
-        
-        # save verse
-        # if f_v.length() > 0.5:
-        #     self.verse = verse
+
 
         # avoid saturation (by paraboloidal profile) clipping to cruise standard speed
         if f_t.length() > speed:
@@ -646,7 +645,7 @@ class PepperMotion(object):
 
 class HouseSimulatorSocket(object):
     
-    def __init__(self, interpreter, local_folder = False):
+    def __init__(self, interpreter, pepper, local_folder = False):
         super().__init__()
         self.local_folder = local_folder
         # self.pipe_path = "../tmp/pipe_sim"
@@ -660,6 +659,7 @@ class HouseSimulatorSocket(object):
         
         self.mode  = 0o600 # octal
         self.interpreter = interpreter
+        self.pepper = pepper
         
         # create pipes
         self.createFIFO(self.pipe_path_HS2P)
@@ -677,7 +677,7 @@ class HouseSimulatorSocket(object):
         
         
         # planner
-        self.previous_plan = False
+        self.previous_plan = None
         self.parser = ParserPDDL(pathsFromSim= True)
         self.solver = SolverFF(pathsFromSim=True)
         
@@ -746,7 +746,8 @@ class HouseSimulatorSocket(object):
                 # do something with the command
     
     def test_plan(self):
-        
+
+        print("previous plan:", self.previous_plan)
         # 1) task definition
         t1 = {"type": "move_object", "args": ['glasses', "table_living"], "free hands": True}
         t2 = {"type": "reach_position", "args": ['free_space'], "free hands": True}
@@ -759,22 +760,35 @@ class HouseSimulatorSocket(object):
         task_description  = [t1,t2,t3]
         task_description2 = [t4,t5]
         
-        #2) parse for first set of tasks
-        self.parser.parse_goal(tasks_description= task_description0)
-        self.parser.parse_init(previous_plan = None)
-        
-        #3) exe first set of tasks
-        plan = self.solver.forward()
-        self.solver.print_plan(plan)
-        
-        #4) parse for second set of tasks, now we have to update using the previus plan (only the previous is needed and not older ones)
-        # parser.parse_goal(tasks_description= task_description2)
-        # parser.parse_init(previous_plan = plan)
-        
-        #5) exe second set of tasks
-        print("\n\n")
-        # plan = solver.forward()
-        # solver.print_plan(plan)
+        if self.pepper.plan is None:   # is free and not busy
+            #2) parse for first set of tasks
+            self.parser.parse_goal(tasks_description= task_description0)
+            self.parser.parse_init(previous_plan = self.previous_plan)
+            
+            #3) exe first set of tasks
+            plan = self.solver.forward()
+            
+            self.previous_plan = deepcopy(plan)
+            
+            if not(plan is None):
+                self.solver.print_plan(plan)
+            
+            #4)execute the plan with pepper
+            print(plan)
+            self.pepper.provide_plan(plan)
+            
+            
+            #5) parse for second set of tasks, now we have to update using the previus plan (only the previous is needed and not older ones)
+            # parser.parse_goal(tasks_description= task_description2)
+            # parser.parse_init(previous_plan = plan)
+            
+            #6) exe second set of tasks
+            # print("\n\n")
+            # plan = solver.forward()
+            # solver.print_plan(plan)
+        else:
+            self.pepper.output_box.add_message(f"Pepper is busy cannot execute the task")
+            plan = None
         
         return plan
         

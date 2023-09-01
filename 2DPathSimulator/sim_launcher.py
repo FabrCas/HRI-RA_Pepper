@@ -91,7 +91,7 @@ def rendering():
     test_motion         = False
     test_grab           = False
     test_oc             = False
-    test_p              = True
+    test_p              = False
 
 
     # initialize the pygame engine, get main display object and clock for the rendering
@@ -123,7 +123,7 @@ def rendering():
     input_interpreter = InputInterpreter({"UI_DOs": ui_group,"text_boxes": text_boxes, "environment": env_group, "pepper": pepper})
 
     # custom socket for handling client/server communication between simualtors
-    sim_socket = HouseSimulatorSocket(input_interpreter)    # auto exe of listening function
+    sim_socket = HouseSimulatorSocket(input_interpreter, pepper)    # auto exe of listening function
 
     # use sim socket to request command for the other simulator
     
@@ -364,9 +364,9 @@ def rendering():
 
         if test_p:
             print("test plan on")
-            plan = sim_socket.test_plan()
-            print(plan)
-            pepper.provide_plan(plan)
+            # plan = sim_socket.test_plan()
+            # print(plan)
+            sim_socket.test_plan()
             
             test_p = False
             

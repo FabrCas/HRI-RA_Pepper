@@ -1783,6 +1783,7 @@ class Pepper(HouseElement):
                 elem = e
         self.toRoom = elem
         
+        self.actual_room = elem
         print(f'started the motion: {time.strftime("%H:%M:%S")}')
         print(f'target: {self.target}')
     
@@ -2229,10 +2230,13 @@ class Pepper(HouseElement):
     
     def provide_plan(self, plan):
         if self.plan is None:
-            self.plan = plan
-            self.listener_thread = threading.Thread(target = self.exe_plan)
-            self.listener_thread.daemon = True
-            self.listener_thread.start()
+            if not(plan is None):
+                self.plan = plan
+                self.listener_thread = threading.Thread(target = self.exe_plan)
+                self.listener_thread.daemon = True
+                self.listener_thread.start()
+            else:
+                self.output_box.add_message(f"task already satisfied or impossible to accomplish")
         else:
             self.output_box.add_message(f"Pepper is busy cannot execute the task")
         
@@ -2306,8 +2310,8 @@ class Pepper(HouseElement):
                 else:
                     raise ValueError("action requested is not described by the PDDL domain file")
         
-        
-        self.output_box.add_message(f"Pepper has completed the task assigned")            
+        # time.sleep(2)
+        # self.output_box.add_message(f"Pepper has completed the task assigned")            
         self.plan = None
                      
     # graphic methods
