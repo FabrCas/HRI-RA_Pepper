@@ -5,6 +5,7 @@ import os
 import threading
 import time
 from copy import deepcopy
+import json             # used to serialize string to array/dict and the opposite
 from planner import ParserPDDL, SolverFF
 
 class InputInterpreter(object):
@@ -738,29 +739,57 @@ class HouseSimulatorSocket(object):
                     print(f"Received command: {command}")
                 
                 # exe
-                if self.interpreter is not None:
-                    self.interpreter.execute(command)
+                task_descriptor = None
+                try:                # try to decode as a task descriptor
+                    task_descriptor = json.loads(command)   # for the opposite, object to string: serialized_dict = json.dumps(my_dict)
+                except:
+                    if self.interpreter is not None:
+                        self.interpreter.execute(command)
+                    
+                    # save the story for the actual session
+                    self.command_list.append(command)
                 
-                # save the story for the actual session
-                self.command_list.append(command)
-                
-                # do something with the command
+                if not (task_descriptor is None):
+                    self.send_task(task_descriptor)
+                    
     
-    def send_task(self):
-        pass
+    def send_task(self, task):
+        if self.pepper.plan is None:   # is free and not busy
+            #2) parse for first set of tasks
+            self.parser.parse_goal(tasks_description= task)
+            self.parser.parse_init(previous_plan = self.previous_plan)
+            
+            #3) exe first set of tasks
+            plan = self.solver.forward()
+            
+            self.previous_plan = deepcopy(plan)
+            
+            if not(plan is None):
+                self.solver.print_plan(plan)
+            
+            #4)execute the plan with pepper
+            print(plan)
+            self.pepper.provide_plan(plan)
+            self.counter += 1 
+            self.counter = self.counter%2
+        
+        else:
+            self.pepper.output_box.add_message(f"Pepper is busy cannot execute the task")
+            plan = None
+    
+        return plan
     
     def test_plan(self):
 
         print("previous plan:", self.previous_plan)
-        # 1) task definition
+        # 1) task atoms definition, and complete ones
         t1 = {"type": "move_object", "args": ['glasses', "table_living"], "free hands": True}
         t2 = {"type": "reach_position", "args": ['free_space'], "free hands": True}
         t3 = {"type": "reach_room", "args": ['studio'], "free hands": True}
-        
         t4 = {"type": "move_object", "args": ['cards', "table_kitchen"], "free hands": True}
         t5 = {"type": "reach_position", "args": ['sofa'], "free hands": True}
         
-        task_description0 = [t3, t2]
+        task_description0 = [t3,t2]
         task_description  = [t1,t2,t3]
         task_description2 = [t4,t5]
         
@@ -785,15 +814,8 @@ class HouseSimulatorSocket(object):
             print(plan)
             self.pepper.provide_plan(plan)
             self.counter += 1 
-            
-            #5) parse for second set of tasks, now we have to update using the previus plan (only the previous is needed and not older ones)
-            # parser.parse_goal(tasks_description= task_description2)
-            # parser.parse_init(previous_plan = plan)
-            
-            #6) exe second set of tasks
-            # print("\n\n")
-            # plan = solver.forward()
-            # solver.print_plan(plan)
+            self.counter = self.counter%2
+        
         else:
             self.pepper.output_box.add_message(f"Pepper is busy cannot execute the task")
             plan = None
