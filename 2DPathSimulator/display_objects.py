@@ -118,7 +118,7 @@ free_space_positions = {
     "living_room":  pg.math.Vector2(745, 562),
     "dining":       pg.math.Vector2(740, 930),
     "toilet":       pg.math.Vector2(690, 80),
-    "studio":       pg.math.Vector2(375, 135),
+    "studio":       pg.math.Vector2(75,275),        #pg.math.Vector2(375, 135),
     "bedroom":      pg.math.Vector2(75, 440),
     "kitchen":      pg.math.Vector2(195, 932),
     "outdoor":      pg.math.Vector2(935, 635) 
@@ -2348,11 +2348,11 @@ class Pepper(HouseElement):
         # r = get_rooms()
         # elem = None
         # for e in r:
-        #     if e.name == "outdoor":
+        #     if e.name == "studio":
         #         elem = e
     
-        # x = elem.x + 50
-        # y = elem.y - 170
+        # x = elem.x- 150
+        # y = elem.y +50
         
         # pg.draw.circle(self.screen, color=(0, 255, 0), center=(x,y), radius=5)
         # print(x,y)

@@ -680,6 +680,7 @@ class HouseSimulatorSocket(object):
         self.previous_plan = None
         self.parser = ParserPDDL(pathsFromSim= True)
         self.solver = SolverFF(pathsFromSim=True)
+        self.counter = 0
         
         
     # function to exe the commands as a queue of instructions
@@ -745,6 +746,9 @@ class HouseSimulatorSocket(object):
                 
                 # do something with the command
     
+    def send_task(self):
+        pass
+    
     def test_plan(self):
 
         print("previous plan:", self.previous_plan)
@@ -760,9 +764,13 @@ class HouseSimulatorSocket(object):
         task_description  = [t1,t2,t3]
         task_description2 = [t4,t5]
         
+        tasks_description = [task_description0,task_description, task_description2]
+        task = tasks_description[self.counter]
+        
+        
         if self.pepper.plan is None:   # is free and not busy
             #2) parse for first set of tasks
-            self.parser.parse_goal(tasks_description= task_description0)
+            self.parser.parse_goal(tasks_description= task)
             self.parser.parse_init(previous_plan = self.previous_plan)
             
             #3) exe first set of tasks
@@ -776,7 +784,7 @@ class HouseSimulatorSocket(object):
             #4)execute the plan with pepper
             print(plan)
             self.pepper.provide_plan(plan)
-            
+            self.counter += 1 
             
             #5) parse for second set of tasks, now we have to update using the previus plan (only the previous is needed and not older ones)
             # parser.parse_goal(tasks_description= task_description2)
