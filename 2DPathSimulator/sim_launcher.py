@@ -364,10 +364,7 @@ def rendering():
 
         if test_p:
             print("test plan on")
-            # plan = sim_socket.test_plan()
-            # print(plan)
             sim_socket.test_plan()
-            
             test_p = False
             
         # handle reset
