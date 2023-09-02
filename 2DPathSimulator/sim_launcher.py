@@ -92,6 +92,7 @@ def rendering():
     test_grab           = False
     test_oc             = False
     test_p              = False
+    test_message        = False
 
 
     # initialize the pygame engine, get main display object and clock for the rendering
@@ -169,6 +170,11 @@ def rendering():
                 for ui_elem in ui_group:
                     if ui_elem.type_DO == 'button' and (ui_elem.rect.collidepoint(mouse_pos)):
                         ui_elem.change_status()
+                        if ui_elem.name == "sleep":
+                            sim_socket.send_command("sleep "+ ui_elem.status)
+                        elif ui_elem.name == "microphone":
+                            sim_socket.send_command("microphone "+ ui_elem.status)
+                            
                         if ui_elem.name == 'HUD' and ui_elem.status == 'on':
                             extra_HUD = True
                         elif ui_elem.name == 'HUD' and ui_elem.status == 'off':
@@ -241,6 +247,7 @@ def rendering():
         test_grab       = input_interpreter.toggle_test_grab(test_grab)
         test_oc         = input_interpreter.toggle_test_open_close(test_oc)
         test_p          = input_interpreter.toggle_test_plan(test_p)
+        test_message    = input_interpreter.toggle_test_message(test_message)
         show_clearance  = input_interpreter.toggle_clearance(show_clearance)
         show_target     = input_interpreter.toggle_target(show_target)
         show_direction  = input_interpreter.toggle_direction(show_direction)
@@ -366,7 +373,10 @@ def rendering():
             print("test plan on")
             sim_socket.test_plan()
             test_p = False
-            
+        
+        if test_message:
+            sim_socket.send_command("ao")
+            test_message =False 
         # handle reset
         if input_interpreter.changed_reset:   # the reset is better to be handled directly in the main loop
 

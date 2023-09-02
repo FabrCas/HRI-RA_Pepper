@@ -148,6 +148,10 @@ class ParserPDDL():
 
         self.predicates = self.get_predicates()
         self.objects = self.get_objects()
+        
+        # init parsing
+        self.unknown_list = []
+        self.learned_list = []
 
         
     def get_objects(self):
@@ -466,7 +470,7 @@ class ParserPDDL():
             p = p.replace("?what", furniture)
             init_items.insert(len(init_items)-2, "        " +p + "\n")
           
-    def define_init(self, starting_init, unknown_list, learned_list):
+    def define_init(self, starting_init):
         lines_init = []
         
         #                       chunk init 
@@ -525,15 +529,20 @@ class ParserPDDL():
         
         
         #                         select unknown predicates
-        for unknown in unknown_list:
+        for learned in self.learned_list:
+            print(f"init adding: {learned}")
+            self.add_objectKnowledge(init_furniture, learned)
+        
+        for unknown in self.unknown_list:
+            print(f"init removing: {unknown}")
+
             self.remove_objectKnowledge(init_items, unknown)
             self.remove_objectKnowledge(init_furniture, unknown)
         
-        for learned in learned_list:
-            self.add_objectKnowledge(init_furniture, learned)
-            
-        # self.add_objectKnowledge(init_furniture, "gameboy","studio","desk_studio")
-        
+        # reset init list
+        self.learned_list = []
+        self.unknown_list = []
+              
         lines_init = [*header_init, *init_doors, *init_window_left, *init_window_right, *init_items, *init_furniture, *init_pepper]
         
         return lines_init
@@ -613,7 +622,7 @@ class ParserPDDL():
                 
         if self.firstParsing: self.firstParsing = False
         
-    def parse_init(self, unknown = [], learned = [], previous_plan = None):    #previous_plan used to update the init by actions
+    def parse_init(self, previous_plan = None):    #previous_plan used to update the init by actions
         """
             This function takes is used to parse the init section of problem file in PDDL:
             - unknonwn: list[dict] -> dict like {'object':(str), 'room':(str), 'furniture':(str)} 
@@ -656,7 +665,7 @@ class ParserPDDL():
         
         # 2) edit init 
         init_file = lines[idx_init_start:idx_init_end+1]
-        lines_init = self.define_init(init_file, unknown_list = unknown, learned_list = learned)   # learned list of dictionaries with this structure {'object':x, 'room':x, 'furniture':x} 
+        lines_init = self.define_init(init_file)   # learned list of dictionaries with this structure {'object':x, 'room':x, 'furniture':x} 
         
         # 3) update by previous plan if exists
         if previous_plan is not None:

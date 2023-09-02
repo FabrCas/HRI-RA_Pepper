@@ -227,7 +227,7 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
     studio.add_door("d_studio_living",living_room, status='close', displ=132)
 
     # bedroom -> living room
-    bedroom.add_door("d_bedroom_living",living_room, status='close', displ=-25)
+    bedroom.add_door("d_bedroom_living",living_room, status='close', displ=-70)
 
     # living room -> dining
     living_room.add_door("d_living_dining",dining, status='open', displ= -50)

@@ -23,6 +23,7 @@ class InputInterpreter(object):
         self.changed_test_motion        = False
         self.changed_test_open_close    = False
         self.changed_test_plan          = False
+        self.changed_test_message       = False
         self.changed_show_obstacles     = False
         self.changed_show_clearance     = False
         self.changed_show_direction     = False
@@ -66,6 +67,9 @@ class InputInterpreter(object):
         if "test_p" in message.strip().lower():   # test planning
             print("Started the planning test")
             self.changed_test_plan = True
+        if "message" in message.strip().lower():
+            print("Sending a message to the docker environment")
+            self.changed_test_message = True
         if "clearance" in message.strip().lower():   # clearance
             print("Changing the show of clearance...")
             self.changed_show_clearance = True
@@ -119,7 +123,6 @@ class InputInterpreter(object):
         self.changed_reset = False
             
 
-        
         return reset
     
     
@@ -227,6 +230,18 @@ class InputInterpreter(object):
             self.boxes[1].add_message(f"Show clearance: {show_clearance}")
 
         return show_clearance
+
+    def toggle_test_message(self, test_message):
+        if self.changed_test_message:
+
+            # change value
+            if test_message:test_message = False
+            else:test_message = True
+
+            # restore default value for input interpreter
+            self.changed_test_message = False
+            
+        return test_message
 
     def toggle_target(self, show_target):
         if self.changed_show_target:
@@ -387,8 +402,11 @@ class PepperMotion(object):
 
         # windows points
         for win in windows:
-            win_left_rect = win[0].rect_gfx.rect
-            win_right_rect = win[1].rect_gfx.rect
+            try:
+                win_left_rect = win[0].rect_gfx.rect
+                win_right_rect = win[1].rect_gfx.rect
+            except:
+                break
 
             # compute the points relative to the edge for the left window
             xs = list(range(win_left_rect.left, win_left_rect.right))
@@ -724,7 +742,7 @@ class HouseSimulatorSocket(object):
             if command is None:
                 command = input("Enter a command to send: ")
 
-            pipe.write(command + "\n")
+            pipe.write(command)
             pipe.flush()
             print("command has been flushed")
             
@@ -738,19 +756,35 @@ class HouseSimulatorSocket(object):
                 if command:
                     print(f"Received command: {command}")
                 
-                # exe
-                task_descriptor = None
-                try:                # try to decode as a task descriptor
-                    task_descriptor = json.loads(command)   # for the opposite, object to string: serialized_dict = json.dumps(my_dict)
-                except:
-                    if self.interpreter is not None:
-                        self.interpreter.execute(command)
+                    # exe
+                    task_descriptor = None
+                    try:                # try to decode as a task descriptor
+                        task_descriptor = json.loads(command)   # for the opposite, object to string: serialized_dict = json.dumps(my_dict)
+                        if task_descriptor == []: continue
                     
+                        if type(task_descriptor[0]) is str:
+                            print("to remove object info sent")
+                            self.parser.unknown_list = [*self.parser.unknown_list, *task_descriptor]
+                            # unknow  for init
+                        else:
+                            if "type" in list(task_descriptor[0].keys()):
+                                print("new task has been sent")
+                                self.send_task(task_descriptor)
+                                
+                            elif "object" in list(task_descriptor[0].keys()):
+                                print("new info about house item has been sent")  
+                                self.parser.learned_list = [*self.parser.learned_list, *task_descriptor]
+                   
+                    except:
+                        if self.interpreter is not None:
+                            self.interpreter.execute(command)
+                    
+
+
+                        
                     # save the story for the actual session
                     self.command_list.append(command)
                 
-                if not (task_descriptor is None):
-                    self.send_task(task_descriptor)
                     
     
     def send_task(self, task):
@@ -769,7 +803,7 @@ class HouseSimulatorSocket(object):
             
             #4)execute the plan with pepper
             print(plan)
-            self.pepper.provide_plan(plan)
+            self.pepper.provide_plan(plan, self)
             self.counter += 1 
             self.counter = self.counter%2
         
@@ -788,12 +822,24 @@ class HouseSimulatorSocket(object):
         t3 = {"type": "reach_room", "args": ['studio'], "free hands": True}
         t4 = {"type": "move_object", "args": ['cards', "table_kitchen"], "free hands": True}
         t5 = {"type": "reach_position", "args": ['sofa'], "free hands": True}
+        t6 = {"type": "reach_room", "args": ['dining'], "free hands": True}
         
+        t7 = {"type": "close_window", "args": ['wl_dining'], "free hands": True}
+        t8 = {"type": "close_window", "args": ['wr_dining'], "free hands": True}
+        t9 = {"type": "open_window", "args": ['wl_bedroom'], "free hands": True}
+        t10 = {"type": "open_window", "args": ['wr_bedroom'], "free hands": True}
+        # simple task
+        task_simple = [t6,t2]
+        
+        # open/close task
+        task_oc = [t7,t8,t9,t10,t2]
+        
+        # mixed task
         task_description0 = [t3,t2]
         task_description  = [t1,t2,t3]
         task_description2 = [t4,t5]
         
-        tasks_description = [task_description0,task_description, task_description2]
+        tasks_description = [task_oc, task_description0,task_description, task_description2]
         task = tasks_description[self.counter]
         
         
@@ -812,7 +858,7 @@ class HouseSimulatorSocket(object):
             
             #4)execute the plan with pepper
             print(plan)
-            self.pepper.provide_plan(plan)
+            self.pepper.provide_plan(plan, self)
             self.counter += 1 
             self.counter = self.counter%2
         

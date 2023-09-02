@@ -1563,7 +1563,7 @@ class Pepper(HouseElement):
         self.group.add(self.p_letter)
 
         # pepper socket for communication with simulator
-        self.socket: PepperMotion = PepperMotion(self)
+        self.motion: PepperMotion = PepperMotion(self)
 
         print(f"Pepper is in the {self.actual_room.name}")
 
@@ -1626,7 +1626,7 @@ class Pepper(HouseElement):
         
     def set_random_position(self):
         margin_from_wall = 20
-        rand_increment = self.socket.random_position(self.actual_room.width, self.actual_room.height, margin_from_wall)
+        rand_increment = self.motion.random_position(self.actual_room.width, self.actual_room.height, margin_from_wall)
         rand_pos_x = self.actual_room.rect.topleft[0] +  rand_increment[0]
         rand_pos_y = self.actual_room.rect.topleft[1] + rand_increment[1]
         print(f"Random position: {(rand_pos_x,rand_pos_y)}")
@@ -1637,23 +1637,23 @@ class Pepper(HouseElement):
         # check if the position lies on obstacles, in that case, recompute
         for k, window in self.actual_room.windows.items():
             if not(window[0].rect_gfx is None):     # left window
-                if self.socket.in_rect(window[0].rect_gfx.rect, pg.math.Vector2(self.x, self.y)):
+                if self.motion.in_rect(window[0].rect_gfx.rect, pg.math.Vector2(self.x, self.y)):
                     self.set_random_position()
                     return
             if not(window[1].rect_gfx is None):     # right window
-                if self.socket.in_rect(window[1].rect_gfx.rect, pg.math.Vector2(self.x, self.y)):
+                if self.motion.in_rect(window[1].rect_gfx.rect, pg.math.Vector2(self.x, self.y)):
                     self.set_random_position()
                     return
 
         for k, door in self.actual_room.doors.items():
             if not(door.rect_gfx is None):
-                if self.socket.in_rect(door.rect_gfx.rect, pg.math.Vector2(self.x, self.y)):
+                if self.motion.in_rect(door.rect_gfx.rect, pg.math.Vector2(self.x, self.y)):
                     self.set_random_position()
                     return
 
         for k, furniture in self.actual_room.furniture.items():
             if not(furniture.rect_gfx is None):
-                if self.socket.in_rect(furniture.rect_gfx.rect, pg.math.Vector2(self.x, self.y)):
+                if self.motion.in_rect(furniture.rect_gfx.rect, pg.math.Vector2(self.x, self.y)):
                     self.set_random_position()
                     return
         return
@@ -1675,7 +1675,7 @@ class Pepper(HouseElement):
 
     # motion methods
     def compute_clearance(self):
-        self.clearance, _ = self.socket.compute_clearance()
+        self.clearance, _ = self.motion.compute_clearance()
 
     def rotate2target(self):
         from_pos = pg.math.Vector2(self.x, self.y)
@@ -1715,7 +1715,7 @@ class Pepper(HouseElement):
                 self.direction_norm = pg.math.Vector2(0,0)
         else:
             # compute the total force using APF methods
-            f_t = self.socket.apf(self.target,self.P_SPEED, profile=self.profile)
+            f_t = self.motion.apf(self.target,self.P_SPEED, profile=self.profile)
 
             print(f_t)
             # we use this force as a generalized velocity
@@ -1762,7 +1762,7 @@ class Pepper(HouseElement):
                 self.direction_norm = pg.math.Vector2(0,0)
         else:
             # compute the total force using APF methods
-            f_t = self.socket.apf(self.target,self.P_SPEED, profile=self.profile)
+            f_t = self.motion.apf(self.target,self.P_SPEED, profile=self.profile)
 
             print(f_t)
             # we use this force as a generalized velocity
@@ -1805,7 +1805,7 @@ class Pepper(HouseElement):
                 self.direction_norm = pg.math.Vector2(0,0)
         else:
             # compute the total force using APF methods
-            f_t = self.socket.apf(self.target,self.P_SPEED, profile=self.profile)
+            f_t = self.motion.apf(self.target,self.P_SPEED, profile=self.profile)
 
             print(f_t)
             # we use this force as a generalized velocity
@@ -1841,7 +1841,7 @@ class Pepper(HouseElement):
                 self.direction_norm = pg.math.Vector2(0,0)
         else:
             # compute the total force using APF methods
-            f_t = self.socket.apf(self.target,self.P_SPEED, profile=self.profile)
+            f_t = self.motion.apf(self.target,self.P_SPEED, profile=self.profile)
 
             print(f_t)
             # we use this force as a generalized velocity
@@ -1904,7 +1904,7 @@ class Pepper(HouseElement):
 
         # apf method
         # compute the total force using APF methods
-        f_t = self.socket.apf(self.target, self.P_SPEED, profile=self.profile)
+        f_t = self.motion.apf(self.target, self.P_SPEED, profile=self.profile)
         print(f_t)
         self.direction = f_t
         try:
@@ -1991,7 +1991,7 @@ class Pepper(HouseElement):
         # apf method
 
         # compute the total force using APF methods
-        f_t = self.socket.apf(self.target, self.P_SPEED, profile=self.profile)
+        f_t = self.motion.apf(self.target, self.P_SPEED, profile=self.profile)
         self.direction = f_t
         try:
             self.direction_norm = pg.math.Vector2.normalize(self.direction)
@@ -2032,9 +2032,9 @@ class Pepper(HouseElement):
             self.x += self.P_SPEED * self.direction_norm.x  # x0 + vx [p/s] * 1 [s]
             self.y += self.P_SPEED * self.direction_norm.y  # y0 + vy [p/s] * 1 [s]
 
-        self.socket.last_positions.append(pg.math.Vector2(self.x, self.y))
-        if len(self.socket.last_positions) > 10:
-            self.socket.last_positions.pop(0)
+        self.motion.last_positions.append(pg.math.Vector2(self.x, self.y))
+        if len(self.motion.last_positions) > 10:
+            self.motion.last_positions.pop(0)
 
         if verbose: print(f"New position {(self.get_position())}")
         distance = (self.get_position() - self.target).length()
@@ -2045,13 +2045,13 @@ class Pepper(HouseElement):
             self.output_box.add_message(f"Pepper has reached {self.target_name}")
             print(f'completed the motion: {time.strftime("%H:%M:%S")}')
             self.reset_motion_variables()
-            self.socket.reset_motion_variables()
+            self.motion.reset_motion_variables()
 
         else:
             # if apf compute the new direction for the next step
             if self.use_apf:
                 # compute the total force using APF methods
-                f_t = self.socket.apf(self.target, self.P_SPEED, profile=self.profile)
+                f_t = self.motion.apf(self.target, self.P_SPEED, profile=self.profile)
                 # we use this force as a generalized velocity
                 self.direction = f_t
                 try:
@@ -2228,10 +2228,11 @@ class Pepper(HouseElement):
     
     # plan execution
     
-    def provide_plan(self, plan):
+    def provide_plan(self, plan, socket):
         if self.plan is None:
             if not(plan is None):
                 self.plan = plan
+                self.socket = socket
                 self.listener_thread = threading.Thread(target = self.exe_plan)
                 self.listener_thread.daemon = True
                 self.listener_thread.start()
@@ -2262,12 +2263,13 @@ class Pepper(HouseElement):
         return None
 
         
-    def exe_plan(self):
+    def exe_plan(self, send_action = True):
         
         while not (self.plan == []):
             if not(self.in_motion):
                 step = self.plan.pop(0)
                 if step['action'].strip().lower() == "move2":
+                    if send_action: self.socket.send_command("pepper motion")
                     room_name   =  step['arguments'][0].strip().lower()
                     # from_elem   =  step['arguments'][1].strip().lower()
                     to_elem     =  step['arguments'][2].strip().lower()
@@ -2285,26 +2287,33 @@ class Pepper(HouseElement):
                     
                     
                 elif step['action'].strip().lower() == "move2room":
+                    if send_action:self.socket.send_command("pepper motion")
                     direction  = step['arguments'][3].strip().lower()
                     room_name = step['arguments'][1].strip().lower()
                     self.move2Room(room_name=room_name, direction=direction)
                     
                 elif step['action'].strip().lower() == "open_door":
+                    if send_action:self.socket.send_command("pepper open")
                     self.openDoor(step['arguments'][0].strip().lower())
                     
                 elif step['action'].strip().lower() == "close_door":
+                    if send_action:self.socket.send_command("pepper close")
                     self.closeDoor(step['arguments'][0].strip().lower())
                     
                 elif step['action'].strip().lower() == "open_win":
+                    if send_action:self.socket.send_command("pepper open")
                     self.openWin(step['arguments'][0].strip().lower())
                     
                 elif step['action'].strip().lower() == "close_win":
+                    if send_action:self.socket.send_command("pepper close")
                     self.closeWin(step['arguments'][0].strip().lower())
                     
                 elif step['action'].strip().lower() == "grab_object":
+                    if send_action:self.socket.send_command("pepper grab")
                     self.grab(step['arguments'][0].strip().lower())
                     
                 elif step['action'].strip().lower() == "place_object":
+                    if send_action:self.socket.send_command("pepper place")
                     self.place(step['arguments'][2].strip().lower())
                 
                 else:
@@ -2366,63 +2375,63 @@ class Pepper(HouseElement):
         if (self.show_target and not(self.target is None)):
             pg.draw.circle(self.screen, (0, 130, 0), (self.target.x, self.target.y), radius=5)
 
-        if (self.show_forces and not(self.socket.last_apf == {})):
+        if (self.show_forces and not(self.motion.last_apf == {})):
             arc_angle_points = 12  # angle to compute points for the arrow
 
-            if ((self.socket.last_apf['f_a'] != None) and \
-                    ((self.socket.last_apf['f_a'].x != 0) or (self.socket.last_apf['f_a'].y != 0))):
+            if ((self.motion.last_apf['f_a'] != None) and \
+                    ((self.motion.last_apf['f_a'].x != 0) or (self.motion.last_apf['f_a'].y != 0))):
 
                 # attractive force
                 pg.draw.line(self.screen, (0, 0, 255), (self.x, self.y),
-                             (self.x + (self.socket.last_apf['f_a'].x * 25), self.y + (self.socket.last_apf['f_a'].y * 25)), width=3)
+                             (self.x + (self.motion.last_apf['f_a'].x * 25), self.y + (self.motion.last_apf['f_a'].y * 25)), width=3)
 
-                direction_offset_1 = self.socket.last_apf['f_a'].rotate(-int(arc_angle_points / 2))
-                direction_offset_2 = self.socket.last_apf['f_a'].rotate(int(arc_angle_points / 2))
+                direction_offset_1 = self.motion.last_apf['f_a'].rotate(-int(arc_angle_points / 2))
+                direction_offset_2 = self.motion.last_apf['f_a'].rotate(int(arc_angle_points / 2))
 
                 point_offset_1 = pg.math.Vector2((self.x + (direction_offset_1.x * 20)),
                                                  (self.y + (direction_offset_1.y * 20)))
                 point_offset_2 = pg.math.Vector2((self.x + (direction_offset_2.x * 20)),
                                                  (self.y + (direction_offset_2.y * 20)))
-                point_target = pg.math.Vector2((self.x + (self.socket.last_apf['f_a'].x * 25)),
-                                               (self.y + (self.socket.last_apf['f_a'].y * 25)))
+                point_target = pg.math.Vector2((self.x + (self.motion.last_apf['f_a'].x * 25)),
+                                               (self.y + (self.motion.last_apf['f_a'].y * 25)))
 
                 points = [point_offset_1, point_offset_2, point_target]
                 pg.draw.polygon(self.screen, (0, 0, 255), points, width=0)
 
             # repulsive force
-            if ((self.socket.last_apf['f_r'] != None) and \
-                    ((self.socket.last_apf['f_r'].x != 0) or (self.socket.last_apf['f_r'].y != 0))):
+            if ((self.motion.last_apf['f_r'] != None) and \
+                    ((self.motion.last_apf['f_r'].x != 0) or (self.motion.last_apf['f_r'].y != 0))):
                 pg.draw.line(self.screen, (255, 0, 0), (self.x, self.y),
-                             (self.x + (self.socket.last_apf['f_r'].x * 25), self.y + (self.socket.last_apf['f_r'].y * 25)), width=3)
+                             (self.x + (self.motion.last_apf['f_r'].x * 25), self.y + (self.motion.last_apf['f_r'].y * 25)), width=3)
 
-                direction_offset_1 = self.socket.last_apf['f_r'].rotate(-int(arc_angle_points / 2))
-                direction_offset_2 = self.socket.last_apf['f_r'].rotate(int(arc_angle_points / 2))
+                direction_offset_1 = self.motion.last_apf['f_r'].rotate(-int(arc_angle_points / 2))
+                direction_offset_2 = self.motion.last_apf['f_r'].rotate(int(arc_angle_points / 2))
 
                 point_offset_1 = pg.math.Vector2((self.x + (direction_offset_1.x * 20)),
                                                  (self.y + (direction_offset_1.y * 20)))
                 point_offset_2 = pg.math.Vector2((self.x + (direction_offset_2.x * 20)),
                                                  (self.y + (direction_offset_2.y * 20)))
-                point_target = pg.math.Vector2((self.x + (self.socket.last_apf['f_r'].x * 25)),
-                                               (self.y + (self.socket.last_apf['f_r'].y * 25)))
+                point_target = pg.math.Vector2((self.x + (self.motion.last_apf['f_r'].x * 25)),
+                                               (self.y + (self.motion.last_apf['f_r'].y * 25)))
 
                 points = [point_offset_1, point_offset_2, point_target]
                 pg.draw.polygon(self.screen, (255, 0, 0), points, width=0)
 
             # vortex field force
-            if ((self.socket.last_apf['f_v'] != None) and \
-                    ((self.socket.last_apf['f_v'].x != 0) or (self.socket.last_apf['f_v'].y != 0))):
+            if ((self.motion.last_apf['f_v'] != None) and \
+                    ((self.motion.last_apf['f_v'].x != 0) or (self.motion.last_apf['f_v'].y != 0))):
                 pg.draw.line(self.screen, (0, 255, 255), (self.x, self.y),
-                             (self.x + (self.socket.last_apf['f_v'].x * 25), self.y + (self.socket.last_apf['f_v'].y * 25)), width=3)
+                             (self.x + (self.motion.last_apf['f_v'].x * 25), self.y + (self.motion.last_apf['f_v'].y * 25)), width=3)
 
-                direction_offset_1 = self.socket.last_apf['f_v'].rotate(-int(arc_angle_points / 2))
-                direction_offset_2 = self.socket.last_apf['f_v'].rotate(int(arc_angle_points / 2))
+                direction_offset_1 = self.motion.last_apf['f_v'].rotate(-int(arc_angle_points / 2))
+                direction_offset_2 = self.motion.last_apf['f_v'].rotate(int(arc_angle_points / 2))
 
                 point_offset_1 = pg.math.Vector2((self.x + (direction_offset_1.x * 20)),
                                                  (self.y + (direction_offset_1.y * 20)))
                 point_offset_2 = pg.math.Vector2((self.x + (direction_offset_2.x * 20)),
                                                  (self.y + (direction_offset_2.y * 20)))
-                point_target = pg.math.Vector2((self.x + (self.socket.last_apf['f_v'].x * 25)),
-                                               (self.y + (self.socket.last_apf['f_v'].y * 25)))
+                point_target = pg.math.Vector2((self.x + (self.motion.last_apf['f_v'].x * 25)),
+                                               (self.y + (self.motion.last_apf['f_v'].y * 25)))
 
                 points = [point_offset_1, point_offset_2, point_target]
                 pg.draw.polygon(self.screen, (0, 255, 255), points, width=0)
