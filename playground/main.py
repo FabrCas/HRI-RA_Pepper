@@ -7,6 +7,22 @@ from pepperSocket import SimSocket
 # main loop in the docker iso execution (python 2.7)
 running_ended =  False
 
+
+def get_connectionData():
+	# take from env variables	
+	pip = os.getenv('PEPPER_IP')
+	if pip is None: PEPPER_IP = "127.0.0.1" 	# localhost
+	pport = os.getenv('PEPPER_PORT')
+	if pport is None: PEPPER_PORT = 9559 		# default port
+	connection_url = "tcp://" + pepper_ip + ":" + str(pepper_port)
+	return pip, pport, connection_url
+
+def init_AppSession(connection_url):   # not required initialization if you use pepper_tools
+    app = qi.Application(["App", "--qi-url=" + connection_url ])
+    app.start()             
+    session = app.session
+    return app, session
+
 def handler_sigint(sig, frame):
     print('\nYou pressed Ctrl+C!')
     # sys.exit(0)

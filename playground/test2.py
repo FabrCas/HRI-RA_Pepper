@@ -32,7 +32,7 @@ if __name__ == "__main__":
 		session = app.session
 		
 		"""
-		if False:
+		if True:
 			tts_service = session.service("ALTextToSpeech")
 			tts_service.setLanguage("English")
 			tts_service.setParameter("speed", 90)
