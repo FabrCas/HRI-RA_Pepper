@@ -8,13 +8,14 @@ Created on Mon Oct 24 22:06:46 2022
 
 import os, sys
 sys.path.append(os.getenv('PEPPER_TOOLS_HOME')+'/cmd_server')
+if os.getenv('PEPPER_PORT') is None:
+    os.environ["PEPPER_PORT"] = "9559"
 
 # sys.path.append(os.path.join(os.getenv('PEPPER_TOOLS_HOME'),'/cmd_server'))
 # print(os.getcwd())
 # print(os.getenv('PEPPER_TOOLS_HOME'))
 
 from naoqi import ALProxy
-from naoqi import *
 
 import pepper_cmd
 from pepper_cmd import *

@@ -1,7 +1,10 @@
 import os, sys
 sys.path.append(os.getenv('PEPPER_TOOLS_HOME')+'/cmd_server')
 import qi
+from naoqi import ALProxy
 
+if os.getenv('PEPPER_PORT') is None:
+	os.environ["PEPPER_PORT"] = "9559"
 
 # test without peppertools
 
@@ -18,6 +21,9 @@ app.start()
 session = app.session
 print("Connection to Naoqi estabilished")
 
-memory_service=app.session.service("ALMemory")
+memory_service= session.service("ALMemory")
+
+# asr_service = session.service("ALSpeechRecognition")
 
 
+asr = ALProxy("ALSpeechRecognition", pepper_ip, pepper_port)

@@ -9,15 +9,41 @@ running_ended =  False
 
 
 def get_connectionData():
-	# take from env variables	
+	# take from env variables if available, otherwise define and write temporal env variables
 	pip = os.getenv('PEPPER_IP')
-	if pip is None: PEPPER_IP = "127.0.0.1" 	# localhost
+	if pip is None:
+		pip = "127.0.0.1" 	# localhost
+		os.environ['PEPPER_IP'] = pip
+
 	pport = os.getenv('PEPPER_PORT')
-	if pport is None: PEPPER_PORT = 9559 		# default port
-	connection_url = "tcp://" + pepper_ip + ":" + str(pepper_port)
+	if pport is None:
+		pport = 9559 		# default port
+		os.environ['PEPPER_PORT'] = str(pport)
+
+	# define the connection URL
+	connection_url = "tcp://" + pip + ":" + str(pport)
 	return pip, pport, connection_url
 
-def init_AppSession(connection_url):   # not required initialization if you use pepper_tools
+def export_modimData():
+	# /home/faber/src/modim/demo/README.md
+	modim_home_path = "$HOME/src/modim"
+	modimg_app_path = "$HOME/playground/modim_app/sample"
+
+	modim_home = os.getenv("MODIM_HOME")
+	modim_app  = os.getenv("MODIM_APP")
+
+	if modim_home is None:
+		os.environ['MODIM_HOME'] = modim_home_path
+		modim_home = os.getenv("MODIM_HOME")
+	if modim_app is None:
+		os.environ['MODIM_APP'] = modimg_app_path
+		modim_app  = os.getenv("MODIM_APP")
+
+	return modim_home, mod
+
+
+# intialization: not required if you use pepper_tools
+def init_AppSession(connection_url):   
     app = qi.Application(["App", "--qi-url=" + connection_url ])
     app.start()             
     session = app.session
