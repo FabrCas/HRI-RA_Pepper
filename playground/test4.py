@@ -17,13 +17,20 @@ connection_url = "tcp://" + pepper_ip + ":" + str(pepper_port)
 
 
 app = qi.Application(["App", "--qi-url=" + connection_url ])
-app.start()          
+app.start()       
+
 session = app.session
 print("Connection to Naoqi estabilished")
 
-memory_service= session.service("ALMemory")
 
+# memory_service= session.service("ALMemory")
+
+   
 # asr_service = session.service("ALSpeechRecognition")
 
 
+# asr = ALProxy("ALSpeechRecognition", pepper_ip, pepper_port)
+
 asr = ALProxy("ALSpeechRecognition", pepper_ip, pepper_port)
+
+app.run()

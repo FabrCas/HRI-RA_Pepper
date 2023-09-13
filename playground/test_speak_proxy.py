@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 # -*- coding: utf-8 -*-
 """
 Created on Mon Oct 24 22:06:46 2022
@@ -15,27 +16,29 @@ if os.getenv('PEPPER_PORT') is None:
 # print(os.getcwd())
 # print(os.getenv('PEPPER_TOOLS_HOME'))
 
-from naoqi import ALProxy
+from naoqi import ALProxy  #The ALProxy object lets you create a proxy to a module.
 
 import pepper_cmd
 from pepper_cmd import *
 
-pepper_ip = os.getenv('PEPPER_IP')
-pepper_port = int(os.getenv('PEPPER_PORT'))
-connection_url = "tcp://" + pepper_ip + ":" + str(pepper_port)
+
+pepper_ip       = os.getenv('PEPPER_IP')
+pepper_port     = int(os.getenv('PEPPER_PORT'))
+connection_url  = "tcp://" + pepper_ip + ":" + str(pepper_port)
 
 
 
 """ ----------------------- start: FUNCTIONS ----------------------------- """
 
 def say(message):
+    # start the 
     try:
         tts = ALProxy("ALTextToSpeech", pepper_ip, pepper_port)
     except Exception as error:
         print("Error in the ALTextToSpeech proxy:")
         print(str(error))
         exit(1)
-        
+
     tts.say(message)
 
 def init_AppSession(connection_url):
@@ -49,7 +52,7 @@ def init_AppSession(connection_url):
         print("Connection to Naoqi estabilished")
         return app, session
     except RuntimeError:
-        print ("Can't connect to Naoqi …")
+        print("Can't connect to Naoqi")
 
 
 
@@ -71,20 +74,24 @@ if True:
 #         app = qi.Application(["Module name", "--qi-url=" + connection_url ])
 #         print("Connection to Naoqi verified")
 # except RuntimeError:
-#     print ("Can't connect to Naoqi …")
-
+#     print("Can't connect to Naoqi")
 # if you use pepper_tools is not required
 # app, session = init_AppSession(connection_url)
 
 
 """ ----------------------- start: execution ---------------------------- """
 say("Hello world!")
-begin()
-pepper_cmd.robot.say("this is from pepper cmd")
-# 
-pepper_cmd.sax()
-end()
+
+
+
 exit(0)
+
+
+# begin()
+#pepper_cmd.robot.say("this is from pepper cmd") 
+#pepper_cmd.sax()
+#end()
+
 """ ----------------------- end: execution ------------------------------ """
 
 
