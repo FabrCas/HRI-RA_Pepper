@@ -1,0 +1,34 @@
+Commands
+
+all relative path from Documents/EAI2_local/
+
+	
+launch and access the container:
+	move to the docker folder: cd hri_software/docker
+	./run.bash
+	docker exec -it pepperhri tmux a
+
+run naoqui:
+	cd hri_software/docker/downloads/naoqi-sdk-2.5.5.5-linux64
+	./naoqi
+
+launch choregraphe:
+	move to the softbank folder: cd softbank
+	./choregraphe-bin
+	
+# second option -> launch android sdk (look is choregraphe doesn't work properly)
+
+
+
+
+If you are using tmux in docker (default configuration), use CTRL-b c to create new tmux windows.
+
+
+
+or use the following script in order (TODO a full complete script):
+./launch_docker.sh
+./launch_docker.sh    	-> get playground env
+./launch_naoqi.sh 	-> get naoqi socket for communication with simulator
+./launch_sim.sh 	-> connect to naoqi (connection-> connect to virtual robot, connection -> connect to -> robot with port 9595)
+./start_modim.sh	-> start modim server
+./launch_modim.sh 	-> load the modim application at localhost IP
