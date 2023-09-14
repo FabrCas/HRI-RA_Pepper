@@ -5,4 +5,5 @@ then connection> connect to... and select the simulated robot on the port 9559 a
 
 
 how to launch modim app:
-
+start modim server using: 	./start_modim.sh
+launch web application with: 	./launch_modim.sh

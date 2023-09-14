@@ -2,13 +2,28 @@ import os
 import sys
 import time
 import signal
-from pepperSocket import SimSocket
+from pepperSocket import SimSocket					# RA module connection
+from naoqi import ALProxy
+from services import Touch
 
-# main loop in the docker iso execution (python 2.7)
-running_ended =  False
+
+# if using pepper tools
+sys.path.append(os.getenv('PEPPER_TOOLS_HOME')+'/cmd_server')
+import pepper_cmd
+from pepper_cmd import * 
 
 
-def get_connectionData():
+# paths from ./playground folder
+modim_path = "./modim_app/"
+topics_path = "./topics/"
+
+
+running_ended =  False # boolean flag for main loop in the docker iso execution (python 2.7)
+
+
+# ---------------------------------------- [environment functions]
+
+def export_connectionData():
 	# take from env variables if available, otherwise define and write temporal env variables
 	pip = os.getenv('PEPPER_IP')
 	if pip is None:
@@ -42,7 +57,15 @@ def export_modimData():
 	return modim_home, mod
 
 
-# intialization: not required if you use pepper_tools
+
+# ---------------------------------------- [callbacks]
+
+
+
+
+# ---------------------------------------- [init functions]
+
+# initialization: not required if you use pepper_tools or call directly the ALProxy
 def init_AppSession(connection_url):   
     app = qi.Application(["App", "--qi-url=" + connection_url ])
     app.start()             
@@ -58,28 +81,40 @@ def handler_sigint(sig, frame):
 
 def main():
 	socket_simulator = SimSocket()
-	while True:
-		if running_ended:break
+	pip, pport, connection_url = export_connectionData()
 
-		# 3 different types of command to send
-		# add knowledge		-> i.e [{'object':'smartphone', 'room':"bedroom", 'furniture':"bed"}, {'object':'glasses', 'room':"toilet", 'furniture':"sink"}, ...]
-		# remove knowledge	-> i.e ["smartphone", "glasses"]
-		# perform task		-> i.e [{"type": "move_object", "args": ['glasses', "table_living"], "free hands": True}, ...]
+	# load services using ALProxy
+	memory_service 			= 	ALProxy("ALMemory", pip, pport)
 
-		command = ""
-		text_input = raw_input("Enter 1(add), 2(remove), 3(task) or exit\n")
 
-		if text_input.strip().lower() 	== "1":
-			command = [{'object':'smartphone', 'room':"bedroom", 'furniture':"bed"}, {'object':'glasses', 'room':"toilet", 'furniture':"sink"}]
-		elif text_input.strip().lower() == "2":
-			command = ["smartphone", "glasses"]
-		elif text_input.strip().lower() == "3":
-			command = [{"type": "move_object", "args": ['glasses', "table_living"], "free hands": True}]
-		elif text_input.strip().lower() == "exit":
-			print("terminating execution...")
-			break
+	# load custom services
+	service_touch = Touch(memory_service)
 
-		socket_simulator.send_command(command)
+
+	if False:
+		# interact with house simulator
+		while True:
+			if running_ended:break
+
+			# 3 different types of command to send
+			# add knowledge		-> i.e [{'object':'smartphone', 'room':"bedroom", 'furniture':"bed"}, {'object':'glasses', 'room':"toilet", 'furniture':"sink"}, ...]
+			# remove knowledge	-> i.e ["smartphone", "glasses"]
+			# perform task		-> i.e [{"type": "move_object", "args": ['glasses', "table_living"], "free hands": True}, ...]
+
+			command = ""
+			text_input = raw_input("Enter 1(add), 2(remove), 3(task) or exit\n")
+
+			if text_input.strip().lower() 	== "1":
+				command = [{'object':'smartphone', 'room':"bedroom", 'furniture':"bed"}, {'object':'glasses', 'room':"toilet", 'furniture':"sink"}]
+			elif text_input.strip().lower() == "2":
+				command = ["smartphone", "glasses"]
+			elif text_input.strip().lower() == "3":
+				command = [{"type": "move_object", "args": ['glasses', "table_living"], "free hands": True}]
+			elif text_input.strip().lower() == "exit":
+				print("terminating execution...")
+				break
+
+			socket_simulator.send_command(command)
 
 
 
