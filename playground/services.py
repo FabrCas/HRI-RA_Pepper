@@ -101,8 +101,220 @@ class Sonar:
     #we use only the frontal sonar, so it will discover only humans in front of him
 
 class Animations:
-    def __init__():
+    def __init__(self, motion_service, tts_service, posture_service):
+        self.motion     = motion_service
+        self.tts        = tts_service
+        self.posture    = posture_service
+ 
+        self.open_hand  = False   # boolean flag to indicate if a
+  
+    
+    # --------------------- default animations from posture service
+
+    def stand(self, speed = 1):
+        jointNames = ["HeadYaw", "HeadPitch"]
+        angles = [0, 0]
+        times  = [5.0, 5.0]
+        isAbsolute = True
+        self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+        self.posture.goToPosture("Stand",speed)
+
+    def crouch(self, speed = 1):
+        self.posture.goToPosture("Crouch",0.7)
+
+    def stand_zero(self, speed = 1):
+        self.posture.goToPosture("StandZero",speed)
+
+    def stand_init(self,speed = 1):
+        self.posture.goToPosture("StandInit", speed)
+
+
+    # --------------------- custom animations
+    def default(self):
+        self.stand_init()  #todo
+
+        # close hand
+        if not self.open_hand:
+            names  = ["RHand"]
+            angles  = [0]
+            fractionMaxSpeed  = 0.2
+            self.motion.setAngles(names, angles, fractionMaxSpeed)
+
+
+    def greet(self): 
+
+        # move arm  
+        jointNames = ["RShoulderPitch", "RShoulderRoll", "RElbowRoll", "RWristYaw", "RHand", "HipRoll", "HeadPitch"]
+        angles = [-0.141, -0.46, 0.892, -0.8, 0.98, -0.07, -0.07]
+        times  = [2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0]
+        isAbsolute = True
+        self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+        # move hand
+        for i in range(2):
+            jointNames = ["RElbowYaw", "HipRoll", "HeadPitch"]
+            angles = [1.8, -0.07, -0.07]
+            times  = [1,1,1]
+            isAbsolute = True
+            self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+            jointNames = ["RElbowYaw", "HipRoll", "HeadPitch"]
+            angles = [1, -0.07, -0.07]
+            times  = [1,1,1]
+            isAbsolute = True
+            self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+        # move back to init stand
+        self.stand_init() 
+        return
+    
+    def yes(self):
+        for i in range(2):
+            jointNames = ["HeadPitch"]
+            angles = [-0.3]
+            times  = [1.0]
+            isAbsolute = True
+            self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+            jointNames = ["HeadPitch"]
+            angles = [0.1]
+            times  = [1.0]
+            isAbsolute = True
+            self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+        return 
+
+    def no(self):  
+        jointNames = ["HeadYaw"]
+        angles = [-0.5]
+        times  = [0.5]
+        isAbsolute = True
+        self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+        jointNames = ["HeadYaw"]
+        angles = [0.5]
+        times  = [1.0]
+        isAbsolute = True
+        self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+
+        jointNames = ["HeadYaw"]
+        angles = [0]
+        times  = [0.5]
+        isAbsolute = True
+        self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+        return 
+
+    # --------------------- custom animations (actions)
+
+    def search(self):
+        for i in range(2):
+            jointNames = ["HeadYaw", "HeadPitch"]
+            angles = [0.5, 0.5]
+            times  = [2,2]
+            isAbsolute = True
+            self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+            jointNames = ["HeadYaw", "HeadPitch"]
+            angles = [-0.5, 0.5]
+            times  = [2,2]
+            isAbsolute = True
+            self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+        jointNames = ["HeadYaw", "HeadPitch"]
+        angles = [0, 0]
+        times  = [1.5, 1.5]
+        isAbsolute = True
+        self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+        return
+
+    def grab(self):
+
+        # look 
+        jointNames = ["HeadPitch"]
+        angles = [0.3]
+        times  = [1]
+        isAbsolute = True
+        self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+
+        # inflect body
+        jointNames = ["KneePitch", "HipPitch"]
+        angles = [-0.3, -1]
+        times  = [1, 1]
+        isAbsolute = True
+        self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+        # move shoulder, elbow and twist while to take central object, while opening hand
+
+        jointNames = ["RShoulderPitch","RShoulderRoll", "RElbowRoll", "RElbowYaw","RHand","RWristYaw"]   
+        angles = [0.8, -0.2,  1, 0.7, 1, -0.8]  #0.8
+        times  = [1,1, 2, 2, 2, 2]
+        isAbsolute = True
+        self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+
+        # close hand
+        jointNames = ["RHand"]   
+        angles = [0]
+        times  = [1]
+        isAbsolute = True
+        self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+        self.open_hand = False
+
+
+    def place(self):
+        names  = ["RHand"]
+        angles  = [0]
+        fractionMaxSpeed  = 0.2
+        self.motion.setAngles(names, angles, fractionMaxSpeed)
+        
+        # look  
+        jointNames = ["HeadPitch"]
+        angles = [0.3]
+        times  = [1]
+        isAbsolute = True
+        self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+        # inflect body
+        jointNames = ["KneePitch", "HipPitch"]
+        angles = [-0.3, -1]
+        times  = [1, 1]
+        isAbsolute = True
+        self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+        # move shoulder, elbow and twist while to take central object, while opening hand
+        jointNames = ["RShoulderPitch","RShoulderRoll", "RElbowRoll", "RElbowYaw","RWristYaw"]   
+        angles = [0.8, -0.2,  1, 0.7, -0.8]  #0.8
+        times  = [1,1, 2, 2, 2]
+        isAbsolute = True
+        self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+
+        # open hand
+        jointNames = ["RHand"]   
+        angles = [1]
+        times  = [1]
+        isAbsolute = True
+        self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+        self.open_hand = True
+
+
+    def openDoor(self):
+        pass 
+
+    def closeDoor(self):
         pass
+
+    def closeWin(self):
+        pass
+
+    def openWin(self):
+        pass
+
 
 class Motion:
     def __init__(self, motion_service):

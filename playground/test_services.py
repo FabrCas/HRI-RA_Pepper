@@ -1,7 +1,7 @@
 import os
 import sys
 from naoqi import ALProxy
-from services import Touch, Sonar, Motion
+from services import Touch, Sonar, Motion, Animations
 import qi 
 
 sys.path.append(os.getenv('PEPPER_TOOLS_HOME')+'/cmd_server')
@@ -36,6 +36,7 @@ audioPlayer_service	 	= 	session.service("ALAudioPlayer")
 motion_service 			= 	session.service("ALMotion")
 dialog_service			= 	session.service('ALDialog')
 anim_speech_service 	= 	session.service("ALAnimatedSpeech")
+tts_service 			= 	session.service("ALTextToSpeech")
 robot_posture_service 	= 	session.service("ALRobotPosture")
 touch_service 			= 	session.service("ALTouch")
 
@@ -43,7 +44,7 @@ touch_service 			= 	session.service("ALTouch")
 
 
 
-activate = [0,0,0,0,0,1]
+activate = [0,0,0,0,0,0,1]
 
 						# head motion code
 if activate[0]:
@@ -125,16 +126,32 @@ if activate[5]:
 
 	# motion = Motion(motion_service)
 	# motion.setSpeed(lin_vel = 0.001, ang_vel = 0, motion_time = 5)
-
-
 	# begin() # connect to robot/simulator with IP in PEPPER_IP env variable
-
-
-
 	# pepper_cmd.robot.startSensorMonitor()  # non-blocking
 	# pepper_cmd.robot.startLaserMonitor()   # non-blocking
-
 	# pepper_cmd.robot.turn(2)
 	# pepper_cmd.robot.setSpeed(0,1.5,0,4,stopOnEnd=True)
-
 	# end()
+
+if activate[6]:
+	# Wake up robot
+    # motion_service.wakeUp()
+
+    # # Send robot to Pose Init
+    # posture_service.goToPosture("StandInit", 0.5)
+
+    # # Go to rest position
+    # motion_service.rest()
+
+
+
+	animations = Animations(motion_service, tts_service, robot_posture_service) 
+
+
+	animations.grab()
+	animations.default()
+	animations.place()
+	animations.default()
+
+
+
