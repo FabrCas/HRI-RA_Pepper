@@ -34,6 +34,7 @@ session = app.session
 memory_service 			=   session.service("ALMemory")
 audioPlayer_service	 	= 	session.service("ALAudioPlayer")
 motion_service 			= 	session.service("ALMotion")
+
 dialog_service			= 	session.service('ALDialog')
 anim_speech_service 	= 	session.service("ALAnimatedSpeech")
 tts_service 			= 	session.service("ALTextToSpeech")
@@ -41,7 +42,7 @@ robot_posture_service 	= 	session.service("ALRobotPosture")
 touch_service 			= 	session.service("ALTouch")
 
 # asr_service  			=	session.service("ALSpeechRecognition")   # does not work for simulation kek 
-
+# navigation_service 		=	session.service("ALNavigation")      # does not work for simulation kek2
 
 
 activate = [0,0,0,0,0,0,1]
@@ -92,16 +93,17 @@ if activate[4]:
 if activate[5]:
 	print("motion test")
 
-	# Wake up robot
-	motion_service.wakeUp()
 
-	# Send robot to Pose Init
-	robot_posture_service.goToPosture("StandInit", 0.5)
+	navigation_service.startFreeZoneUpdate()
+
+	# success = motion_service.setCollisionProtectionEnabled("Body", False)
+	# if(not success):
+	# 	print("Failed to disable collision protection")
+
 
 	x     = 1.0	
 	y     = 0.0
 	theta = 0.0
-	# frequency = 1.0
 	motion_service.moveToward(x, y, theta)
 
 	# If we don't send another command, he will move forever
@@ -113,15 +115,12 @@ if activate[5]:
 
 	# Lets make him slow down(frequency) after 3 seconds
 	time.sleep(3)
-	frequency = 0.5
 	motion_service.moveToward(x, y, theta)
 
 	# Lets make him stop after 3 seconds
 	time.sleep(3)
 	motion_service.stopMove()
 
-	# Go to rest position	
-	motion_service.rest()
 
 
 	# motion = Motion(motion_service)
@@ -145,13 +144,23 @@ if activate[6]:
 
 
 
-	animations = Animations(motion_service, tts_service, robot_posture_service) 
 
 
-	animations.grab()
+	animations = Animations(motion_service, tts_service, robot_posture_service)
+	# animations.interactDoor()
+	# animations.default() 
+	animations.interactWin()
 	animations.default()
-	animations.place()
-	animations.default()
+
+
+
+
+	# animations.search()
+	# animations.grab()
+	# animations.default()
+	# animations.place()
+	# animations.default()
+
 
 
 
