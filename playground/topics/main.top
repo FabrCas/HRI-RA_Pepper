@@ -1,12 +1,43 @@
-topic: ~welcome ()
+topic: ~house-assistant()
 language: enu
 
-concept:(want) [want need desire like]
-concept:(alcohol) [beer vodka "red wine"]
-concept:(child-drink) ["orange juice" milk]
-concept:(drink) [~alcohol ~child-drink]
+concept: (myname) ["My name is" "I'm" ]
 
-u: (what do you do) I can help people with drinks
 
-u:(I ~want to drink) what you ~want to drink?
-    u1:(* _~drink) do you want me to search $1 for you?
+proposal: %tablet Ok, Let's launch my tablet application. Tell me "finish" when have concluded to use it.
+	u1: (finish) Ok, Do you want to do something else?
+		u2: (yes) ^goto(music)
+		u3: (no) ok, i stay here if you need something
+
+
+proposal: %music Ok, I have a song for you, do you want to listen?
+	u1: (yes) Perfect! Just a moment. Here it is. Tell me "stop" to end the music playback.
+		u2: (stop) ok, i stop music.
+	u1: (no) Ok, goodbye.
+
+
+proposal: %conversate Do you want to conversate?
+	u1: (no) Ok, goodbye.
+
+proposal: %name What's your name?
+	u1: ({~myname} _*) Hi $1
+
+// u: (hello) Hi Human 
+
+u: (["what can you do" "what you can do"]) i can help you providing different functionalities as house assistant.You can ask me to: open/close windows & doors, move object in the house.Moreover you can register new objects whether I don't know enough about.
+
+
+u: (["can you describe the house" "tell me about this house"]) Of course! This is a beautiful house, with eight different rooms: the Foyer, the Toilet, the living Room, the dining room, the studio, the kitchen, and a bedroom.
+Now we are in the Foyer.
+
+u: (["task" "action" "job" "assignment"] {_*}) You can ask me to peform a task, interacting with the tablet. you want to do now?
+	u1:(yes) ^goto(tablet)
+	u1:(no) OK, goodbye.
+
+u: (["tablet"]  {_*}) ^goto(tablet)
+
+u: (["hello" "hi"] {_*}) ^goto(name)
+
+u: (["Great" "Nice" "Perfect"]) I'm happy to be helpful
+
+u: (["play" "song" "music"] {_*}) ^goto(music) 

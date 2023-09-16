@@ -42,7 +42,12 @@ def export_connectionData():
 def export_modimData():
 	# /home/faber/src/modim/demo/README.md
 	modim_home_path = "$HOME/src/modim"
-	modimg_app_path = "$HOME/playground/modim_app/sample"
+	modimg_app_path = "$HOME/playground/modim/app"
+
+
+	os.environ['MODIM_HOME'] = modim_home_path
+	os.environ['MODIM_APP'] = modimg_app_path
+
 
 	modim_home = os.getenv("MODIM_HOME")
 	modim_app  = os.getenv("MODIM_APP")
@@ -67,14 +72,48 @@ def handler_sigint(sig, frame):
 
 
 def callback_ans(answer_message):
-	print(answer_message)
-	
-	pass
+	print "answer: "+answer_message
+	yes_kw = ["task", "tablet", "job", "assignment", "action"]
+
+	if "goodbye" in answer_message.strip().lower():
+		animations.greet()
+
+	elif "launch" in answer_message.strip().lower():
+		print("launching tablet application")
+		launch_tablet()
+
+	elif any(name in answer_message.strip().lower() for name in yes_kw):
+		animations.yes()
+
+	elif "here it is" in answer_message.strip().lower():
+		print("starting music")
+		# print(song_path)
+		global fileId
+		player_service.playFile(song_path, _async=True)
+		animations.dance()
+
+
 
 def callback_inp(input_message):
-	print(input_message)
-	pass
+	print "input: "+input_message
+
+	if "stop" in input_message.strip().lower():
+		print("stopping music")
+		for i in range(100):
+			try:
+				player_service.stop(i)
+			except:
+				pass
+		animations.continue_dance = False
+
+	
 # ---------------------------------------- [init functions]
+
+
+def launch_tablet():
+	print modim_path
+
+	
 
 # initialization: not required if you use pepper_tools or call directly the ALProxy
 def init_AppSession(connection_url):   
@@ -89,9 +128,12 @@ def main():
 	pip, pport, connection_url = export_connectionData()
 
 	# define paths
+	global song_path, modim_path
 	project_path  = "/home/faber/playground/"
 	topic_path = project_path + "topics/main.top"
 	modim_path = project_path + "modim/app"
+	static_path = project_path + "static/"
+	song_path = static_path + "Smash_Mouth_-_All_Star.wav"
 
 	running =  True  # main loop flag 
 
@@ -104,11 +146,14 @@ def main():
 		sys.exit(1)
 
 	# load services using ALProxy
+	
+	global player_service
 	memory_service 			= 	session.service("ALMemory")
 	motion_service			=   session.service("ALMotion")
 	posture_service         = 	session.service("ALRobotPosture")
 	tts_service 			= 	session.service("ALTextToSpeech")
 	dialog_service 			=	session.service('ALDialog')
+	player_service			=	session.service('ALAudioPlayer')
 
 
 
@@ -119,12 +164,15 @@ def main():
 	dialog_service.setLanguage('English')
 
 	# load custom services
+	global animations
+
 	touch 			= Touch(memory_service)
 	animations 		= Animations(motion_service, posture_service)
 	sonar           = Sonar(memory_service)
 	motion          = Motion(motion_service)
 
 	# 							start demo
+	# todo include animiations
 	# animations.wakeUp()
 	# animations.greet()
 	# tts_service.say("Hello human, my name is Pepper and in this demo, i can show you my abilities as house assistant.")
@@ -144,21 +192,9 @@ def main():
 		if running_ended:break    # break if you press CTRL+C (SignInt)
 
 		try:
-			user_input = raw_input("Interact with the robot:\nTo terminate the conversation insert [stop, finish] or touch Pepper's hands or head inserting [Head, LHand, RHand]\n")
+			user_input = raw_input("Interact with the robot:\nTo terminate the conversation insert [end] or touch Pepper's hands or head inserting [Head, LHand, RHand]\n")
 
 		except KeyboardInterrupt:
-
-			flag_stop = False
-
-			# Stop the dialog engine, then deactivate and unlaod topic
-			dialog_service.unsubscribe('house_pepper')
-			dialog_service.deactivateTopic(topic_name)
-			dialog_service.unloadTopic(topic_name)   
-
-			# continue and exit
-			continue
-
-		if ("stop" in user_input.strip().lower()) or ("finish" in user_input.strip().lower()):
 
 			running = False
 
@@ -167,24 +203,45 @@ def main():
 			dialog_service.deactivateTopic(topic_name)
 			dialog_service.unloadTopic(topic_name)   
 
-			# animations.rest()
+			# continue and exit
+			continue
+
+		if ("end" in user_input.strip().lower()):
+
+			running = False
+
+			# Stop the dialog engine, then deactivate and unlaod topic
+			dialog_service.unsubscribe('house_pepper')
+			dialog_service.deactivateTopic(topic_name)
+			dialog_service.unloadTopic(topic_name)   
+
+			
 			# continue and exit
 			continue
 		
 		# touch actions by the user
 		elif "head" in user_input.strip().lower():
 			if touch.set("Head"):
-				tts_service.say("You touched my head", _async=True)    
+				tts_service.say("You touched my head", _async=True)
+				if motion_service.robotIsWakeUp():
+					tts_service.say("This is my custom command for the rest, touch my head again to wake me", _async=True)
+					animations.rest()
+					tts_service.say("ZZZ \\pau=2000\\", _async=True)
+				else:
+					animations.wakeUp()
+					tts_service.say("I'm awake now! Is nice to see you again!", _async=True)
 		
 		elif "lhand" in  user_input.strip().lower():
 			if touch.set("LHand"):
                 # tts_service.say("?"+" "*5, _async=True)    
 				tts_service.say("You touched my left hand", _async=True) 
+				tts_service.say("I can help you with anything?", _async=True) 
 
 		elif "rhand" in user_input.strip().lower():
 			if touch.set("RHand"):
                 # tts_service.say("?"+" "*5, _async=True)   
 				tts_service.say("You touched my right hand", _async=True) 
+				tts_service.say("I can help you with anything?", _async=True)
 
 
 

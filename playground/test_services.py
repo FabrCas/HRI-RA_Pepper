@@ -41,11 +41,15 @@ tts_service 			= 	session.service("ALTextToSpeech")
 robot_posture_service 	= 	session.service("ALRobotPosture")
 touch_service 			= 	session.service("ALTouch")
 
+player_service          =   session.service("ALAudioPlayer")
+
 # asr_service  			=	session.service("ALSpeechRecognition")   # does not work for simulation kek 
 # navigation_service 		=	session.service("ALNavigation")      # does not work for simulation kek2
 
 
-activate = [0,0,0,0,0,0,1]
+activate = [0,0,0,
+			0,0,0,
+			0,0,1]
 
 						# head motion code
 if activate[0]:
@@ -142,11 +146,7 @@ if activate[6]:
     # # Go to rest position
     # motion_service.rest()
 
-
-
-
-
-	animations = Animations(motion_service, tts_service, robot_posture_service)
+	animations = Animations(motion_service, robot_posture_service)
 
 	# animations.search()
 	# animations.grab()
@@ -155,7 +155,125 @@ if activate[6]:
 	# animations.search()
 	# animations.place()
 
+	animations.dance()
+	# animations.interactWin()
+
+if activate[7]:
+
+	def callback_ans(answer_message):
+		print(answer)
+		pass
+
+	def callback_inp(input_message):
+		print(input_message)
+		pass
+
+	touch_service = Touch(memory_service)
+
+	print(os.getcwd())
+
+	dialog_service.setLanguage('English')
+	project_path  = "/home/faber/playground/"
+	topic_path = project_path + "topics/main.top"
+
+	print(topic_path)	
+
+	topic_path = topic_path.decode('utf-8')
+	topic_name = dialog_service.loadTopic(topic_path.encode('utf-8'))
+
+	# Adds the specified topic to the list of the topics that are currently used by the dialog engine to parse inputs of human.
+	dialog_service.activateTopic(topic_name)
+
+	# Start dialog
+	# Starts the dialog engine. Starts the speech recognition on robot.
+	# The dialog engine will stop when all subscribers will have unsubscribed.
+	dialog_service.subscribe('house_pepper')
+	
+	ans = memory_service.subscriber("Dialog/LastAnswer")
+	ans.signal.connect(callback_ans)
+	inp = memory_service.subscriber("Dialog/LastInput")
+	inp.signal.connect(callback_inp)
+
+	flag_stop = True
+
+	while flag_stop:
+		try:
+			user_input = raw_input("Interact with the robot:\nTo terminate the conversation insert [stop, finish] or touch Pepper's hands or head inserting [Head, LHand, RHand]\n")
+
+		except KeyboardInterrupt:
+			flag_stop = False
+
+			# Stop the dialog engine, then deactivate and unlaod topic
+			dialog_service.unsubscribe('house_pepper')
+			dialog_service.deactivateTopic(topic_name)
+			dialog_service.unloadTopic(topic_name)   
+
+			# continue and exit
+			continue
+
+		if ("stop" in user_input.strip().lower()) or ("finish" in user_input.strip().lower()):
+
+			flag_stop = False
+
+			# Stop the dialog engine, then deactivate and unlaod topic
+			dialog_service.unsubscribe('house_pepper')
+			dialog_service.deactivateTopic(topic_name)
+			dialog_service.unloadTopic(topic_name)   
+
+			# continue and exit
+			continue
+		
+		# touch actions by the user
+		elif "head" in user_input.strip().lower():
+			if touch_service.set("Head"):
+				tts_service.say("You touched my head", _async=True)    
+		
+		elif "lhand" in  user_input.strip().lower():
+			if touch_service.set("LHand"):
+                # tts_service.say("?"+" "*5, _async=True)    
+				tts_service.say("You touched my left hand", _async=True) 
+
+		elif "rhand" in user_input.strip().lower():
+			if touch_service.set("RHand"):
+                # tts_service.say("?"+" "*5, _async=True)   
+				tts_service.say("You touched my right hand", _async=True) 
 
 
-	# animations.interactDoor()
-	animations.interactWin()
+
+			
+
+
+
+
+
+
+
+
+
+if activate[8]:
+	project_path  = "/home/faber/playground/"
+	static_path = project_path + "static/"
+	song_path = static_path + "Smash_Mouth_-_All_Star.wav"
+
+	print(static_path)
+
+
+	# fileId = player_service.loadFile(song_path)
+	# player_service.play(fileId, _async=True)
+
+	player_service.playFile(song_path, _async=True)
+
+	# print(ao)s
+
+	time.sleep(1)
+
+	# player_service.stop()
+	# player_service.stop(ao)
+	# player_service.pause()
+
+	for i in range(100):
+		try:
+			player_service.stop(i)
+		except:
+			pass
+

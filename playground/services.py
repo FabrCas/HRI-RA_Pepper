@@ -105,8 +105,8 @@ class Animations:
     def __init__(self, motion_service, posture_service):
         self.motion     = motion_service
         self.posture    = posture_service
- 
         self.open_hand  = True   # boolean flag to indicate if the hand has to remain close
+        self.continue_dance = False
 
         # set posture standard init and save angles
         self.stand_init()
@@ -138,6 +138,10 @@ class Animations:
 
     def print_angles_start(self):
         print(self.angles_start)
+
+
+    def stopDance(self):
+        self.continue_dance = False
 
     # --------------------- default animations from posture service
 
@@ -513,6 +517,44 @@ class Animations:
         times  = [1,1]
         isAbsolute = True
         self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+        self.default()
+
+
+    def dance(self):
+
+        jointNames = ["RShoulderPitch", "RElbowRoll", "LShoulderPitch", "LElbowRoll"]
+        angles = [0.64, 1.55, 0.64, -1.55]
+        times = [0.5, 0.5, 0.5, 0.5]
+        isAbsolute = True
+        self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+        self.continue_dance = True
+
+        while self.continue_dance:
+            jointNames = ["RShoulderPitch", "RElbowRoll", "LShoulderPitch", "LElbowRoll", "HipRoll"]
+            angles = [0.34, 1.25, 1, -1.25, 0.15]
+            times = [0.5, 0.5, 0.5, 0.5, 0.5]
+            isAbsolute = True
+            self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+            jointNames = ["RShoulderPitch", "RElbowRoll", "LShoulderPitch", "LElbowRoll", "HipRoll"]
+            angles = [1, 1.85, 0.34, -1.85, 0.15]
+            times = [0.5, 0.5, 0.5, 0.5, 0.5]
+            isAbsolute = True
+            self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+
+            angles = [0.34, 1.25, 1, -1.25, -0.15]
+            times = [0.5, 0.5, 0.5, 0.5, 0.5]
+            isAbsolute = True
+            self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+            jointNames = ["RShoulderPitch", "RElbowRoll", "LShoulderPitch", "LElbowRoll", "HipRoll"]
+            angles = [1, 1.85, 0.34, -1.85, -0.15]
+            times = [0.5, 0.5, 0.5, 0.5, 0.5]
+            isAbsolute = True
+            self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
 
         self.default()
 
