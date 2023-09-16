@@ -6,17 +6,13 @@ from pepperSocket import SimSocket					# RA module connection
 from naoqi import ALProxy
 from services import Touch, Sonar, Motion, Animations
 
+# importing the SimSocket the default directory is EAI2Host
+
 
 # if using pepper tools
 sys.path.append(os.getenv('PEPPER_TOOLS_HOME')+'/cmd_server')
 import pepper_cmd
-from pepper_cmd import * 
-
-
-# paths from ./playground folder
-modim_path = "./modim_app/"
-topics_path = "./topics/"
-
+from pepper_cmd import *
 
 running_ended =  False # boolean flag for main loop in the docker iso execution (python 2.7)
 
@@ -110,10 +106,41 @@ def callback_inp(input_message):
 # ---------------------------------------- [init functions]
 
 
-def launch_tablet():
-	print modim_path
+def launch_tablet(script_name = "demo.py"):   # page: file:///home/faber/playground/modim/app/index.html
+	print "launching table application."  
 
-	
+	try:
+		# move to script folder of the app, we are the EAI2host folder
+		print(os.getcwd())
+		print(local_script_path)
+		os.chdir("./../playground/"+ local_script_path)
+
+		# execute app
+		os.system("python " + script_name)
+
+		# go back to playground
+		os.chdir("./../../../../EAI2Host")
+		print(os.getcwd())
+
+	except Exception as e:
+		print("cannot find the tablet script")
+		print(e)
+
+	# unload
+	dialog_service.unsubscribe('house_pepper')
+	dialog_service.deactivateTopic("house-assistant")
+	dialog_service.unloadTopic("house-assistant")
+
+	# load again to repeat tablet execution
+	project_path  = "/home/faber/playground/"
+	topic_path = project_path + "topics/main.top"
+	topic_path = topic_path.decode('utf-8')
+	topic_name = dialog_service.loadTopic(topic_path.encode('utf-8'))
+	dialog_service.activateTopic(topic_name) 	 
+	dialog_service.subscribe(topic_name)
+
+
+
 
 # initialization: not required if you use pepper_tools or call directly the ALProxy
 def init_AppSession(connection_url):   
@@ -128,10 +155,18 @@ def main():
 	pip, pport, connection_url = export_connectionData()
 
 	# define paths
-	global song_path, modim_path
+	global song_path, local_script_path
 	project_path  = "/home/faber/playground/"
+
+	# topic path
 	topic_path = project_path + "topics/main.top"
+
+	# tablet app path
 	modim_path = project_path + "modim/app"
+	modim_script_path = modim_path + "/scripts"
+	local_script_path = "./modim/app/scripts"
+
+	# music path
 	static_path = project_path + "static/"
 	song_path = static_path + "Smash_Mouth_-_All_Star.wav"
 
@@ -148,6 +183,7 @@ def main():
 	# load services using ALProxy
 	
 	global player_service
+	global dialog_service
 	memory_service 			= 	session.service("ALMemory")
 	motion_service			=   session.service("ALMotion")
 	posture_service         = 	session.service("ALRobotPosture")
@@ -178,9 +214,13 @@ def main():
 	# tts_service.say("Hello human, my name is Pepper and in this demo, i can show you my abilities as house assistant.")
 
 
+	global topic_path
 	topic_path = topic_path.decode('utf-8')
+
+	# global topic_name
 	topic_name = dialog_service.loadTopic(topic_path.encode('utf-8'))
-	dialog_service.activateTopic(topic_name)
+
+	dialog_service.activateTopic(topic_name) 	 
 	dialog_service.subscribe('house_pepper')
 
 	ans = memory_service.subscriber("Dialog/LastAnswer")
@@ -200,8 +240,15 @@ def main():
 
 			# Stop the dialog engine, then deactivate and unlaod topic
 			dialog_service.unsubscribe('house_pepper')
-			dialog_service.deactivateTopic(topic_name)
-			dialog_service.unloadTopic(topic_name)   
+			try:
+				dialog_service.deactivateTopic(topic_name)
+				dialog_service.unloadTopic(topic_name)
+			except:
+				for topic in dialog_service.getActivatedTopics():
+					dialog_service.deactivateTopic(topic)
+					dialog_service.unloadTopic(topic)
+
+			   
 
 			# continue and exit
 			continue
@@ -212,8 +259,15 @@ def main():
 
 			# Stop the dialog engine, then deactivate and unlaod topic
 			dialog_service.unsubscribe('house_pepper')
-			dialog_service.deactivateTopic(topic_name)
-			dialog_service.unloadTopic(topic_name)   
+			try:
+				dialog_service.deactivateTopic(topic_name)
+				dialog_service.unloadTopic(topic_name)   
+			except:	
+				for topic in dialog_service.getActivatedTopics():
+					dialog_service.deactivateTopic(topic)
+					dialog_service.unloadTopic(topic)   
+
+			
 
 			
 			# continue and exit

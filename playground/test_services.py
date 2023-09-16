@@ -49,7 +49,7 @@ player_service          =   session.service("ALAudioPlayer")
 
 activate = [0,0,0,
 			0,0,0,
-			0,0,1]
+			0,0,0,1]
 
 						# head motion code
 if activate[0]:
@@ -124,8 +124,6 @@ if activate[5]:
 	# Lets make him stop after 3 seconds
 	time.sleep(3)
 	motion_service.stopMove()
-
-
 
 	# motion = Motion(motion_service)
 	# motion.setSpeed(lin_vel = 0.001, ang_vel = 0, motion_time = 5)
@@ -239,17 +237,6 @@ if activate[7]:
 				tts_service.say("You touched my right hand", _async=True) 
 
 
-
-			
-
-
-
-
-
-
-
-
-
 if activate[8]:
 	project_path  = "/home/faber/playground/"
 	static_path = project_path + "static/"
@@ -276,4 +263,27 @@ if activate[8]:
 			player_service.stop(i)
 		except:
 			pass
+
+if activate[9]:   # modim test
+	project_path  = "/home/faber/playground/"	
+	modim_path = project_path + "modim/app"
+
+	scripts = "modim/app/scripts"
+	demo = "demo.py"
+
+	print(scripts)
+	# move to script folder of the app
+	os.chdir(scripts)
+
+	os.system("python " + demo)
+
+	# go back to playground
+	os.chdir("./../../..")
+
+	print(os.getcwd())
+
+	# ------
+
+
+
 
