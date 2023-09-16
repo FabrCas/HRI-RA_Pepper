@@ -147,20 +147,15 @@ if activate[6]:
 
 
 	animations = Animations(motion_service, tts_service, robot_posture_service)
-	# animations.interactDoor()
-	# animations.default() 
-	animations.interactWin()
-	animations.default()
-
-
-
 
 	# animations.search()
 	# animations.grab()
-	# animations.default()
+
+
+	# animations.search()
 	# animations.place()
-	# animations.default()
 
 
 
-
+	# animations.interactDoor()
+	animations.interactWin()

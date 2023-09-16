@@ -141,7 +141,7 @@ class Animations:
 
     # --------------------- default animations from posture service
 
-    def stand(self, speed = 1):
+    def stand(self, speed = 1):   # time: 5 [s]
         jointNames = ["HeadYaw", "HeadPitch"]
         angles = [0, 0]
         times  = [5.0, 5.0]
@@ -149,31 +149,36 @@ class Animations:
         self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
         self.posture.goToPosture("Stand",speed)
 
-    def crouch(self, speed = 1):
+    def crouch(self, speed = 1):  # time: 2 [s]
         self.posture.goToPosture("Crouch",0.7)
+        return
 
     def stand_zero(self, speed = 1):
         self.posture.goToPosture("StandZero",speed)
+        return
 
     def stand_init(self,speed = 1):
         self.posture.goToPosture("StandInit", speed)
+        return
 
     def wakeUp(self):
         self.motion.wakeUp()
+        return
 
     def rest(self):
         self.motion.rest()
+        return
 
 
     # --------------------- custom animations
-    def default(self):
+    def default(self):    # time: 2 [s]
 
         if self.open_hand:
             self.stand_init()
         else: # custom default with closed hand
             jointNames = [k for k,v in self.angles_start.items()]
             angles = [v for k,v in self.angles_start.items()]
-            times  = [1]*len(self.angles_start)
+            times  = [2]*len(self.angles_start)
             isAbsolute = True
             self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
 
@@ -186,7 +191,7 @@ class Animations:
         #     self.motion.setAngles(names, angles, fractionMaxSpeed)
 
 
-    def greet(self): 
+    def greet(self):  # time: 6 [s] + default = 8 [s]
 
         # move arm  
         jointNames = ["RShoulderPitch", "RShoulderRoll", "RElbowRoll", "RWristYaw", "RHand", "HipRoll", "HeadPitch"]
@@ -210,26 +215,31 @@ class Animations:
             self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
 
         # move back to init stand
-        self.stand_init() 
+        self.default() 
         return
     
-    def yes(self):
+    def yes(self):    # time: 3 [s]
         for i in range(2):
             jointNames = ["HeadPitch"]
             angles = [-0.3]
-            times  = [1.0]
+            times  = [0.5]
             isAbsolute = True
             self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
 
             jointNames = ["HeadPitch"]
             angles = [0.1]
-            times  = [1.0]
+            times  = [0.5]
             isAbsolute = True
             self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
 
+        jointNames = ["HeadPitch"]
+        angles = [self.angles_start['HeadPitch'][0]]
+        times  = [1]
+        isAbsolute = True
+        self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
         return 
 
-    def no(self):  
+    def no(self):  # time: 2 [s]
         jointNames = ["HeadYaw"]
         angles = [-0.5]
         times  = [0.5]
@@ -244,26 +254,25 @@ class Animations:
 
 
         jointNames = ["HeadYaw"]
-        angles = [0]
+        angles = [self.angles_start['HeadYaw'][0]]
         times  = [0.5]
         isAbsolute = True
         self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
-
         return 
 
     # --------------------- custom animations (actions)
 
-    def search(self):
+    def search(self):  # time: 3 [s]
         for i in range(1):
             jointNames = ["HeadYaw", "HeadPitch"]
             angles = [0.5, 0.3]
-            times  = [2,2]
+            times  = [1,1]
             isAbsolute = True
             self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
 
             jointNames = ["HeadYaw", "HeadPitch"]
             angles = [-0.5, 0.3]
-            times  = [2,2]
+            times  = [1,1]
             isAbsolute = True
             self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
 
@@ -274,14 +283,14 @@ class Animations:
         # self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
 
 
-        jointNames = ["HeadYaw"]     
-        angles = [0]
-        times  = [1.5]
+        jointNames = ["HeadYaw", "HeadPitch"]     
+        angles = [self.angles_start['HeadYaw'][0], 0.3]    # 0.3 same pitch used even for grab and place and object
+        times  = [1,1]
         isAbsolute = True
         self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
         return
 
-    def grab(self):
+    def grab(self): # time: 5 [s] + default = 7 [s]
 
         # look 
         jointNames = ["HeadPitch"]
@@ -315,13 +324,16 @@ class Animations:
         self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
 
         self.open_hand = False
+        self.default()
+        return 
 
 
-    def place(self):
-        names  = ["RHand"]
-        angles  = [0]
-        fractionMaxSpeed  = 0.2
-        self.motion.setAngles(names, angles, fractionMaxSpeed)
+    def place(self):   # time: 5 [s] + default = 7 [s]
+
+        # names  = ["RHand"]
+        # angles  = [0]
+        # fractionMaxSpeed  = 0.2
+        # self.motion.setAngles(names, angles, fractionMaxSpeed)
         
         # look  
         jointNames = ["HeadPitch"]
@@ -353,9 +365,12 @@ class Animations:
         self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
 
         self.open_hand = True
+        self.default()
+        return
+        
 
 
-    def interactDoor(self, time_wheel_motion = 4):
+    def interactDoor(self, time_wheel_motion = 4):  # time: 6 + 4 + 3 = 13 [s] + 1(default) = 14[s]
 
         jointNames = ["HeadYaw", "HeadPitch"]
         angles = [-0.2, 0.2]
@@ -430,8 +445,10 @@ class Animations:
         isAbsolute = True
         self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
 
+        self.default()
 
-    def interactWin(self, time_wheel_motion = 4):
+
+    def interactWin(self, time_wheel_motion = 4):  # time: 6 + 4  + 3 [s] = 13 + 1 (default) = 14[s]
 
         jointNames = ["HeadYaw", "HeadPitch"]
         angles = [-0.2, -0.2]
@@ -496,6 +513,8 @@ class Animations:
         times  = [1,1]
         isAbsolute = True
         self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
+
+        self.default()
 
 
 class Motion:
