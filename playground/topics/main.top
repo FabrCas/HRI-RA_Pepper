@@ -1,0 +1,12 @@
+topic: ~welcome ()
+language: enu
+
+concept:(want) [want need desire like]
+concept:(alcohol) [beer vodka "red wine"]
+concept:(child-drink) ["orange juice" milk]
+concept:(drink) [~alcohol ~child-drink]
+
+u: (what do you do) I can help people with drinks
+
+u:(I ~want to drink) what you ~want to drink?
+    u1:(* _~drink) do you want me to search $1 for you?

@@ -4,9 +4,10 @@ import math
 class Touch:
     def __init__(self, memory_service):
         self.memory_service = memory_service
-        self.sensors = {'Head_mid': 'Device/SubDeviceList/Head/Touch/Middle/Sensor/Value' ,
+        self.sensors = {'Head': 'Device/SubDeviceList/Head/Touch/Middle/Sensor/Value' , 
                         'LHand':      'Device/SubDeviceList/LHand/Touch/Back/Sensor/Value' ,
                         'RHand':      'Device/SubDeviceList/RHand/Touch/Back/Sensor/Value' }
+        # left and right hands, head middle sensors
 
     def print_name_sensor(self):
         for k in self.sensors.keys():
@@ -101,9 +102,8 @@ class Sonar:
     #we use only the frontal sonar, so it will discover only humans in front of him
 
 class Animations:
-    def __init__(self, motion_service, tts_service, posture_service):
+    def __init__(self, motion_service, posture_service):
         self.motion     = motion_service
-        self.tts        = tts_service
         self.posture    = posture_service
  
         self.open_hand  = True   # boolean flag to indicate if the hand has to remain close
@@ -515,7 +515,6 @@ class Animations:
         self.motion.angleInterpolation(jointNames, angles, times, isAbsolute)
 
         self.default()
-
 
 class Motion:
     def __init__(self, motion_service):
