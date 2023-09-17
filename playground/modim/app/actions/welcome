@@ -1,9 +1,9 @@
 IMAGE
-<*, *, *, *>:  img/welcome.jpg
+<*, *, *, *>:  img/welcome.jpeg
 ----
 TEXT
-<*,*,it,*>: Benvenuto
-<*,*,*,*>:  Welcome
+<*,*,it,*>: Ciao, premi il pulsante per configurare una delle task disponibili
+<*,*,*,*>:  Hi, press the button to select one of the available tasks
 ----
 GESTURE
 <*,*,*,*>: animations/Stand/Gestures/Hey_1
@@ -14,7 +14,7 @@ TTS
 ----
 BUTTONS
 start
-<*,*,it,*>: Inizia
-<*,*,*,*>:  Start
+<*,*,it,*>: Premi
+<*,*,*,*>:  Press
 ----
 

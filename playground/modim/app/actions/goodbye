@@ -1,9 +1,8 @@
 TEXT
-<*,*,it,*>: Spero ti sia divertito. Arrivederci.
-<*,*,*,*>:  I hope you have enjoyed. Goodbye.
+<*,*,it,*>: Sto cominiando l'esecuzione dell'operazione
+<*,*,*,*>:  I'm starting the task execution
 ----
 TTS
-<*,*,it,*>: Spero ti sia divertito. Arrivederci.
-<*,*,*,*>:  I hope you have enjoyed. Goodbye.
+<*,*,it,*>: Sto cominiando l'esecuzione dell'operazione
+<*,*,*,*>:  I'm starting the task execution
 ----
-

@@ -1,0 +1,11 @@
+IMAGE
+<*,*,*,*>:  img/windows.jpg
+----
+TEXT
+<*,*,it,*>: questa operazione è per aprire le finestra della camera da letto e chiudere quelle della sala da pranzo.
+<*,*,*,*>:  In this task, the objective is to close the dining windows and to open the bedroom ones.
+----
+TTS
+<*,*,it,*>: operazione di apertura e chiusura finestre
+<*,*,*,*>: open and close window task
+----

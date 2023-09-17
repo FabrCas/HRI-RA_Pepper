@@ -1,0 +1,32 @@
+IMAGE
+<*, *, *, *>:  img/task_menu.jpg
+----
+TEXT
+<*,*,it,*>: operazioni: 1)navigazione 2)aprire/chiudere finestre 3)spostare due oggetti 4)spostare un oggetto
+<*,*,*,*>:  tasks: 1)motion 2)open/close windows 3)move 2 objects 4)move object 
+----
+GESTURE
+<*,*,*,*>:
+----
+TTS
+<*,*,it,*>: 
+<*,*,*,*>:
+----
+BUTTONS
+navigation
+<*,*,it,*>: 1
+<*,*,*,*>:  1
+window
+<*,*,it,*>: 2
+<*,*,*,*>:  2
+move_known
+<*,*,it,*>: 3
+<*,*,*,*>:  3
+move_unknown
+<*,*,it,*>: 4
+<*,*,*,*>:  4
+exit
+<*,*,it,*>: exit
+<*,*,*,*>:  exit
+----
+

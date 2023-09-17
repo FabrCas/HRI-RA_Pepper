@@ -1,0 +1,11 @@
+IMAGE
+<*,*,*,*>:  img/exit.jpg
+----
+TEXT
+<*,*,it,*>: Non è stata selezionata nessuna operazione.
+<*,*,*,*>:  No task has been selected.
+----
+TTS
+<*,*,it,*>: uscita senza la selezione di nessuna operazione
+<*,*,*,*>: exit without tasks selection
+----

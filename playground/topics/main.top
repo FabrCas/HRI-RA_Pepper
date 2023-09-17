@@ -3,11 +3,10 @@ language: enu
 
 concept: (myname) ["My name is" "I'm" ]
 
-
 proposal: %tablet Ok, Let's launch my tablet application. Tell me "finish" when have concluded to use it.
 	u1: (finish) Ok, Do you want to do something else?
 		u2: (yes) ^goto(music)
-		u3: (no) ok, i stay here if you need something
+		u2: (no) ok, i stay here if you need something
 
 
 proposal: %music Ok, I have a song for you, do you want to listen?
@@ -22,9 +21,7 @@ proposal: %conversate Do you want to conversate?
 proposal: %name What's your name?
 	u1: ({~myname} _*) Hi $1
 
-// u: (hello) Hi Human 
-
-u: (["what can you do" "what you can do"]) i can help you providing different functionalities as house assistant.You can ask me to: open/close windows & doors, move object in the house.Moreover you can register new objects whether I don't know enough about.
+u: (["what can you do" "what you can do"]) i can help you providing different functionalities as house assistant.You can ask me to: open/close windows & doors, move objects in the house.Use the tablet to request task execution. Moreover you can tell me more about house object to register new data!
 
 
 u: (["can you describe the house" "tell me about this house"]) Of course! This is a beautiful house, with eight different rooms: the Foyer, the Toilet, the living Room, the dining room, the studio, the kitchen, and a bedroom.
@@ -34,10 +31,23 @@ u: (["task" "action" "job" "assignment"] {_*}) You can ask me to peform a task, 
 	u1:(yes) ^goto(tablet)
 	u1:(no) OK, goodbye.
 
-u: (["tablet"]  {_*}) ^goto(tablet)
+u: (["tablet"c "app"]  {_*}) ^goto(tablet)
 
 u: (["hello" "hi"] {_*}) ^goto(name)
 
 u: (["Great" "Nice" "Perfect"]) I'm happy to be helpful
 
 u: (["play" "song" "music"] {_*}) ^goto(music) 
+
+u: (can i use again the tablet) Yes of course i launch my tablet application.
+
+u: (["do you where are the glasses"]) no i don't know please let me know
+
+u: (["do you where is the smartphone"]) no i don't know please let me know
+
+u: (["glasses"] ["toilet"] ["sink"] {_*}) ok i have registered this information on the glasses
+
+u: (["smartphone"] ["bedroom"] ["bed"] {_*}) ok i have registered this information on the smartphone.
+
+
+

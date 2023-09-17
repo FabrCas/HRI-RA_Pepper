@@ -1,6 +1,8 @@
 import os
 import sys
 import time
+import json
+import subprocess
 import signal
 from pepperSocket import SimSocket					# RA module connection
 from naoqi import ALProxy
@@ -14,8 +16,11 @@ sys.path.append(os.getenv('PEPPER_TOOLS_HOME')+'/cmd_server')
 import pepper_cmd
 from pepper_cmd import *
 
-running_ended =  False # boolean flag for main loop in the docker iso execution (python 2.7)
 
+# initialize global variables
+running_ended =  False # boolean flag for main loop in the docker iso execution (python 2.7)
+config_task = None # empty global config coming from the interaction with the tablet
+socket_simulator = SimSocket()
 
 # ---------------------------------------- [environment functions]
 
@@ -25,7 +30,6 @@ def export_connectionData():
 	if pip is None:
 		pip = "127.0.0.1" 	# localhost
 		os.environ['PEPPER_IP'] = pip
-
 	pport = os.getenv('PEPPER_PORT')
 	if pport is None:
 		pport = 9559 		# default port
@@ -58,7 +62,6 @@ def export_modimData():
 	return modim_home, mod
 
 
-
 # ---------------------------------------- [callbacks]
 def handler_sigint(sig, frame):
     print('\nYou pressed Ctrl+C!')
@@ -88,6 +91,15 @@ def callback_ans(answer_message):
 		player_service.playFile(song_path, _async=True)
 		animations.dance()
 
+	# add knowledge acquisition
+	elif "smartphone" in answer_message.strip().lower():
+		command = add_knowledge("smartphone")
+		print(command)
+		socket_simulator.send_command(command)
+	elif "glasses" in answer_message.strip().lower():
+		command = add_knowledge("glasses")
+		print(command)
+		socket_simulator.send_command(command)
 
 
 def callback_inp(input_message):
@@ -102,8 +114,66 @@ def callback_inp(input_message):
 				pass
 		animations.continue_dance = False
 
-	
+
+# ---------------------------------------- [utilities]
+# predefined task one 
+def get_task(number):
+
+	# [{"type": "move_object", "args": ['glasses', "table_living"], "free hands": True}, ...]
+	command = []
+	if number == 1:      # simple motion
+		t1 = {"type": "reach_room", "args": ['dining'], "free hands": True}
+		t2 = {"type": "reach_position", "args": ['free_space'], "free hands": True}
+		command = [t1,t2]
+
+	elif number == 2:   # open windows
+		t1 = {"type": "reach_position", "args": ['free_space'], "free hands": True}
+		t2 = {"type": "close_window", "args": ['wl_dining'], "free hands": True}
+		t3 = {"type": "close_window", "args": ['wr_dining'], "free hands": True}
+		t4 = {"type": "open_window", "args": ['wl_bedroom'], "free hands": True}
+		t5 = {"type": "open_window", "args": ['wr_bedroom'], "free hands": True}
+		command = [t1,t2,t3,t4,t5]
+
+	elif number == 3:  # move known
+		t4 = {"type": "move_object", "args": ['cards', "table_kitchen"], "free hands": True}
+		t5 = {"type": "reach_position", "args": ['sofa'], "free hands": True}
+		command = [t1,t2,t3,t4,t5]
+
+	elif number == 4: # move unknown object (need to acquire knowledge)
+		t1 = {"type": "move_object", "args": ['smartphone', "desk_studio"], "free hands": True}
+		t2 = {"type": "reach_position", "args": ['free_space'], "free hands": True}
+		t3 = {"type": "reach_room", "args": ['studio'], "free hands": True}
+		command = [t1,t2,t3]   
+
+	else:
+		print("wrong number selected")
+
+	return command
+
+def add_knowledge(what):
+	command = []
+	if "smartphone" in what:
+		command.append({'object':'smartphone', 'room':"bedroom", 'furniture':"bed"})
+	if "glasses" in what: 
+		command.append({'object':'glasses', 'room':"toilet", 'furniture':"sink"})
+	return command 
+
+
+def filter_output(output):
+
+	lines_output = output.split('\n')
+
+	keywords = []
+	for line in lines_output:
+		if "reply:" in line.lower().strip():
+			text = line.split("(")[1]
+			text = text.replace(")","")
+			keywords.append(text)
+	return keywords
+
 # ---------------------------------------- [init functions]
+
+
 
 
 def launch_tablet(script_name = "demo.py"):   # page: file:///home/faber/playground/modim/app/index.html
@@ -117,9 +187,14 @@ def launch_tablet(script_name = "demo.py"):   # page: file:///home/faber/playgro
 
 		# execute app
 		os.system("python " + script_name)
+		# output = subprocess.check_output(["python", script_name], universal_newlines=True)
+		# interaction_keywords = filter_output(output)
+		# print(interaction_keywords)
 
-		# go back to playground
+		# go back to EAI2Host
 		os.chdir("./../../../../EAI2Host")
+		# os.chdir("./../../../../playground")
+
 		print(os.getcwd())
 
 	except Exception as e:
@@ -127,9 +202,18 @@ def launch_tablet(script_name = "demo.py"):   # page: file:///home/faber/playgro
 		print(e)
 
 	# unload
-	dialog_service.unsubscribe('house_pepper')
-	dialog_service.deactivateTopic("house-assistant")
-	dialog_service.unloadTopic("house-assistant")
+	try:
+		dialog_service.unsubscribe('house_pepper')
+	except:
+		pass
+	try:
+		dialog_service.deactivateTopic("house-assistant")
+	except:
+		pass
+	try:
+		dialog_service.unloadTopic("house-assistant")
+	except:
+		pass
 
 	# load again to repeat tablet execution
 	project_path  = "/home/faber/playground/"
@@ -139,6 +223,9 @@ def launch_tablet(script_name = "demo.py"):   # page: file:///home/faber/playgro
 	dialog_service.activateTopic(topic_name) 	 
 	dialog_service.subscribe(topic_name)
 
+	# Flush command to execute
+	# task = interaction_keywords[1]
+	# print("task selected -> {}".format(task))
 
 
 
@@ -151,11 +238,11 @@ def init_AppSession(connection_url):
 
 
 def main():
-	socket_simulator = SimSocket()
+	
 	pip, pport, connection_url = export_connectionData()
 
-	# define paths
-	global song_path, local_script_path
+	# 						define paths
+	global song_path, local_script_path, local_taskConfig_path, topic_path
 	project_path  = "/home/faber/playground/"
 
 	# topic path
@@ -165,6 +252,7 @@ def main():
 	modim_path = project_path + "modim/app"
 	modim_script_path = modim_path + "/scripts"
 	local_script_path = "./modim/app/scripts"
+	local_taskConfig_path = "/config/modim_config.json"
 
 	# music path
 	static_path = project_path + "static/"
@@ -214,19 +302,27 @@ def main():
 	# tts_service.say("Hello human, my name is Pepper and in this demo, i can show you my abilities as house assistant.")
 
 
-	global topic_path
+
 	topic_path = topic_path.decode('utf-8')
 
 	# global topic_name
 	topic_name = dialog_service.loadTopic(topic_path.encode('utf-8'))
 
+	
 	dialog_service.activateTopic(topic_name) 	 
 	dialog_service.subscribe('house_pepper')
+
 
 	ans = memory_service.subscriber("Dialog/LastAnswer")
 	ans.signal.connect(callback_ans)
 	inp = memory_service.subscriber("Dialog/LastInput")
 	inp.signal.connect(callback_inp)
+
+
+	# socket house simulator, remove knowledge
+	command_hs = ["smartphone", "glasses"]
+	socket_simulator.send_command(command_hs)
+
 
 	while running:
 		if running_ended:break    # break if you press CTRL+C (SignInt)
@@ -258,7 +354,10 @@ def main():
 			running = False
 
 			# Stop the dialog engine, then deactivate and unlaod topic
-			dialog_service.unsubscribe('house_pepper')
+			try:
+				dialog_service.unsubscribe('house_pepper')
+			except:
+				pass
 			try:
 				dialog_service.deactivateTopic(topic_name)
 				dialog_service.unloadTopic(topic_name)   
@@ -267,9 +366,6 @@ def main():
 					dialog_service.deactivateTopic(topic)
 					dialog_service.unloadTopic(topic)   
 
-			
-
-			
 			# continue and exit
 			continue
 		

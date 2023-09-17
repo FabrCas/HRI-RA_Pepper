@@ -1,0 +1,11 @@
+IMAGE
+<*,*,*,*>:  img/navigation.jpg
+----
+TEXT
+<*,*,it,*>: Questa è una semplice operazione di movimento/navigazione in cui l'obiettivo è raggiungere la sala da pranzo.
+<*,*,*,*>:  this is a simple navigation/motion task, the goal is to reach the dining room.
+----
+TTS
+<*,*,it,*>: operazione di movimento
+<*,*,*,*>: task motion
+----

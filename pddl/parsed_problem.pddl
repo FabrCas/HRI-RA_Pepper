@@ -178,19 +178,15 @@
         (on green_notebook cabinet_bedroom_r)
         (on yellow_notebook cabinet_toilet)
         (on cards table_living)
-        (in smartphone bedroom)
-        (on smartphone bed)
-        (in glasses toilet)
-        (on glasses sink)
-
+        (on pink_notebook table_dining)
         
         ;                           pepper init 
-        (PepperIn foyer)
+        (PepperIn dining)
         (PepperAt free_space)
         (freeHands)
     )
     
     (:goal
-        (and (on glasses table_living)  (freeHands))
+        (and (PepperIn dining) (PepperAt free_space)  (freeHands))
     )
 )

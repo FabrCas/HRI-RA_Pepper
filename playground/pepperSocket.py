@@ -31,6 +31,7 @@ class SimSocket(object):
         listener_thread = threading.Thread(target=self.receive_command)
         listener_thread.daemon = True
         listener_thread.start()
+
         
     # function to exe the commands as a queue of instructions
     def exe_commmands(self):
@@ -41,7 +42,12 @@ class SimSocket(object):
             
     def setInterpreter(self, interpreter):
         self.interpreter = interpreter     
-        
+    
+
+    def setPepperServices(self, animations_service, tts_service):
+        self.animations_service = animations_service
+        self.tts_service = tts_service
+
     def createFIFO(self, path):
         
 

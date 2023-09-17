@@ -2,6 +2,7 @@ import sys
 import time
 import os
 import random
+import json
 
 try:
     sys.path.insert(0, os.getenv('MODIM_HOME')+'/src/GUI')
@@ -14,22 +15,22 @@ except Exception as e:
 import ws_client
 from ws_client import *
 
+
 def i1():
 
     im.init()
 
     im.ask('welcome')  # wait for button
 
-    q = random.choice(['animal','color'])
-
-    a = im.ask(q)
+    a = im.ask("tasks")  #tasks
 
     if (a!='timeout'):
         im.execute(a)
         im.execute('goodbye')
 
-    im.init()
 
+    im.init()
+    
 
 if __name__ == "__main__":
 
@@ -39,6 +40,10 @@ if __name__ == "__main__":
     mws.setDemoPathAuto(__file__)
     # remote execution
     # mws.setDemoPath('<ABSOLUTE_DEMO_PATH_ON_REMOTE_SERVER>')
+
+    print("---------------path--------------------")
+    print(os.getcwd())
+    print("---------------------------------------")
 
     mws.run_interaction(i1)
 

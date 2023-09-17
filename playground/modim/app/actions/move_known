@@ -1,0 +1,11 @@
+IMAGE
+<*,*,*,*>:  img/smartphone.jpg
+----
+TEXT
+<*,*,it,*>: questo incarico è per portare lo smartphone sulla scrivania nello studio
+<*,*,*,*>:  In this task, the objective is to bring the smartphone on the desk in the studio
+----
+TTS
+<*,*,it,*>: operazione di spostamento per un oggetto conosciuto
+<*,*,*,*>: known object movement task
+----
