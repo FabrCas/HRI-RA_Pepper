@@ -800,6 +800,9 @@ class HouseSimulatorSocket(object):
             
             if not(plan is None):
                 self.solver.print_plan(plan)
+            else:
+                print("plan is None")
+                self.send_command("None plan")
             
             #4)execute the plan with pepper
             print(plan)

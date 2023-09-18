@@ -1,11 +1,11 @@
 IMAGE
-<*,*,*,*>:  img/cards.jpg
+<*,*,*,*>:  img/glasses.jpg
 ----
 TEXT
-<*,*,it,*>: questo incarico è utilizzato per portare delle carte sul tavolo in cucina, per poi far rimanere Pepper vicino al divano nel salotto.
-<*,*,*,*>:  In this task, the objective is to bring the cards on the table in the kitchen, then Pepper has to remain near the sofa in the living room.
+<*,*,it,*>: questo incarico è per portare gli occhiali sulla scrivania nello studio
+<*,*,*,*>:  In this task, the objective is to bring the glasses on the desk in the studio
 ----
 TTS
-<*,*,it,*>: operazione di spostamento per un oggetto sconosciuto
-<*,*,*,*>: unknown object movement task
+<*,*,it,*>: operazione di spostamento per un oggetto conosciuto
+<*,*,*,*>: known object movement task
 ----

@@ -374,7 +374,7 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
 
     # -- dining
     dining.add_furniture("dining chair top", "chair",x= dining.x,\
-                         y= dining.y - 70, width=kitchen_chair_w,\
+                         y= dining.y - 60, width=kitchen_chair_w,\
                          height= kitchen_chair_h, rotation=0)
 
     dining.add_furniture("dining chair right", "chair",x= dining.x + 80,\
@@ -386,7 +386,7 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
                          height= kitchen_chair_h, rotation=+90)
 
     dining.add_furniture("dining chair bottom", "chair",x= dining.x + 20,\
-                         y= dining.y + 60, width=kitchen_chair_w,\
+                         y= dining.y + 45, width=kitchen_chair_w,\
                          height= kitchen_chair_h, rotation=180)
 
     dining_table_w = 140; dining_table_h = 140;
@@ -478,7 +478,7 @@ def create_environment(screen: Surface, output_box: OutputTextBox, verbose = Tru
     # -- living room
     cards_sofa_w = 25; cards_sofa_h = 25
     living_room.add_furniture("cards", "cards", x= living_room.x + 20,\
-                         y=  math.ceil(living_room.y - (living_room_sofa_h/2 * 1/2) - (small_table_sofa_h/2 * 1/2)) -10,\
+                         y=  math.ceil(living_room.y - (living_room_sofa_h/2 * 1/2) - (small_table_sofa_h/2 * 1/2)),\
                          width=cards_sofa_w, height= cards_sofa_h, rotation=180)
 
     # -- dining

@@ -94,15 +94,35 @@ class SimSocket(object):
                         print("changing microphone status to {}".format(status))    
                     elif "sleep" in command:                                        #TODO
                         status = command.split()[1]             
-                        print("changing sleep status to {}".format(status))         
-                    elif "tts" in command:                                          #TODO (text to speech message)
-                        message = command.split()[1]
-                        print("tts message: {}".format(message))
-                                                                         
+                        print("changing sleep status to {}".format(status))     
 
+                    elif "none plan" in command.strip().lower():                                          #TODO (text to speech message)
+                        self.tts_service.say("I cannot execute the task, please give me more information", _async=True)
 
+                    elif "pepper open door" in command.strip().lower():
+                        self.animations_service.interactDoor()
 
- 
+                    elif "pepper close door" in command.strip().lower():
+                        self.animations_service.interactDoor()
+
+                    elif "pepper open window"in command.strip().lower():
+                        self.animations_service.interactWin()
+
+                    elif "pepper close window"in command.strip().lower():
+                        self.animations_service.interactWin()
+
+                    elif "pepper grab" in command.strip().lower():
+                        self.animations_service.search()
+                        self.animations_service.grab()
+
+                    elif "pepper place" in command.strip().lower():
+                        self.animations_service.search()
+                        self.animations_service.place()
+
+                    
+                                
+                    
+                                                            
  
 """
                                                 test section

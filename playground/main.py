@@ -19,7 +19,7 @@ from pepper_cmd import *
 
 # initialize global variables
 running_ended =  False # boolean flag for main loop in the docker iso execution (python 2.7)
-config_task = None # empty global config coming from the interaction with the tablet
+tts_service = None
 socket_simulator = SimSocket()
 
 # ---------------------------------------- [environment functions]
@@ -117,33 +117,47 @@ def callback_inp(input_message):
 
 # ---------------------------------------- [utilities]
 # predefined task one 
-def get_task(number):
+def get_task(name_task):
 
 	# [{"type": "move_object", "args": ['glasses', "table_living"], "free hands": True}, ...]
 	command = []
-	if number == 1:      # simple motion
+	if name_task.strip().lower() == "navigation":      # simple motion
 		t1 = {"type": "reach_room", "args": ['dining'], "free hands": True}
 		t2 = {"type": "reach_position", "args": ['free_space'], "free hands": True}
 		command = [t1,t2]
+		tts_service.say("you have selected the navigation task", _async=True)
 
-	elif number == 2:   # open windows
+	elif name_task.strip().lower() ==  "window":   # open windows
 		t1 = {"type": "reach_position", "args": ['free_space'], "free hands": True}
 		t2 = {"type": "close_window", "args": ['wl_dining'], "free hands": True}
 		t3 = {"type": "close_window", "args": ['wr_dining'], "free hands": True}
 		t4 = {"type": "open_window", "args": ['wl_bedroom'], "free hands": True}
 		t5 = {"type": "open_window", "args": ['wr_bedroom'], "free hands": True}
 		command = [t1,t2,t3,t4,t5]
+		tts_service.say("you have selected the windows task", _async=True)
 
-	elif number == 3:  # move known
-		t4 = {"type": "move_object", "args": ['cards', "table_kitchen"], "free hands": True}
-		t5 = {"type": "reach_position", "args": ['sofa'], "free hands": True}
-		command = [t1,t2,t3,t4,t5]
+	elif name_task.strip().lower() == "move_known":  # move known
+		t1= {"type": "move_object", "args": ['cards', "table_kitchen"], "free hands": True}
+		t2 = {"type": "reach_room", "args": ['living_room'], "free hands": True}
+		t3 = {"type": "reach_position", "args": ['free_space'], "free hands": True}
+		command = [t1,t2,t3]
+		tts_service.say("you have selected the move cards task", _async=True)
 
-	elif number == 4: # move unknown object (need to acquire knowledge)
-		t1 = {"type": "move_object", "args": ['smartphone', "desk_studio"], "free hands": True}
-		t2 = {"type": "reach_position", "args": ['free_space'], "free hands": True}
-		t3 = {"type": "reach_room", "args": ['studio'], "free hands": True}
-		command = [t1,t2,t3]   
+	elif name_task.strip().lower() == "move_unknown": # move unknown object (need to acquire knowledge)
+		# t1 = {"type": "move_object", "args": ['smartphone', "desk_studio"], "free hands": True}
+		# t2 = {"type": "reach_room", "args": ['studio'], "free hands": True}
+		# t3 = {"type": "reach_position", "args": ['free_space'], "free hands": True}
+
+		t1 = {"type": "move_object", "args": ['glasses', "desk_studio"], "free hands": True}
+		t2 = {"type": "reach_room", "args": ['studio'], "free hands": True}
+		t3 = {"type": "reach_position", "args": ['free_space'], "free hands": True}
+
+		command = [t1,t2,t3]
+		tts_service.say("you have selected the move glasses task", _async=True)
+
+	elif name_task.strip().lower() == "exit":
+		command = None
+		tts_service.say("ok you are exit from the tablet system", _async=True)
 
 	else:
 		print("wrong number selected")
@@ -181,21 +195,21 @@ def launch_tablet(script_name = "demo.py"):   # page: file:///home/faber/playgro
 
 	try:
 		# move to script folder of the app, we are the EAI2host folder
-		print(os.getcwd())
-		print(local_script_path)
+		# print(os.getcwd())
+		# print(local_script_path)
 		os.chdir("./../playground/"+ local_script_path)
 
 		# execute app
-		os.system("python " + script_name)
-		# output = subprocess.check_output(["python", script_name], universal_newlines=True)
-		# interaction_keywords = filter_output(output)
+		# os.system("python " + script_name)
+		output = subprocess.check_output(["python", script_name], universal_newlines=True)
+		interaction_keywords = filter_output(output)
 		# print(interaction_keywords)
 
 		# go back to EAI2Host
 		os.chdir("./../../../../EAI2Host")
 		# os.chdir("./../../../../playground")
 
-		print(os.getcwd())
+		# print(os.getcwd())
 
 	except Exception as e:
 		print("cannot find the tablet script")
@@ -224,8 +238,16 @@ def launch_tablet(script_name = "demo.py"):   # page: file:///home/faber/playgro
 	dialog_service.subscribe(topic_name)
 
 	# Flush command to execute
-	# task = interaction_keywords[1]
-	# print("task selected -> {}".format(task))
+	task_name = interaction_keywords[1]
+	print("task selected -> {}".format(task_name))
+	command = get_task(task_name)
+	print(command)
+
+	# handle exit command
+	if command is not(None):
+		socket_simulator.send_command(command)
+		
+
 
 
 
@@ -242,6 +264,7 @@ def main():
 	pip, pport, connection_url = export_connectionData()
 
 	# 						define paths
+
 	global song_path, local_script_path, local_taskConfig_path, topic_path
 	project_path  = "/home/faber/playground/"
 
@@ -270,8 +293,7 @@ def main():
 
 	# load services using ALProxy
 	
-	global player_service
-	global dialog_service
+	global player_service, dialog_service, tts_service
 	memory_service 			= 	session.service("ALMemory")
 	motion_service			=   session.service("ALMotion")
 	posture_service         = 	session.service("ALRobotPosture")
@@ -294,6 +316,10 @@ def main():
 	animations 		= Animations(motion_service, posture_service)
 	sonar           = Sonar(memory_service)
 	motion          = Motion(motion_service)
+
+
+	# pass services to the socket
+	socket_simulator.setPepperServices(animations, tts_service)
 
 	# 							start demo
 	# todo include animiations
@@ -322,6 +348,18 @@ def main():
 	# socket house simulator, remove knowledge
 	command_hs = ["smartphone", "glasses"]
 	socket_simulator.send_command(command_hs)
+	time.sleep(1)
+
+	# exe = True
+
+	# if exe:
+	# 	# navigation  window move_known move_unknown
+	# 	command = get_task("window")
+	# 	print(command)
+
+	# 	# handle exit command
+	# 	socket_simulator.send_command(command)
+	# 	exe = False
 
 
 	while running:
@@ -348,6 +386,10 @@ def main():
 
 			# continue and exit
 			continue
+
+
+
+
 
 		if ("end" in user_input.strip().lower()):
 

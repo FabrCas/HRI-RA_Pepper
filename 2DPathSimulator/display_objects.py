@@ -88,7 +88,7 @@ reach_positions = {
     "sofa":                 pg.math.Vector2(680, 487),
     "table_living":         pg.math.Vector2(590, 363),
     "armchair_l":           pg.math.Vector2(500, 453),  #to otheside add to y -100
-    "armchair_r":           pg.math.Vector2(680, 452),  #to otheside add to y -100
+    "armchair_r":           pg.math.Vector2(680, 360),#pg.math.Vector2(680, 452),  #to otheside add to y -100
     "table_dining":         pg.math.Vector2(635, 745)
 }
 
@@ -2120,7 +2120,7 @@ class Pepper(HouseElement):
             self.toRoom = None
             
     # grab/place method                                                             
-    def grab(self, name_object: str):
+    def grab(self, name_object: str, exe_time = 11):
         
         furniture = get_furniture()
         item = None
@@ -2128,6 +2128,7 @@ class Pepper(HouseElement):
             if elem.name.lower().strip() == name_object:
                 item = elem
         
+        time.sleep(exe_time)
         
         if not(item.is_movable):
             print("Pepper cannot hold this object!")
@@ -2141,7 +2142,7 @@ class Pepper(HouseElement):
         timer = threading.Timer(1, lambda: self.toggle_inMotion())
         timer.start()
            
-    def place(self, name_place:str):
+    def place(self, name_place:str, exe_time = 11):
         if self.grabbed_object is None:
             print("Pepper has not grabbed an object")
         else:
@@ -2152,6 +2153,8 @@ class Pepper(HouseElement):
                 place_positions[name_place] = [target]
                 
             place_positions[name_place][-1] = target
+            
+            time.sleep(exe_time)
             
             self.grabbed_object.rect.center = (target.x, target.y)
             print("Pepper is placing {}".format(self.grabbed_object.name))
@@ -2169,13 +2172,14 @@ class Pepper(HouseElement):
 
                                                                 # open/close method
                                                                 
-    def openDoor(self, door_name):   # door name of the type "d_$room1_$room2"
+    def openDoor(self, door_name, exe_time = 15):   # door name of the type "d_$room1_$room2"
         found = False
         doors = get_doors()
         for door in doors:
             if door.name == door_name:
                 door.open()
                 found = True
+                time.sleep(exe_time)
         if not found:
             print(f"{door_name} is not present in the room where pepper is placed ({self.actual_room.name})")    
         
@@ -2183,13 +2187,14 @@ class Pepper(HouseElement):
         timer = threading.Timer(1, lambda: self.toggle_inMotion())
         timer.start()
         
-    def closeDoor(self, door_name):
+    def closeDoor(self, door_name, exe_time = 15):
         found = False
         doors = get_doors()
         for door in doors:
             if door.name == door_name:
                 door.close()
                 found = True
+                time.sleep(exe_time)
         if not found:
             print(f"{door_name} is not present in the room where pepper is placed ({self.actual_room.name})")      
         
@@ -2197,13 +2202,14 @@ class Pepper(HouseElement):
         timer = threading.Timer(1, lambda: self.toggle_inMotion())
         timer.start()
         
-    def openWin(self, win_name):    # window name of the type "wl_$room" or "wr_$room", respectively for left and right windows
+    def openWin(self, win_name, exe_time = 15):    # window name of the type "wl_$room" or "wr_$room", respectively for left and right windows
         found = False
         windows = get_windows()
         for window in windows:
                 if window.name == win_name:
                     window.open()
                     found = True
+                    time.sleep(exe_time)
         if not found:
             print(f"{win_name} is not present in the room where pepper is placed ({self.actual_room.name})")    
         
@@ -2211,13 +2217,14 @@ class Pepper(HouseElement):
         timer = threading.Timer(1, lambda: self.toggle_inMotion())
         timer.start()
          
-    def closeWin(self, win_name):
+    def closeWin(self, win_name, exe_time = 15):
         found = False
         windows = get_windows()
         for window in windows:
             if window.name == win_name:
                 window.close()
                 found = True
+                time.sleep(exe_time)
         if not found:
             print(f"{win_name} is not present in the room where pepper is placed ({self.actual_room.name})") 
 
@@ -2247,16 +2254,19 @@ class Pepper(HouseElement):
         """
         d = get_doors()
         for elem in d:
+            # if item == elem.name.strip().lower():
             if item in elem.name.strip().lower():
                 return "door"
         
         w = get_windows()
         for elem in w:
+            # if item == elem.name.strip().lower():
             if item in elem.name.strip().lower():
                 return "window"
                 
         f = get_furniture()
         for elem in f:
+            # if item == elem.name.strip().lower():
             if item in elem.name.strip().lower():
                 return "furniture"
             
@@ -2293,19 +2303,19 @@ class Pepper(HouseElement):
                     self.move2Room(room_name=room_name, direction=direction)
                     
                 elif step['action'].strip().lower() == "open_door":
-                    if send_action:self.socket.send_command("pepper open")
+                    if send_action:self.socket.send_command("pepper open door")
                     self.openDoor(step['arguments'][0].strip().lower())
                     
                 elif step['action'].strip().lower() == "close_door":
-                    if send_action:self.socket.send_command("pepper close")
+                    if send_action:self.socket.send_command("pepper close door")
                     self.closeDoor(step['arguments'][0].strip().lower())
                     
                 elif step['action'].strip().lower() == "open_win":
-                    if send_action:self.socket.send_command("pepper open")
+                    if send_action:self.socket.send_command("pepper open window")
                     self.openWin(step['arguments'][0].strip().lower())
                     
                 elif step['action'].strip().lower() == "close_win":
-                    if send_action:self.socket.send_command("pepper close")
+                    if send_action:self.socket.send_command("pepper close window")
                     self.closeWin(step['arguments'][0].strip().lower())
                     
                 elif step['action'].strip().lower() == "grab_object":
@@ -2362,7 +2372,10 @@ class Pepper(HouseElement):
     
         # x = elem.x- 150
         # y = elem.y +50
-        
+        # pg.math.Vector2(305, 485)
+        # pg.math.Vector2(680, 452)
+        # x = 680
+        # y  = 360
         # pg.draw.circle(self.screen, color=(0, 255, 0), center=(x,y), radius=5)
         # print(x,y)
         

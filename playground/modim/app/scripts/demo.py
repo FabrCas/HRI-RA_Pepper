@@ -29,6 +29,18 @@ def i1():
         im.execute('goodbye')
 
 
+        # if (a!='timeout'):
+        # while(not(a=="exit")):
+        #     im.execute(a)
+        #     im.execute('welcome')
+        #     a = im.ask("tasks")
+        #     if (a=='timeout'): break
+
+        # im.execute("exit")
+        # im.execute('goodbye')
+
+
+
     im.init()
     
 

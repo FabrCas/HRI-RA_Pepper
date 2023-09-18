@@ -2,8 +2,8 @@ IMAGE
 <*, *, *, *>:  img/task_menu.jpg
 ----
 TEXT
-<*,*,it,*>: operazioni: 1)navigazione 2)aprire/chiudere finestre 3)spostare due oggetti 4)spostare un oggetto
-<*,*,*,*>:  tasks: 1)motion 2)open/close windows 3)move 2 objects 4)move object 
+<*,*,it,*>: operazioni: 1)navigazione 2)aprire/chiudere finestre 3)spostare le carte 4)spostare gli occhiali
+<*,*,*,*>:  tasks: 1)motion 2)open/close windows 3)move cards 4)move glasses 
 ----
 GESTURE
 <*,*,*,*>:
