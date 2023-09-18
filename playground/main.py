@@ -23,7 +23,6 @@ tts_service = None
 socket_simulator = SimSocket()
 
 # ---------------------------------------- [environment functions]
-
 def export_connectionData():
 	# take from env variables if available, otherwise define and write temporal env variables
 	pip = os.getenv('PEPPER_IP')
@@ -322,10 +321,9 @@ def main():
 	socket_simulator.setPepperServices(animations, tts_service)
 
 	# 							start demo
-	# todo include animiations
-	# animations.wakeUp()
-	# animations.greet()
-	# tts_service.say("Hello human, my name is Pepper and in this demo, i can show you my abilities as house assistant.")
+	animations.wakeUp()
+	animations.greet()
+	tts_service.say("Hello human, my name is Pepper and in this demo, i can show you my abilities as house assistant.")
 
 
 
@@ -382,12 +380,8 @@ def main():
 					dialog_service.deactivateTopic(topic)
 					dialog_service.unloadTopic(topic)
 
-			   
-
 			# continue and exit
 			continue
-
-
 
 
 
@@ -439,31 +433,28 @@ def main():
 
 
 		# ----------------------------- interaction with house simulator
-		if False:
+		#if False:
 			# 3 different types of command_hs to send
 			# add knowledge		-> i.e [{'object':'smartphone', 'room':"bedroom", 'furniture':"bed"}, {'object':'glasses', 'room':"toilet", 'furniture':"sink"}, ...]
 			# remove knowledge	-> i.e ["smartphone", "glasses"]
 			# perform task		-> i.e [{"type": "move_object", "args": ['glasses', "table_living"], "free hands": True}, ...]
 
 
-			text_input = raw_input("Enter 1(add), 2(remove), 3(task) or exit\n")
+			#text_input = raw_input("Enter 1(add), 2(remove), 3(task) or exit\n")
+			#command_hs = ""
+			#if command_hs != "":
 
-			command_hs = ""
+				#if text_input.strip().lower() 	== "1":
+				#	command_hs = [{'object':'smartphone', 'room':"bedroom", 'furniture':"bed"}, {'object':'glasses', 'room':"toilet", 'furniture':"sink"}]
+				#elif text_input.strip().lower() == "2":
+				#	command_hs = ["smartphone", "glasses"]
+				#elif text_input.strip().lower() == "3":
+				#	command_hs = [{"type": "move_object", "args": ['glasses', "table_living"], "free hands": True}]
+				#elif text_input.strip().lower() == "exit":
+				#	print("terminating execution...")
+				#	break
 
-
-			if command_hs != "":
-
-				if text_input.strip().lower() 	== "1":
-					command_hs = [{'object':'smartphone', 'room':"bedroom", 'furniture':"bed"}, {'object':'glasses', 'room':"toilet", 'furniture':"sink"}]
-				elif text_input.strip().lower() == "2":
-					command_hs = ["smartphone", "glasses"]
-				elif text_input.strip().lower() == "3":
-					command_hs = [{"type": "move_object", "args": ['glasses', "table_living"], "free hands": True}]
-				elif text_input.strip().lower() == "exit":
-					print("terminating execution...")
-					break
-
-				socket_simulator.send_command(command_hs)
+				#socket_simulator.send_command(command_hs)
 
 
 

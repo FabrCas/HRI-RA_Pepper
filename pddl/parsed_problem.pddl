@@ -99,7 +99,6 @@
         
         (in wl_dining dining)
         (isPositioned wl_dining dining east)
-        (openWin wl_dining)
 
         ;                           window definition [right]
         (in wr_foyer foyer)
@@ -120,7 +119,6 @@
         
         (in wr_dining dining)
         (isPositioned wr_dining dining east)
-        (openWin wr_dining)
         
         
         ;                           house objects (movable)
@@ -136,10 +134,8 @@
         (in orange3 kitchen)
         (in apple1 kitchen)
         (in apple2 kitchen)
-        (in smartphone bedroom)
         (in red_notebook bedroom)
         (in green_notebook bedroom)
-        (in glasses toilet)
         (in yellow_notebook toilet)
         (in pink_notebook dining)
         
@@ -175,16 +171,17 @@
         (on orange3 plate_oranges)
         (on apple1 plate_apples)
         (on apple2 plate_apples)
-        (on smartphone bed)
         (on red_notebook cabinet_bedroom_l)
         (on green_notebook cabinet_bedroom_r)
-        (on glasses sink)
         (on yellow_notebook cabinet_toilet)
         (in glasses toilet)
         (on glasses sink)
 
         
         ;                           pepper init 
+        (openDoor d_bedroom_living)
+        (openWin wl_bedroom)
+        (openWin wr_bedroom)
         (openDoor d_dining_kitchen)
         (freeHands)
 

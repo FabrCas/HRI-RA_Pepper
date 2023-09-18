@@ -31,7 +31,7 @@ u: (["task" "action" "job" "assignment"] {_*}) You can ask me to peform a task, 
 	u1:(yes) ^goto(tablet)
 	u1:(no) OK, goodbye.
 
-u: (["tablet"c "app"]  {_*}) ^goto(tablet)
+u: (["tablet" "app"]  {_*}) ^goto(tablet)
 
 u: (["hello" "hi"] {_*}) ^goto(name)
 
@@ -50,6 +50,7 @@ u: (["glasses"] ["toilet"] ["sink"] {_*}) ok i have registered this information 
 u: (["smartphone"] ["bedroom"] ["bed"] {_*}) ok i have registered this information on the smartphone.
 
 u: (["sounds good"] {_*}) Yeah! this is a 00s anthem!
+u: ([bye] {_*}) Goodbye
 
 
 
