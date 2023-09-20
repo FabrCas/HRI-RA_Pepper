@@ -17,7 +17,6 @@
         west            - direction
         east            - direction
         free_space      - room_element    ; to characterize pepper not in proximity of room elements
-        ;pepper          - object
     )
     
     
