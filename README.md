@@ -8,7 +8,8 @@ The core of this work is the interaction with Pepper robot to perform simulated 
  3. Designing of a RA module for high-level action planning, and low-level motion planning.
  4. Designing a 2D house environment simulator to represent the execution of tasks.
 
-The full description of the project is contained in the [report](https://github.com/FabrCas/HRI-RA_Pepper/blob/main/report.pdf)
+The full description of the project is contained in the [report](https://github.com/FabrCas/HRI-RA_Pepper/blob/main/report.pdf).
+
 A demo of the project's execution is available at the following [link](https://www.youtube.com/watch?v=gS-ZhO2bwkg)
 
 
